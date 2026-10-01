@@ -2,10 +2,12 @@
   "name": "app-map",
   "private": true,
   "version": "0.1.0",
+  "workspaces": ["apps/mobile"],
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspace @app-map/mobile",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "mobile:start": "npm run start --workspace @app-map/mobile"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
