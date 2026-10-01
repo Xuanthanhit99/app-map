@@ -41,14 +41,14 @@ function toPulse(item: RealityHomeItem): RealityPulse {
     id: item.id,
     kind: item.kind,
     headline: presentation.headline,
-    supportingText: presentation.supportingText,
     tone: presentation.tone,
-    cta: presentation.cta,
+    ...(presentation.supportingText !== undefined ? { supportingText: presentation.supportingText } : {}),
+    ...(presentation.cta !== undefined ? { cta: presentation.cta } : {}),
     accessibility: describeRealityState({
       headline: presentation.headline,
-      freshness: item.state.freshness,
-      provenance: item.state.provenance?.[0]?.sourceType,
       warning: item.state.safetyLevel !== "NONE",
+      ...(item.state.freshness !== undefined ? { freshness: item.state.freshness } : {}),
+      ...(item.state.provenance?.[0]?.sourceType !== undefined ? { provenance: item.state.provenance[0].sourceType } : {}),
     }),
   };
 }
@@ -90,8 +90,6 @@ export function buildRealityHomeViewModel(
       showLayers: true,
       showShortcutRow: !shouldReduceChrome(responsive),
     },
-    emptyMessage: pulses.length === 0
-      ? "Chưa có đủ tín hiệu gần đây. Không có dữ liệu không có nghĩa là khu vực đang an toàn."
-      : undefined,
+    ...(pulses.length === 0 ? { emptyMessage: "Chưa có đủ tín hiệu gần đây. Không có dữ liệu không có nghĩa là khu vực đang an toàn." } : {}),
   };
 }
