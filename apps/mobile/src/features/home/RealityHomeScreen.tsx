@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { buildRealityHomeViewModel, type RealityHomeItem } from "../../../../../src/features/reality-home/reality-home";
 import type { ResponsiveContract } from "../../../../../src/responsive/layout-contract";
 import { RealityCard } from "../../ui/RealityCard";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
-import { requestForegroundLocation } from "../../infrastructure/location/foreground-location";
-import type { LocationLifecycle } from "@core/location/location-lifecycle";
+import { useForegroundLocationLifecycle } from "../../infrastructure/location/useForegroundLocationLifecycle";
 import { selectMapItem, type MapMarker, type MapSelection } from "@core/map/map-contract";
 import { theme } from "../../ui/theme";
 
@@ -63,17 +62,9 @@ function responsiveFor(width: number, height: number, fontScale: number): Respon
 export function RealityHomeScreen() {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [location, setLocation] = useState<LocationLifecycle>({ status: "IDLE" });
+  const location = useForegroundLocationLifecycle();
   const [selection, setSelection] = useState<MapSelection>({ source: "SYSTEM" });
 
-  useEffect(() => {
-    let active = true;
-    setLocation({ status: "REQUESTING" });
-    void requestForegroundLocation().then((next) => {
-      if (active) setLocation(next);
-    });
-    return () => { active = false; };
-  }, []);
   const responsive = responsiveFor(width, height, fontScale);
   const vm = useMemo(() => buildRealityHomeViewModel(demoItems, responsive), [width, height, fontScale]);
 
