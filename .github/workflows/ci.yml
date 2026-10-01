@@ -18,3 +18,7 @@ jobs:
         run: npm test
       - name: Typecheck core and Expo runtime
         run: npm run typecheck
+      - name: Export Android production bundle
+        run: npm run export:android --workspace @app-map/mobile
+      - name: Export iOS production bundle
+        run: npm run export:ios --workspace @app-map/mobile
