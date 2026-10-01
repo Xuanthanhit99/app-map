@@ -16,21 +16,17 @@ export function MovingContributionScreen() {
   }
 
   const title = state.step === "TYPE" ? "Bạn vừa thấy gì?" : "Mức nào?";
+  const options = state.step === "TYPE"
+    ? state.options.map((option) => ({ option, onPress: () => setState(selectMovingReportType(option)) }))
+    : state.options.map((option) => ({ option, onPress: () => setState(selectFloodSeverity(option)) }));
+
   return (
     <View style={styles.root}>
       <Text accessibilityRole="header" style={styles.title} allowFontScaling maxFontSizeMultiplier={2}>{title}</Text>
       <Text style={styles.body}>Chọn nhanh, không cần nhập chữ khi đang di chuyển.</Text>
       <View style={styles.options}>
-        {state.options.map((option) => (
-          <Pressable
-            key={option}
-            accessibilityRole="button"
-            accessibilityLabel={labels[option]}
-            style={styles.option}
-            onPress={() => state.step === "TYPE"
-              ? setState(selectMovingReportType(option))
-              : setState(selectFloodSeverity(option))}
-          >
+        {options.map(({ option, onPress }) => (
+          <Pressable key={option} accessibilityRole="button" accessibilityLabel={labels[option]} style={styles.option} onPress={onPress}>
             <Text style={styles.optionText}>{labels[option]}</Text>
           </Pressable>
         ))}
