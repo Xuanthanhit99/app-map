@@ -1,4 +1,4 @@
-import { Camera, MapView, UserLocation } from "@maplibre/maplibre-react-native";
+import { Camera, Map, UserLocation } from "@maplibre/maplibre-react-native";
 import { StyleSheet, View } from "react-native";
 import type { ForegroundLocationState } from "../location/foreground-location";
 
@@ -12,10 +12,10 @@ export function RealityMap({ location, accessibilityLabel }: { location: Foregro
 
   return (
     <View style={styles.root} accessible={false}>
-      <MapView style={styles.map} mapStyle={DEMO_STYLE} logoEnabled={false} attributionEnabled>
-        <Camera defaultSettings={{ centerCoordinate: center, zoomLevel: location.status === "READY" ? 14 : 11 }} />
-        {location.status === "READY" ? <UserLocation visible /> : null}
-      </MapView>
+      <Map style={styles.map} mapStyle={DEMO_STYLE}>
+        <Camera initialViewState={{ center, zoom: location.status === "READY" ? 14 : 11 }} />
+        {location.status === "READY" ? <UserLocation accuracy /> : null}
+      </Map>
       <View accessible accessibilityRole="summary" accessibilityLabel={accessibilityLabel} style={styles.accessibleEquivalent} />
     </View>
   );
