@@ -1,13 +1,7 @@
 import * as Location from "expo-location";
+import type { LocationLifecycle } from "@core/location/location-lifecycle";
 
-export type ForegroundLocationState =
-  | { status: "IDLE" }
-  | { status: "REQUESTING" }
-  | { status: "DENIED"; canAskAgain: boolean }
-  | { status: "UNAVAILABLE"; message: string }
-  | { status: "READY"; latitude: number; longitude: number; accuracyMeters?: number };
-
-export async function requestForegroundLocation(): Promise<ForegroundLocationState> {
+export async function requestForegroundLocation(): Promise<LocationLifecycle> {
   const permission = await Location.requestForegroundPermissionsAsync();
   if (!permission.granted) return { status: "DENIED", canAskAgain: permission.canAskAgain };
 
@@ -18,9 +12,10 @@ export async function requestForegroundLocation(): Promise<ForegroundLocationSta
       status: "READY",
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
+      observedAt: position.timestamp,
       ...(position.coords.accuracy == null ? {} : { accuracyMeters: position.coords.accuracy }),
     };
   } catch {
-    return { status: "UNAVAILABLE", message: "Chưa thể xác định vị trí hiện tại." };
+    return { status: "UNAVAILABLE", reason: "NO_FIX" };
   }
 }
