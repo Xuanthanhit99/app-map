@@ -7,13 +7,6 @@ import { describeProvenance } from "@core/presentation/provenance-presentation";
 import type { DetailContainer } from "@core/responsive/layout-contract";
 import { theme } from "../../src/ui/theme";
 
-const containerStyles: Record<DetailContainer, object> = {
-  BOTTOM_SHEET: styles.bottomSheet,
-  FLOATING_PANEL: styles.floatingPanel,
-  SIDE_INSPECTOR: styles.sideInspector,
-  GLANCE_RAIL: styles.glanceRail,
-};
-
 export default function RealityDetailRoute() {
   const { kind } = useLocalSearchParams<{ kind: string }>();
   const router = useRouter();
@@ -71,3 +64,10 @@ const styles = StyleSheet.create({
   body: { ...theme.typography.body, color: theme.color.textSecondary },
   section: { ...theme.typography.headline, color: theme.color.textPrimary },
 });
+
+const containerStyles: Record<DetailContainer, object> = {
+  BOTTOM_SHEET: styles.bottomSheet,
+  FLOATING_PANEL: styles.floatingPanel,
+  SIDE_INSPECTOR: styles.sideInspector,
+  GLANCE_RAIL: styles.glanceRail,
+};
