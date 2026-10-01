@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { buildRealitySheet } from "../../../../src/features/reality-sheet/reality-sheet";
+import { buildRealitySheet } from "@core/features/reality-sheet/reality-sheet";
 import { theme } from "../../src/ui/theme";
 
 export default function RealityDetailRoute(){
