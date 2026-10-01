@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { buildPlaceNowViewModel } from "../../../../../src/features/place-now/place-now";
+import { describeProvenance } from "@core/presentation/provenance-presentation";
 import { theme } from "../../ui/theme";
 
 export function PlaceNowScreen() {
@@ -31,7 +32,7 @@ export function PlaceNowScreen() {
         <Text style={styles.body} allowFontScaling maxFontSizeMultiplier={2}>{vm.supportingText}</Text>
       </View>
       <Text accessibilityRole="header" style={styles.section}>Bằng chứng gần đây</Text>
-      {vm.evidence.map((e, i) => <Text key={i} style={styles.body}>{e.sourceType} · {e.confidence ?? "chưa rõ độ tin cậy"}</Text>)}
+      {vm.evidence.map((e, i) => <Text key={i} style={styles.body}>{describeProvenance(e)}</Text>)}
     </ScrollView>
   );
 }
