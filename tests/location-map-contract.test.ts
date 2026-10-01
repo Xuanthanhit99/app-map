@@ -15,6 +15,11 @@ describe("location lifecycle", () => {
     expect(reduceLocation(degraded, { type: "FIX", latitude: 21.03, longitude: 105.84, accuracyMeters: 12, observedAt: 200 })).toMatchObject({ status: "READY", latitude: 21.03, longitude: 105.84, observedAt: 200 });
   });
 
+  it("keeps repeated degradation while preserving the last known fix", () => {
+    const degraded: LocationLifecycle = { status: "DEGRADED", lastKnown: { latitude: 21.02, longitude: 105.83, observedAt: 100 }, reason: "STALE" };
+    expect(reduceLocation(degraded, { type: "DEGRADE", reason: "TEMPORARILY_UNAVAILABLE" })).toEqual({ ...degraded, reason: "TEMPORARILY_UNAVAILABLE" });
+  });
+
   it("keeps denied distinct from unavailable", () => {
     expect(reduceLocation({ status: "IDLE" }, { type: "DENY", canAskAgain: false }).status).toBe("DENIED");
     expect(reduceLocation({ status: "IDLE" }, { type: "UNAVAILABLE", reason: "NO_FIX" }).status).toBe("UNAVAILABLE");
