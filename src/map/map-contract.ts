@@ -18,8 +18,17 @@ export interface MapSelection {
   source: "MAP" | "LIST" | "SYSTEM";
 }
 
+export interface MapMarker {
+  id: string;
+  coordinate: Coordinate;
+}
+
 export function selectMapItem(state: MapSelection, selectedId: string | undefined, source: MapSelection["source"]): MapSelection {
   return selectedId === undefined ? { source } : { selectedId, source };
+}
+
+export function synchronizeSelection(selectedId: string | undefined, source: MapSelection["source"]): MapSelection {
+  return selectMapItem({ source: "SYSTEM" }, selectedId, source);
 }
 
 export function isRenderableRoute(route: RouteGeometry): boolean {
