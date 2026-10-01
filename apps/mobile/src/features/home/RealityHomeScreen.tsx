@@ -5,7 +5,9 @@ import { buildRealityHomeViewModel, type RealityHomeItem } from "../../../../../
 import type { ResponsiveContract } from "../../../../../src/responsive/layout-contract";
 import { RealityCard } from "../../ui/RealityCard";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
-import { requestForegroundLocation, type ForegroundLocationState } from "../../infrastructure/location/foreground-location";
+import { requestForegroundLocation } from "../../infrastructure/location/foreground-location";
+import type { LocationLifecycle } from "@core/location/location-lifecycle";
+import { selectMapItem, type MapSelection } from "@core/map/map-contract";
 import { theme } from "../../ui/theme";
 
 const demoItems: RealityHomeItem[] = [
@@ -56,7 +58,8 @@ function responsiveFor(width: number, height: number, fontScale: number): Respon
 export function RealityHomeScreen() {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [location, setLocation] = useState<ForegroundLocationState>({ status: "IDLE" });
+  const [location, setLocation] = useState<LocationLifecycle>({ status: "IDLE" });
+  const [selection, setSelection] = useState<MapSelection>({ source: "SYSTEM" });
 
   useEffect(() => {
     let active = true;
@@ -74,6 +77,8 @@ export function RealityHomeScreen() {
       <View style={styles.map}>
         <RealityMap
           location={location}
+          camera={{ mode: "OVERVIEW" }}
+          selection={selection}
           accessibilityLabel="Bản đồ khu vực hiện tại. Các tình trạng quan trọng có danh sách tương đương ngay bên dưới."
         />
         {location.status === "REQUESTING" || location.status === "IDLE" ? (
@@ -88,7 +93,7 @@ export function RealityHomeScreen() {
         ) : null}
         {location.status === "UNAVAILABLE" ? (
           <View style={styles.locationNotice} accessible accessibilityRole="text">
-            <Text style={styles.locationNoticeText}>{location.message} Bản đồ vẫn dùng được với khu vực mặc định.</Text>
+            <Text style={styles.locationNoticeText}>Tạm thời chưa xác định được vị trí. Bản đồ vẫn dùng được với khu vực mặc định.</Text>
           </View>
         ) : null}
       </View>
@@ -102,12 +107,12 @@ export function RealityHomeScreen() {
         <Text accessibilityRole="header" style={styles.title} allowFontScaling maxFontSizeMultiplier={2}>{vm.title}</Text>
         <Text style={styles.subtitle}>Điều đáng chú ý nhất được đưa lên trước. Màu sắc không phải tín hiệu duy nhất.</Text>
 
-        {vm.pulse ? <RealityCard pulse={vm.pulse} /> : <Text style={styles.empty}>{vm.emptyMessage}</Text>}
+        {vm.pulse ? <View onTouchEnd={() => setSelection((current) => selectMapItem(current, vm.pulse?.id, "LIST"))}><RealityCard pulse={vm.pulse} /></View> : <Text style={styles.empty}>{vm.emptyMessage}</Text>}
 
         {vm.secondary.length ? (
           <View style={styles.secondary}>
             <Text accessibilityRole="header" style={styles.sectionTitle}>Gần đây</Text>
-            {vm.secondary.map((item) => <RealityCard key={item.id} pulse={item} />)}
+            {vm.secondary.map((item) => <View key={item.id} onTouchEnd={() => setSelection((current) => selectMapItem(current, item.id, "LIST"))}><RealityCard pulse={item} /></View>)}
           </View>
         ) : null}
       </ScrollView>
