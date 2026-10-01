@@ -81,7 +81,7 @@ export function buildPlaceNowViewModel(
     supportingText,
     live: state.live.truthStatus === "KNOWN" ? state.live.domain : null,
     truthStatus: state.live.truthStatus,
-    freshness: state.live.freshness,
+    ...(state.live.freshness !== undefined ? { freshness: state.live.freshness } : {}),
     evidence: state.live.provenance ?? [],
     container: getDetailContainer(responsive),
     showAskHere:
@@ -89,8 +89,8 @@ export function buildPlaceNowViewModel(
       state.live.freshness === "STALE",
     accessibility: describeRealityState({
       headline,
-      freshness: state.live.freshness,
-      provenance: state.live.provenance?.[0]?.sourceType,
+      ...(state.live.freshness !== undefined ? { freshness: state.live.freshness } : {}),
+      ...(state.live.provenance?.[0]?.sourceType !== undefined ? { provenance: state.live.provenance[0].sourceType } : {}),
       warning:
         state.live.domain.open === "TEMPORARILY_CLOSED" ||
         state.live.domain.open === "CLOSED",
