@@ -1,6 +1,7 @@
-import { Camera, Map, UserLocation } from "@maplibre/maplibre-react-native";
+import { Camera, CircleLayer, Map, ShapeSource, UserLocation } from "@maplibre/maplibre-react-native";
 import { StyleSheet, View } from "react-native";
-import type { CameraMode, MapSelection, RouteGeometry } from "@core/map/map-contract";
+import type { CameraMode, MapMarker, MapSelection, RouteGeometry } from "@core/map/map-contract";
+import { isRenderableRoute } from "@core/map/map-contract";
 import type { LocationLifecycle } from "@core/location/location-lifecycle";
 
 const DEMO_STYLE = "https://demotiles.maplibre.org/style.json";
@@ -14,21 +15,30 @@ function initialView(camera: CameraMode, location: LocationLifecycle) {
   return { center: DEFAULT_CENTER, zoom: 11 };
 }
 
-export function RealityMap({ location, camera, route, selection, accessibilityLabel }: {
+export function RealityMap({ location, camera, route, markers = [], selection, onSelectMarker, accessibilityLabel }: {
   location: LocationLifecycle;
   camera: CameraMode;
   route?: RouteGeometry;
+  markers?: readonly MapMarker[];
   selection?: MapSelection;
+  onSelectMarker?: (id: string) => void;
   accessibilityLabel: string;
 }) {
   const view = initialView(camera, location);
-  const routeSummary = route && route.coordinates.length >= 2 ? ` Tuyến đường có ${route.coordinates.length} điểm hình học.` : "";
+  const routeFeature = route && isRenderableRoute(route) ? { type: "Feature" as const, properties: {}, geometry: { type: "LineString" as const, coordinates: route.coordinates.map(([lng, lat]) => [lng, lat]) } } : undefined;
+  const markerCollection = { type: "FeatureCollection" as const, features: markers.map((marker) => ({ type: "Feature" as const, id: marker.id, properties: { id: marker.id, selected: marker.id === selection?.selectedId }, geometry: { type: "Point" as const, coordinates: [...marker.coordinate] } })) };
+  const routeSummary = routeFeature ? ` Tuyến đường có ${route!.coordinates.length} điểm hình học.` : "";
   const selectionSummary = selection?.selectedId ? ` Đang chọn ${selection.selectedId}.` : "";
 
   return (
     <View style={styles.root} accessible={false}>
       <Map style={styles.map} mapStyle={DEMO_STYLE}>
         <Camera initialViewState={view} />
+        {routeFeature ? <ShapeSource id="active-route" shape={routeFeature}><CircleLayer id="active-route-points" style={{ circleRadius: 3 }} /></ShapeSource> : null}
+        {markers.length ? <ShapeSource id="reality-markers" shape={markerCollection} onPress={(event) => {
+          const id = event.features?.[0]?.properties?.id;
+          if (typeof id === "string") onSelectMarker?.(id);
+        }}><CircleLayer id="reality-marker-dots" style={{ circleRadius: 7 }} /></ShapeSource> : null}
         {location.status === "READY" ? <UserLocation accuracy /> : null}
       </Map>
       <View accessible accessibilityRole="summary" accessibilityLabel={accessibilityLabel + routeSummary + selectionSummary} style={styles.accessibleEquivalent} />
