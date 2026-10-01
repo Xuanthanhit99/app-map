@@ -6,9 +6,27 @@
     "orientation": "default",
     "scheme": "reality",
     "userInterfaceStyle": "automatic",
-    "plugins": ["expo-router"],
-    "experiments": { "typedRoutes": true },
-    "android": { "package": "com.xuanthanhit99.reality" },
-    "ios": { "bundleIdentifier": "com.xuanthanhit99.reality", "supportsTablet": true }
+    "plugins": [
+      "expo-router",
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Cho phép Reality sử dụng vị trí của bạn khi đang dùng ứng dụng để hiển thị khu vực hiện tại và hỗ trợ hành trình.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "com.xuanthanhit99.reality"
+    },
+    "ios": {
+      "bundleIdentifier": "com.xuanthanhit99.reality",
+      "supportsTablet": true
+    }
   }
 }
