@@ -7,8 +7,13 @@ import { RealityCard } from "../../ui/RealityCard";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
 import { requestForegroundLocation } from "../../infrastructure/location/foreground-location";
 import type { LocationLifecycle } from "@core/location/location-lifecycle";
-import { selectMapItem, type MapSelection } from "@core/map/map-contract";
+import { selectMapItem, type MapMarker, type MapSelection } from "@core/map/map-contract";
 import { theme } from "../../ui/theme";
+
+const demoMarkers: readonly MapMarker[] = [
+  { id: "road-nguyen-trai", coordinate: [105.834, 21.027] },
+  { id: "parking-a", coordinate: [105.84, 21.03] },
+];
 
 const demoItems: RealityHomeItem[] = [
   {
@@ -78,7 +83,9 @@ export function RealityHomeScreen() {
         <RealityMap
           location={location}
           camera={{ mode: "OVERVIEW" }}
+          markers={demoMarkers}
           selection={selection}
+          onSelectMarker={(id) => setSelection((current) => selectMapItem(current, id, "MAP"))}
           accessibilityLabel="Bản đồ khu vực hiện tại. Các tình trạng quan trọng có danh sách tương đương ngay bên dưới."
         />
         {location.status === "REQUESTING" || location.status === "IDLE" ? (
