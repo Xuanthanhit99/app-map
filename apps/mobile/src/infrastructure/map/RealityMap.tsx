@@ -1,4 +1,4 @@
-import { Camera, CircleLayer, Map, ShapeSource, UserLocation } from "@maplibre/maplibre-react-native";
+import { Camera, GeoJSONSource, Layer, Map, UserLocation } from "@maplibre/maplibre-react-native";
 import { StyleSheet, View } from "react-native";
 import type { CameraMode, MapMarker, MapSelection, RouteGeometry } from "@core/map/map-contract";
 import { isRenderableRoute } from "@core/map/map-contract";
@@ -34,11 +34,11 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
     <View style={styles.root} accessible={false}>
       <Map style={styles.map} mapStyle={DEMO_STYLE}>
         <Camera initialViewState={view} />
-        {routeFeature ? <ShapeSource id="active-route" shape={routeFeature}><CircleLayer id="active-route-points" style={{ circleRadius: 3 }} /></ShapeSource> : null}
-        {markers.length ? <ShapeSource id="reality-markers" shape={markerCollection} onPress={(event) => {
-          const id = event.features?.[0]?.properties?.id;
+        {routeFeature ? <GeoJSONSource id="active-route" data={routeFeature}><Layer id="active-route-line" type="line" paint={{ "line-width": 4 }} /></GeoJSONSource> : null}
+        {markers.length ? <GeoJSONSource id="reality-markers" data={markerCollection} onPress={(event) => {
+          const id = event.nativeEvent.features?.[0]?.properties?.id;
           if (typeof id === "string") onSelectMarker?.(id);
-        }}><CircleLayer id="reality-marker-dots" style={{ circleRadius: 7 }} /></ShapeSource> : null}
+        }}><Layer id="reality-marker-dots" type="circle" paint={{ "circle-radius": 7 }} /></GeoJSONSource> : null}
         {location.status === "READY" ? <UserLocation accuracy /> : null}
       </Map>
       <View accessible accessibilityRole="summary" accessibilityLabel={accessibilityLabel + routeSummary + selectionSummary} style={styles.accessibleEquivalent} />
