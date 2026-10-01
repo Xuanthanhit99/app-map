@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { reduceLocation, type LocationLifecycle } from "../src/location/location-lifecycle";
-import { isRenderableRoute, selectMapItem } from "../src/map/map-contract";
+import { isRenderableRoute, selectMapItem, synchronizeSelection } from "../src/map/map-contract";
 
 describe("location lifecycle", () => {
   it("degrades a valid fix without discarding last known position", () => {
@@ -30,5 +30,11 @@ describe("map contracts", () => {
   it("keeps map/list selection synchronized through one contract", () => {
     expect(selectMapItem({ source: "SYSTEM" }, "road-1", "LIST")).toEqual({ selectedId: "road-1", source: "LIST" });
     expect(selectMapItem({ selectedId: "road-1", source: "LIST" }, undefined, "MAP")).toEqual({ source: "MAP" });
+  });
+
+  it("produces the same selected identity from map and list transitions", () => {
+    expect(synchronizeSelection("parking-a", "MAP").selectedId).toBe(synchronizeSelection("parking-a", "LIST").selectedId);
+    expect(synchronizeSelection("parking-a", "MAP").source).toBe("MAP");
+    expect(synchronizeSelection("parking-a", "LIST").source).toBe("LIST");
   });
 });
