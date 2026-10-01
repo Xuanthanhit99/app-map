@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { buildActiveJourneyViewModel } from "../../../../../src/features/journey/active-journey";
 import { theme } from "../../ui/theme";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
-import { requestForegroundLocation } from "../../infrastructure/location/foreground-location";
-import type { LocationLifecycle } from "@core/location/location-lifecycle";
+import { useForegroundLocationLifecycle } from "../../infrastructure/location/useForegroundLocationLifecycle";
 import type { RouteGeometry } from "@core/map/map-contract";
 
 const demoRoute: RouteGeometry = { id: "journey-demo", source: "MOCK", generatedAt: 1, coordinates: [[105.828, 21.021], [105.834, 21.027], [105.842, 21.032]] };
@@ -13,16 +12,8 @@ const demoRoute: RouteGeometry = { id: "journey-demo", source: "MOCK", generated
 export function ActiveJourneyScreen() {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [location, setLocation] = useState<LocationLifecycle>({ status: "IDLE" });
+  const location = useForegroundLocationLifecycle();
 
-  useEffect(() => {
-    let active = true;
-    setLocation({ status: "REQUESTING" });
-    void requestForegroundLocation().then((next) => {
-      if (active) setLocation(next);
-    });
-    return () => { active = false; };
-  }, []);
   const vm = buildActiveJourneyViewModel({
     maneuver: { distanceMeters: 300, instruction: "Rẽ phải vào Nguyễn Trãi" },
     etaMinutes: 18,
