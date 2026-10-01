@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { buildRealityHomeViewModel, type RealityHomeItem } from "../../../../../src/features/reality-home/reality-home";
 import type { ResponsiveContract } from "../../../../../src/responsive/layout-contract";
 import { RealityCard } from "../../ui/RealityCard";
+import { RealityMap } from "../../infrastructure/map/RealityMap";
+import { requestForegroundLocation, type ForegroundLocationState } from "../../infrastructure/location/foreground-location";
 import { theme } from "../../ui/theme";
 
 const demoItems: RealityHomeItem[] = [
@@ -54,16 +56,41 @@ function responsiveFor(width: number, height: number, fontScale: number): Respon
 export function RealityHomeScreen() {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const [location, setLocation] = useState<ForegroundLocationState>({ status: "IDLE" });
+
+  useEffect(() => {
+    let active = true;
+    setLocation({ status: "REQUESTING" });
+    void requestForegroundLocation().then((next) => {
+      if (active) setLocation(next);
+    });
+    return () => { active = false; };
+  }, []);
   const responsive = responsiveFor(width, height, fontScale);
   const vm = useMemo(() => buildRealityHomeViewModel(demoItems, responsive), [width, height, fontScale]);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
-      <View style={styles.map} accessible accessibilityRole="summary" accessibilityLabel="Bản đồ khu vực hiện tại. Danh sách tình trạng tương đương nằm bên dưới.">
-        <View style={styles.mapPlaceholder}>
-          <Text style={styles.mapTitle}>REALITY MAP</Text>
-          <Text style={styles.mapHint}>Map provider sẽ được gắn sau; trạng thái không phụ thuộc vào bản đồ để truy cập.</Text>
-        </View>
+      <View style={styles.map}>
+        <RealityMap
+          location={location}
+          accessibilityLabel="Bản đồ khu vực hiện tại. Các tình trạng quan trọng có danh sách tương đương ngay bên dưới."
+        />
+        {location.status === "REQUESTING" || location.status === "IDLE" ? (
+          <View style={styles.locationNotice} accessible accessibilityRole="text">
+            <Text style={styles.locationNoticeText}>Đang xác định vị trí…</Text>
+          </View>
+        ) : null}
+        {location.status === "DENIED" ? (
+          <View style={styles.locationNotice} accessible accessibilityRole="text">
+            <Text style={styles.locationNoticeText}>Chưa có quyền vị trí. Bản đồ vẫn dùng được; tình trạng bên dưới không bị coi là thiếu dữ liệu.</Text>
+          </View>
+        ) : null}
+        {location.status === "UNAVAILABLE" ? (
+          <View style={styles.locationNotice} accessible accessibilityRole="text">
+            <Text style={styles.locationNoticeText}>{location.message} Bản đồ vẫn dùng được với khu vực mặc định.</Text>
+          </View>
+        ) : null}
       </View>
 
       <ScrollView
@@ -90,13 +117,9 @@ export function RealityHomeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: theme.color.background },
-  map: { flex: 0.9, minHeight: 220, backgroundColor: theme.color.brand[50], padding: theme.spacing[4] },
-  mapPlaceholder: {
-    flex: 1, borderWidth: 1, borderColor: theme.color.brand[100], borderRadius: theme.radius.card,
-    alignItems: "center", justifyContent: "center", padding: theme.spacing[6], gap: theme.spacing[2],
-  },
-  mapTitle: { ...theme.typography.label, color: theme.color.brand[800], letterSpacing: 1.2 },
-  mapHint: { ...theme.typography.small, color: theme.color.textSecondary, textAlign: "center" },
+  map: { flex: 0.9, minHeight: 220, backgroundColor: theme.color.brand[50] },
+  locationNotice: { position: "absolute", left: theme.spacing[3], right: theme.spacing[3], bottom: theme.spacing[3], backgroundColor: theme.color.surface1, borderRadius: theme.radius.card, padding: theme.spacing[3], borderWidth: 1, borderColor: theme.color.border },
+  locationNoticeText: { ...theme.typography.small, color: theme.color.textPrimary },
   sheet: { flex: 1.1, backgroundColor: theme.color.background },
   content: { padding: theme.spacing[4], gap: theme.spacing[3] },
   eyebrow: { ...theme.typography.label, color: theme.color.brand[700], letterSpacing: 0.8 },
