@@ -4,12 +4,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { buildActiveJourneyViewModel } from "../../../../../src/features/journey/active-journey";
 import { theme } from "../../ui/theme";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
-import { requestForegroundLocation, type ForegroundLocationState } from "../../infrastructure/location/foreground-location";
+import { requestForegroundLocation } from "../../infrastructure/location/foreground-location";
+import type { LocationLifecycle } from "@core/location/location-lifecycle";
+import type { RouteGeometry } from "@core/map/map-contract";
+
+const demoRoute: RouteGeometry = { id: "journey-demo", source: "MOCK", generatedAt: 1, coordinates: [[105.828, 21.021], [105.834, 21.027], [105.842, 21.032]] };
 
 export function ActiveJourneyScreen() {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [location, setLocation] = useState<ForegroundLocationState>({ status: "IDLE" });
+  const [location, setLocation] = useState<LocationLifecycle>({ status: "IDLE" });
 
   useEffect(() => {
     let active = true;
@@ -44,6 +48,8 @@ export function ActiveJourneyScreen() {
       <View style={styles.map}>
         <RealityMap
           location={location}
+          camera={{ mode: "FOLLOW_ROUTE", padding: 48 }}
+          route={demoRoute}
           accessibilityLabel="Bản đồ hành trình. Chỉ dẫn rẽ, khoảng cách và cảnh báo đường phía trước luôn có nội dung chữ riêng."
         />
         {location.status === "DENIED" || location.status === "UNAVAILABLE" ? (
