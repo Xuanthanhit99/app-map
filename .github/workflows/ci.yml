@@ -12,7 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm install
-      - run: npm test
-      - run: npm run typecheck
+      - name: Install workspace dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test behavior contracts
+        run: npm test
+      - name: Typecheck core and Expo runtime
+        run: npm run typecheck
