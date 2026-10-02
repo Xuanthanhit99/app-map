@@ -1,19 +1,55 @@
 name: Real Routing Validation
+
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17 2 * * 1"
+    inputs:
+      commit_sha:
+        description: "Reviewed commit SHA from feat/production-foundation"
+        required: true
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
+  authorize:
+    runs-on: ubuntu-latest
+    outputs:
+      validated_sha: ${{ steps.authorize.outputs.validated_sha }}
+    steps:
+      - name: Authorize reviewed branch commit
+        id: authorize
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ inputs.commit_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$SHA" != ""
+          git init validation
+          cd validation
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          git fetch --depth=200 origin feat/production-foundation
+          git merge-base --is-ancestor "$SHA" FETCH_HEAD
+          test "$SHA" = "$(git rev-parse "$SHA^{commit}")"
+          echo "validated_sha=$SHA" >> "$GITHUB_OUTPUT"
+
   hanoi-golden-routes:
+    needs: authorize
+    environment: routing-production-validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout reviewed commit only
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.authorize.outputs.validated_sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install workspace dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install reviewed workspace dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Validate Hanoi golden routes against TomTom
         env:
           TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
