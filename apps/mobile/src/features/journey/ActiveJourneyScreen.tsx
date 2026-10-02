@@ -1,4 +1,5 @@
 
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { buildActiveJourneyViewModel } from "../../../../../src/features/journey/active-journey";
@@ -6,13 +7,36 @@ import { theme } from "../../ui/theme";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
 import { useForegroundLocationLifecycle } from "../../infrastructure/location/useForegroundLocationLifecycle";
 import type { RouteGeometry } from "@core/map/map-contract";
+import { HttpRoutingProvider } from "../../infrastructure/routing/HttpRoutingProvider";
 
-const demoRoute: RouteGeometry = { id: "journey-demo", source: "MOCK", generatedAt: 1, coordinates: [[105.828, 21.021], [105.834, 21.027], [105.842, 21.032]] };
+const SAMPLE_DESTINATION = [105.8525, 21.0285] as const;
 
 export function ActiveJourneyScreen() {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const location = useForegroundLocationLifecycle();
+  const [route, setRoute] = useState<RouteGeometry | undefined>();
+  const [routingState, setRoutingState] = useState<"IDLE" | "LOADING" | "READY" | "FAILED">("IDLE");
+  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const routing = useMemo(() => apiBaseUrl ? new HttpRoutingProvider(apiBaseUrl) : undefined, [apiBaseUrl]);
+
+  useEffect(() => {
+    if (location.status !== "READY" || !routing) return;
+    let active = true;
+    setRoutingState("LOADING");
+    void routing.route({ origin: [location.longitude, location.latitude], destination: SAMPLE_DESTINATION, mode: "DRIVING" })
+      .then((result) => {
+        if (!active) return;
+        if (result.status === "SUCCESS") {
+          setRoute(result.route);
+          setRoutingState("READY");
+        } else {
+          setRoute(undefined);
+          setRoutingState("FAILED");
+        }
+      });
+    return () => { active = false; };
+  }, [location.status === "READY" ? location.latitude : undefined, location.status === "READY" ? location.longitude : undefined, routing]);
 
   const vm = buildActiveJourneyViewModel({
     maneuver: { distanceMeters: 300, instruction: "Rẽ phải vào Nguyễn Trãi" },
@@ -40,10 +64,14 @@ export function ActiveJourneyScreen() {
         <RealityMap
           location={location}
           camera={{ mode: "FOLLOW_ROUTE", padding: 48 }}
-          route={demoRoute}
+          route={route}
           accessibilityLabel="Bản đồ hành trình. Chỉ dẫn rẽ, khoảng cách và cảnh báo đường phía trước luôn có nội dung chữ riêng."
         />
-        {location.status === "DENIED" || location.status === "UNAVAILABLE" ? (
+        {routingState === "LOADING" ? (
+          <View style={styles.locationNotice} accessible accessibilityRole="text"><Text style={styles.locationNoticeText}>Đang tải tuyến đường…</Text></View>
+        ) : routingState === "FAILED" || (!routing && location.status === "READY") ? (
+          <View style={styles.locationNotice} accessible accessibilityRole="alert"><Text style={styles.locationNoticeText}>Chưa tải được tuyến đường. Không dùng tuyến mô phỏng thay cho dữ liệu thật.</Text></View>
+        ) : location.status === "DENIED" || location.status === "UNAVAILABLE" ? (
           <View style={styles.locationNotice} accessible accessibilityRole="text">
             <Text style={styles.locationNoticeText}>
               {location.status === "DENIED"
