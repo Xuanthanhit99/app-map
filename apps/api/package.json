@@ -5,7 +5,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "validate:routing:real": "tsx scripts/validate-real-routing.ts",
-    "start": "tsx src/server.ts"
+    "start": "tsx src/server.ts",
+    "validate:routing:runtime": "tsx scripts/validate-routing-runtime.ts"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
