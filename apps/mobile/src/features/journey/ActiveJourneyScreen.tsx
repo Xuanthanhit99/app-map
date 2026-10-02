@@ -8,6 +8,7 @@ import { RealityMap } from "../../infrastructure/map/RealityMap";
 import { useForegroundLocationLifecycle } from "../../infrastructure/location/useForegroundLocationLifecycle";
 import type { RouteGeometry } from "@core/map/map-contract";
 import { HttpRoutingProvider } from "../../infrastructure/routing/HttpRoutingProvider";
+import { activeJourneyLocationNotice } from "@core/location/active-journey-location";
 
 const SAMPLE_DESTINATION = [105.8525, 21.0285] as const;
 
@@ -19,6 +20,7 @@ export function ActiveJourneyScreen() {
   const [routingState, setRoutingState] = useState<"IDLE" | "LOADING" | "READY" | "FAILED">("IDLE");
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
   const routing = useMemo(() => apiBaseUrl ? new HttpRoutingProvider(apiBaseUrl) : undefined, [apiBaseUrl]);
+  const locationNotice = activeJourneyLocationNotice(location);
 
   useEffect(() => {
     if (location.status !== "READY" || !routing) return;
@@ -71,13 +73,9 @@ export function ActiveJourneyScreen() {
           <View style={styles.locationNotice} accessible accessibilityRole="text"><Text style={styles.locationNoticeText}>Đang tải tuyến đường…</Text></View>
         ) : routingState === "FAILED" || (!routing && location.status === "READY") ? (
           <View style={styles.locationNotice} accessible accessibilityRole="alert"><Text style={styles.locationNoticeText}>Chưa tải được tuyến đường. Không dùng tuyến mô phỏng thay cho dữ liệu thật.</Text></View>
-        ) : location.status === "DENIED" || location.status === "UNAVAILABLE" ? (
+        ) : locationNotice ? (
           <View style={styles.locationNotice} accessible accessibilityRole="text">
-            <Text style={styles.locationNoticeText}>
-              {location.status === "DENIED"
-                ? "Chưa có quyền vị trí. Chỉ dẫn và cảnh báo hành trình vẫn tiếp tục."
-                : "Tạm thời chưa xác định được vị trí. Chỉ dẫn và cảnh báo hành trình vẫn tiếp tục."}
-            </Text>
+            <Text style={styles.locationNoticeText}>{locationNotice}</Text>
           </View>
         ) : null}
       </View>
