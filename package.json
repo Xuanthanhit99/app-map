@@ -2,9 +2,12 @@
   "name": "app-map",
   "private": true,
   "version": "0.1.0",
-  "workspaces": ["apps/mobile"],
+  "workspaces": [
+    "apps/mobile",
+    "apps/api"
+  ],
   "scripts": {
-    "typecheck": "tsc --noEmit && npm run typecheck --workspace @app-map/mobile",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspace @app-map/api && npm run typecheck --workspace @app-map/mobile",
     "test": "vitest run",
     "test:watch": "vitest",
     "mobile:start": "npm run start --workspace @app-map/mobile"
