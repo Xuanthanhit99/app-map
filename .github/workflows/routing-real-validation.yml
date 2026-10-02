@@ -54,3 +54,7 @@ jobs:
         env:
           TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
         run: npm run validate:routing:real --workspace @app-map/api
+      - name: Validate live HTTP routing runtime
+        env:
+          TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+        run: npm run validate:routing:runtime --workspace @app-map/api
