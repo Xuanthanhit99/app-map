@@ -1,0 +1,36 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  contracts-and-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install workspace dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test behavior contracts
+        run: npm test
+      - name: Typecheck core and Expo runtime
+        run: npm run typecheck
+      - name: Detect mobile workspace
+        id: mobile
+        shell: bash
+        run: |
+          if [ -f apps/mobile/package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Mobile workspace is not present on this baseline; mobile export gates are not applicable."
+          fi
+      - name: Export Android production bundle
+        if: steps.mobile.outputs.exists == 'true'
+        run: npm run export:android --workspace @app-map/mobile
+      - name: Export iOS production bundle
+        if: steps.mobile.outputs.exists == 'true'
+        run: npm run export:ios --workspace @app-map/mobile

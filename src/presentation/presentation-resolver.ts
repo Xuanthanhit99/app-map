@@ -134,5 +134,11 @@ export function resolvePresentation<TDomain>(
 
   if (state.cached) badges.push("CACHED");
 
-  return { headline, supportingText, tone, cta, badges };
+  return {
+    headline,
+    tone,
+    badges,
+    ...(supportingText !== undefined ? { supportingText } : {}),
+    ...(cta !== undefined ? { cta } : {}),
+  };
 }
