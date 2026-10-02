@@ -22,6 +22,12 @@ describe("mobile HTTP routing provider", () => {
     vi.unstubAllGlobals();
   });
 
+  it("returns retryable UNAVAILABLE when the network request fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Network request failed"); }));
+    expect(await new HttpRoutingProvider("http://api").route(request)).toMatchObject({ status: "FAILURE", reason: "UNAVAILABLE", retryable: true });
+    vi.unstubAllGlobals();
+  });
+
   it("returns TIMEOUT when the backend exceeds the client deadline", async () => {
     vi.stubGlobal("fetch", vi.fn((_url: string, init?: RequestInit) => new Promise((_resolve, reject) => {
       init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
