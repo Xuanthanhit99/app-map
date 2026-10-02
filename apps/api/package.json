@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "validate:routing:real": "tsx scripts/validate-real-routing.ts"
+    "validate:routing:real": "tsx scripts/validate-real-routing.ts",
+    "start": "tsx src/server.ts"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
