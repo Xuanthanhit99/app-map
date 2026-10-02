@@ -2,6 +2,12 @@
   "name": "@app-map/api",
   "version": "0.1.0",
   "private": true,
-  "scripts": { "typecheck": "tsc --noEmit" },
-  "devDependencies": { "typescript": "^5.7.2" }
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "validate:routing:real": "tsx scripts/validate-real-routing.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2"
+  }
 }
