@@ -3,7 +3,14 @@ import { AppState } from "react-native";
 import * as Location from "expo-location";
 import { reduceLocation, type LocationLifecycle } from "@core/location/location-lifecycle";
 
-const STALE_AFTER_MS = 30_000;\nconst LOCATION_DEBUG_PREFIX = "[RealityLocation]";\n\nfunction debugLocation(event: string, detail?: unknown) {\n  if (!__DEV__) return;\n  if (detail === undefined) console.info(LOCATION_DEBUG_PREFIX, event);\n  else console.info(LOCATION_DEBUG_PREFIX, event, detail);\n}
+const STALE_AFTER_MS = 30_000;
+const LOCATION_DEBUG_PREFIX = "[RealityLocation]";
+
+function debugLocation(event: string, detail?: unknown) {
+  if (!__DEV__) return;
+  if (detail === undefined) console.info(LOCATION_DEBUG_PREFIX, event);
+  else console.info(LOCATION_DEBUG_PREFIX, event, detail);
+}
 
 function fix(position: Location.LocationObject) {
   return {
@@ -46,7 +53,8 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
       startingRef.current = true;
       dispatch({ type: "REQUEST" });
       try {
-        const permission = await Location.requestForegroundPermissionsAsync();\n        debugLocation("permission", { granted: permission.granted, canAskAgain: permission.canAskAgain });
+        const permission = await Location.requestForegroundPermissionsAsync();
+        debugLocation("permission", { granted: permission.granted, canAskAgain: permission.canAskAgain });
         if (!mounted) return;
         if (!permission.granted) {
           dispatch({ type: "DENY", canAskAgain: permission.canAskAgain });
@@ -56,10 +64,12 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
         // Register the foreground watcher before waiting for a one-shot fix.
         // On emulators and cold GNSS starts, getCurrentPositionAsync can wait for
         // a fix while no continuous native request is active.
-        debugLocation("watch:request");\n        subscription = await Location.watchPositionAsync(
+        debugLocation("watch:request");
+        subscription = await Location.watchPositionAsync(
           { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 5_000 },
           acceptPosition,
         );
+        debugLocation("watch:registered");
         if (!mounted) {
           subscription.remove();
           subscription = undefined;
@@ -67,7 +77,13 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
         }
 
         try {
-          debugLocation("current:request");\n          const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });\n          debugLocation("current:position", {\n            latitude: position.coords.latitude,\n            longitude: position.coords.longitude,\n            accuracy: position.coords.accuracy,\n          });
+          debugLocation("current:request");
+          const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          debugLocation("current:position", {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          });
           acceptPosition(position);
         } catch {
           // Keep the live foreground watcher active. It can still recover from
@@ -77,7 +93,8 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
             dispatch({ type: "DEGRADE", reason: "TEMPORARILY_UNAVAILABLE" });
           }
         }
-      } catch {
+      } catch (error) {
+        debugLocation("start:error", error instanceof Error ? error.message : String(error));
         if (stateRef.current.status === "READY" || stateRef.current.status === "DEGRADED") {
           dispatch({ type: "DEGRADE", reason: "TEMPORARILY_UNAVAILABLE" });
         } else {
