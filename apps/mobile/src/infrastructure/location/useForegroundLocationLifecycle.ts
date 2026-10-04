@@ -18,6 +18,7 @@ function fix(position: Location.LocationObject) {
 export function useForegroundLocationLifecycle(): LocationLifecycle {
   const [state, setState] = useState<LocationLifecycle>({ status: "IDLE" });
   const stateRef = useRef<LocationLifecycle>(state);
+  const startingRef = useRef(false);
   stateRef.current = state;
 
   useEffect(() => {
@@ -35,30 +36,55 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
       if (staleTimer) clearTimeout(staleTimer);
       staleTimer = setTimeout(() => dispatch({ type: "DEGRADE", reason: "STALE" }), STALE_AFTER_MS);
     };
+    const acceptPosition = (position: Location.LocationObject) => {
+      dispatch(fix(position));
+      armStale();
+    };
 
     const start = async () => {
+      if (startingRef.current || subscription) return;
+      startingRef.current = true;
       dispatch({ type: "REQUEST" });
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (!mounted) return;
-      if (!permission.granted) {
-        dispatch({ type: "DENY", canAskAgain: permission.canAskAgain });
-        return;
-      }
       try {
-        const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        dispatch(fix(position));
-        armStale();
-        subscription?.remove();
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (!mounted) return;
+        if (!permission.granted) {
+          dispatch({ type: "DENY", canAskAgain: permission.canAskAgain });
+          return;
+        }
+
+        // Register the foreground watcher before waiting for a one-shot fix.
+        // On emulators and cold GNSS starts, getCurrentPositionAsync can wait for
+        // a fix while no continuous native request is active.
         subscription = await Location.watchPositionAsync(
           { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 5_000 },
-          (next) => { dispatch(fix(next)); armStale(); },
+          acceptPosition,
         );
+        if (!mounted) {
+          subscription.remove();
+          subscription = undefined;
+          return;
+        }
+
+        try {
+          const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          acceptPosition(position);
+        } catch {
+          // Keep the live foreground watcher active. It can still recover from
+          // a cold/no-fix one-shot request without converting the state to a
+          // terminal unavailable state.
+          if (stateRef.current.status === "READY" || stateRef.current.status === "DEGRADED") {
+            dispatch({ type: "DEGRADE", reason: "TEMPORARILY_UNAVAILABLE" });
+          }
+        }
       } catch {
         if (stateRef.current.status === "READY" || stateRef.current.status === "DEGRADED") {
           dispatch({ type: "DEGRADE", reason: "TEMPORARILY_UNAVAILABLE" });
         } else {
           dispatch({ type: "UNAVAILABLE", reason: "NO_FIX" });
         }
+      } finally {
+        startingRef.current = false;
       }
     };
 
@@ -74,6 +100,7 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
 
     return () => {
       mounted = false;
+      startingRef.current = false;
       subscription?.remove();
       if (staleTimer) clearTimeout(staleTimer);
       appState.remove();
