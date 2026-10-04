@@ -14,6 +14,9 @@ describe("foreground location native request regression", () => {
     expect(watch).toBeGreaterThan(-1);
     expect(current).toBeGreaterThan(-1);
     expect(watch).toBeLessThan(current);
-    expect(source).toContain("if (startingRef.current || subscription) return;");\n    expect(source).toContain('debugLocation("watch:request")');\n    expect(source).toContain('debugLocation("watch:registered")');\n    expect(source).toContain('debugLocation("start:error"');
+    expect(source).toContain("if (startingRef.current || subscription) return;");
+    expect(source).toContain('debugLocation("watch:request")');
+    expect(source).toContain('debugLocation("watch:registered")');
+    expect(source).toContain('debugLocation("start:error"');
   });
 });
