@@ -2,21 +2,24 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("foreground location native request regression", () => {
-  it("registers the foreground watcher before awaiting the one-shot fix", () => {
+  it("uses cached location opportunistically and keeps the foreground watcher authoritative", () => {
     const source = readFileSync(
       "apps/mobile/src/infrastructure/location/useForegroundLocationLifecycle.ts",
       "utf8",
     );
 
+    const lastKnown = source.indexOf("await Location.getLastKnownPositionAsync(");
     const watch = source.indexOf("await Location.watchPositionAsync(");
-    const current = source.indexOf("Location.getCurrentPositionAsync(");
 
+    expect(lastKnown).toBeGreaterThan(-1);
     expect(watch).toBeGreaterThan(-1);
-    expect(current).toBeGreaterThan(-1);
-    expect(watch).toBeLessThan(current);
+    expect(lastKnown).toBeLessThan(watch);
+    expect(source).not.toContain("Location.getCurrentPositionAsync(");
     expect(source).toContain("if (startingRef.current || subscription) return;");
+    expect(source).toContain('debugLocation("services"');
     expect(source).toContain('debugLocation("watch:request")');
     expect(source).toContain('debugLocation("watch:registered")');
+    expect(source).toContain('debugLocation("position"');
     expect(source).toContain('debugLocation("start:error"');
   });
 });
