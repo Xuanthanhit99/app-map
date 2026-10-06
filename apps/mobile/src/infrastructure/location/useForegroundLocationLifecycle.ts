@@ -4,7 +4,6 @@ import * as Location from "expo-location";
 import { reduceLocation, type LocationLifecycle } from "@core/location/location-lifecycle";
 
 const STALE_AFTER_MS = 30_000;
-const INITIAL_FIX_TIMEOUT_MS = 8_000;
 const LOCATION_DEBUG_PREFIX = "[RealityLocation]";
 
 function debugLocation(event: string, detail?: unknown) {
@@ -45,6 +44,12 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
       staleTimer = setTimeout(() => dispatch({ type: "DEGRADE", reason: "STALE" }), STALE_AFTER_MS);
     };
     const acceptPosition = (position: Location.LocationObject) => {
+      debugLocation("position", {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+        timestamp: position.timestamp,
+      });
       dispatch(fix(position));
       armStale();
     };
@@ -54,6 +59,13 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
       startingRef.current = true;
       dispatch({ type: "REQUEST" });
       try {
+        const servicesEnabled = await Location.hasServicesEnabledAsync();
+        debugLocation("services", { enabled: servicesEnabled });
+        if (!servicesEnabled) {
+          dispatch({ type: "UNAVAILABLE", reason: "SERVICES_DISABLED" });
+          return;
+        }
+
         const permission = await Location.requestForegroundPermissionsAsync();
         debugLocation("permission", { granted: permission.granted, canAskAgain: permission.canAskAgain });
         if (!mounted) return;
@@ -62,51 +74,38 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
           return;
         }
 
-        // Register the foreground watcher before waiting for a one-shot fix.
-        // On emulators and cold GNSS starts, getCurrentPositionAsync can wait for
-        // a fix while no continuous native request is active.
+        const lastKnown = await Location.getLastKnownPositionAsync({
+          maxAge: 5 * 60_000,
+          requiredAccuracy: 1_000,
+        });
+        if (lastKnown) {
+          debugLocation("lastKnown:position", {
+            latitude: lastKnown.coords.latitude,
+            longitude: lastKnown.coords.longitude,
+            accuracy: lastKnown.coords.accuracy,
+          });
+          acceptPosition(lastKnown);
+        } else {
+          debugLocation("lastKnown:none");
+        }
+
+        // The watcher is the authoritative foreground source. Do not make app
+        // readiness depend on a separate one-shot GNSS request: on Android the
+        // latter can time out even while another app has a valid fused fix.
         debugLocation("watch:request");
         subscription = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 5_000 },
+          {
+            accuracy: Location.Accuracy.Balanced,
+            distanceInterval: 1,
+            timeInterval: 1_000,
+            mayShowUserSettingsDialog: true,
+          },
           acceptPosition,
         );
         debugLocation("watch:registered");
         if (!mounted) {
           subscription.remove();
           subscription = undefined;
-          return;
-        }
-
-        try {
-          const lastKnown = await Location.getLastKnownPositionAsync({ maxAge: 120_000, requiredAccuracy: 500 });
-          if (lastKnown) {
-            debugLocation("lastKnown:position", {
-              latitude: lastKnown.coords.latitude,
-              longitude: lastKnown.coords.longitude,
-              accuracy: lastKnown.coords.accuracy,
-            });
-            acceptPosition(lastKnown);
-          }
-
-          debugLocation("current:request");
-          const position = await Promise.race([
-            Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
-            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("INITIAL_FIX_TIMEOUT")), INITIAL_FIX_TIMEOUT_MS)),
-          ]);
-          debugLocation("current:position", {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          });
-          acceptPosition(position);
-        } catch (error) {
-          debugLocation("current:error", error instanceof Error ? error.message : String(error));
-          // Keep the live foreground watcher active. It can still recover from
-          // a cold/no-fix one-shot request without converting the state to a
-          // terminal unavailable state.
-          if (stateRef.current.status === "READY" || stateRef.current.status === "DEGRADED") {
-            dispatch({ type: "DEGRADE", reason: "TEMPORARILY_UNAVAILABLE" });
-          }
         }
       } catch (error) {
         debugLocation("start:error", error instanceof Error ? error.message : String(error));
