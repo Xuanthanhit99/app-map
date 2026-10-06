@@ -60,7 +60,8 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
       dispatch({ type: "REQUEST" });
       try {
         const servicesEnabled = await Location.hasServicesEnabledAsync();
-        debugLocation("services", { enabled: servicesEnabled });
+        const providerStatus = await Location.getProviderStatusAsync();
+        debugLocation("services", { enabled: servicesEnabled, providerStatus });
         if (!servicesEnabled) {
           dispatch({ type: "UNAVAILABLE", reason: "SERVICES_DISABLED" });
           return;
@@ -95,8 +96,8 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
         debugLocation("watch:request");
         subscription = await Location.watchPositionAsync(
           {
-            accuracy: Location.Accuracy.Balanced,
-            distanceInterval: 1,
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 0,
             timeInterval: 1_000,
             mayShowUserSettingsDialog: true,
           },
