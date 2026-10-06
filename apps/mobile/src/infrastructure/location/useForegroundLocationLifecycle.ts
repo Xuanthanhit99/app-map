@@ -4,6 +4,7 @@ import * as Location from "expo-location";
 import { reduceLocation, type LocationLifecycle } from "@core/location/location-lifecycle";
 
 const STALE_AFTER_MS = 30_000;
+const INITIAL_FIX_TIMEOUT_MS = 8_000;
 const LOCATION_DEBUG_PREFIX = "[RealityLocation]";
 
 function debugLocation(event: string, detail?: unknown) {
@@ -77,15 +78,29 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
         }
 
         try {
+          const lastKnown = await Location.getLastKnownPositionAsync({ maxAge: 120_000, requiredAccuracy: 500 });
+          if (lastKnown) {
+            debugLocation("lastKnown:position", {
+              latitude: lastKnown.coords.latitude,
+              longitude: lastKnown.coords.longitude,
+              accuracy: lastKnown.coords.accuracy,
+            });
+            acceptPosition(lastKnown);
+          }
+
           debugLocation("current:request");
-          const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          const position = await Promise.race([
+            Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("INITIAL_FIX_TIMEOUT")), INITIAL_FIX_TIMEOUT_MS)),
+          ]);
           debugLocation("current:position", {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
           });
           acceptPosition(position);
-        } catch {
+        } catch (error) {
+          debugLocation("current:error", error instanceof Error ? error.message : String(error));
           // Keep the live foreground watcher active. It can still recover from
           // a cold/no-fix one-shot request without converting the state to a
           // terminal unavailable state.
