@@ -4,7 +4,21 @@ import type { CameraMode, MapMarker, MapSelection, RouteGeometry } from "@core/m
 import { isRenderableRoute } from "@core/map/map-contract";
 import type { LocationLifecycle } from "@core/location/location-lifecycle";
 
-const DEMO_STYLE = "https://demotiles.maplibre.org/style.json";
+const PRODUCTION_STYLE = {
+  version: 8 as const,
+  sources: {
+    openmaptiles: {
+      type: "raster" as const,
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution: "© OpenStreetMap contributors",
+    },
+  },
+  layers: [
+    { id: "background", type: "background" as const, paint: { "background-color": "#EDF2EF" } },
+    { id: "openmaptiles", type: "raster" as const, source: "openmaptiles", minzoom: 0, maxzoom: 19 },
+  ],
+};
 const DEFAULT_CENTER: [number, number] = [105.8342, 21.0278];
 
 function initialView(camera: CameraMode, location: LocationLifecycle) {
@@ -32,7 +46,7 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
 
   return (
     <View style={styles.root} accessible={false}>
-      <Map style={styles.map} mapStyle={DEMO_STYLE}>
+      <Map style={styles.map} mapStyle={PRODUCTION_STYLE}>
         <Camera initialViewState={view} />
         {routeFeature ? <GeoJSONSource id="active-route" data={routeFeature}><Layer id="active-route-line" type="line" paint={{ "line-width": 4 }} /></GeoJSONSource> : null}
         {markers.length ? <GeoJSONSource id="reality-markers" data={markerCollection} onPress={(event) => {
