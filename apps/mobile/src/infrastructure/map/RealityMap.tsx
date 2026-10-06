@@ -51,7 +51,7 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
   return (
     <View style={styles.root} accessible={false}>
       <Map style={styles.map} mapStyle={PRODUCTION_STYLE}>
-        {view ? <Camera centerCoordinate={view.center} zoomLevel={view.zoom} animationDuration={500} /> : <Camera />}
+        {view ? <Camera center={view.center} zoom={view.zoom} duration={500} easing="ease" /> : <Camera />}
         {routeFeature ? <GeoJSONSource id="active-route" data={routeFeature}><Layer id="active-route-line" type="line" paint={{ "line-width": 4 }} /></GeoJSONSource> : null}
         {markers.length ? <GeoJSONSource id="reality-markers" data={markerCollection} onPress={(event) => {
           const id = event.nativeEvent.features?.[0]?.properties?.id;
