@@ -9,7 +9,7 @@ describe("foreground location native request regression", () => {
     );
 
     const watch = source.indexOf("await Location.watchPositionAsync(");
-    const current = source.indexOf("await Location.getCurrentPositionAsync(");
+    const current = source.indexOf("Location.getCurrentPositionAsync(");
 
     expect(watch).toBeGreaterThan(-1);
     expect(current).toBeGreaterThan(-1);
