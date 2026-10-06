@@ -16,7 +16,10 @@ describe("foreground location native request regression", () => {
     expect(lastKnown).toBeLessThan(watch);
     expect(source).not.toContain("Location.getCurrentPositionAsync(");
     expect(source).toContain("if (startingRef.current || subscription) return;");
+    expect(source).toContain("Location.getProviderStatusAsync()");
     expect(source).toContain('debugLocation("services"');
+    expect(source).toContain("accuracy: Location.Accuracy.High");
+    expect(source).toContain("distanceInterval: 0");
     expect(source).toContain('debugLocation("watch:request")');
     expect(source).toContain('debugLocation("watch:registered")');
     expect(source).toContain('debugLocation("position"');
