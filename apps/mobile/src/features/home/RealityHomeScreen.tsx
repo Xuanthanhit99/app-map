@@ -1,22 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { buildRealityHomeViewModel, type RealityHomeItem } from "../../../../../src/features/reality-home/reality-home";
 import type { ResponsiveContract } from "../../../../../src/responsive/layout-contract";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
 import { useForegroundLocationLifecycle } from "../../infrastructure/location/useForegroundLocationLifecycle";
 import { selectMapItem, type MapMarker, type MapSelection } from "@core/map/map-contract";
 import { theme } from "../../ui/theme";
-
-const demoMarkers: readonly MapMarker[] = [
-  { id: "road-nguyen-trai", coordinate: [105.834, 21.027] },
-  { id: "parking-a", coordinate: [105.84, 21.03] },
-];
-
-const demoItems: RealityHomeItem[] = [
-  { id: "road-nguyen-trai", kind: "ROAD", distanceMeters: 350, state: { domain: "FLOODED_MODERATE", truthStatus: "KNOWN", freshness: "FRESH", systemAvailability: "ONLINE", permission: "GRANTED", contentAvailability: "CONTENT", interactionLifecycle: "NONE", fetchLifecycle: "IDLE", safetyLevel: "CAUTION", provenance: [{ sourceType: "COMMUNITY", confidence: "MEDIUM" }] } },
-  { id: "parking-a", kind: "PARKING", distanceMeters: 600, state: { domain: "LIMITED", truthStatus: "KNOWN", freshness: "AGING", systemAvailability: "ONLINE", permission: "GRANTED", contentAvailability: "CONTENT", interactionLifecycle: "NONE", fetchLifecycle: "IDLE", safetyLevel: "NONE", provenance: [{ sourceType: "FACILITY_API", confidence: "HIGH" }] } },
-];
 
 const categories = ["Gần bạn", "Ăn uống", "Cà phê", "Đỗ xe", "Khác"] as const;
 
@@ -28,10 +17,8 @@ export function RealityHomeScreen() {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const location = useForegroundLocationLifecycle();
-  const [selection, setSelection] = useState<MapSelection>({ source: "SYSTEM" });
   const [category, setCategory] = useState<(typeof categories)[number]>("Gần bạn");
   const responsive = responsiveFor(width, height, fontScale);
-  const vm = useMemo(() => buildRealityHomeViewModel(demoItems, responsive), [width, height, fontScale]);
   const compact = width < 380 || fontScale >= 1.6;
 
   return (
@@ -76,29 +63,21 @@ export function RealityHomeScreen() {
         </View>
 
         <View style={styles.feed}>
-          {vm.pulse ? (
-            <Pressable onPress={() => setSelection((current) => selectMapItem(current, vm.pulse?.id, "LIST"))} style={styles.liveRow}>
-              <View style={[styles.stateIcon, styles.stateCaution]}><Text style={styles.stateIconText}>≈</Text></View>
-              <View style={styles.liveCopy}><Text style={styles.livePlace}>Nguyễn Trãi</Text><Text style={styles.liveHeadline}>Ngập nhẹ đang giảm</Text><Text style={styles.liveMeta}>8 lượt đi qua · 3 phút trước</Text></View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
-          ) : <Text style={styles.empty}>{vm.emptyMessage}</Text>}
-          <Pressable style={styles.liveRow}>
-            <View style={[styles.stateIcon, styles.stateTraffic]}><Text style={styles.stateIconText}>!</Text></View>
-            <View style={styles.liveCopy}><Text style={styles.livePlace}>Ngã Tư Sở</Text><Text style={styles.liveHeadline}>Thi công, thu hẹp làn</Text><Text style={styles.liveMeta}>Có thể đi qua · 8 phút trước</Text></View>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
-          <Pressable onPress={() => setSelection((current) => selectMapItem(current, "parking-a", "LIST"))} style={styles.liveRow}>
-            <View style={[styles.stateIcon, styles.stateParking]}><Text style={styles.stateIconText}>P</Text></View>
-            <View style={styles.liveCopy}><Text style={styles.livePlace}>Vincom Nguyễn Chí Thanh</Text><Text style={styles.liveHeadline}>Còn chỗ xe máy</Text><Text style={styles.liveMeta}>5 lượt vào gần đây · 6 phút trước</Text></View>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
+          <View style={styles.unknownState}>
+            <View style={[styles.stateIcon, styles.stateUnknown]}><Text style={styles.stateIconText}>?</Text></View>
+            <View style={styles.liveCopy}>
+              <Text style={styles.liveHeadline}>Chưa có đủ tín hiệu gần đây</Text>
+              <Text style={styles.liveMeta}>Không có dữ liệu không có nghĩa là khu vực đang an toàn. Báo tình trạng bạn vừa thấy để giúp người đi sau.</Text>
+            </View>
+          </View>
         </View>
 
         <View style={styles.mapHeader}><Text style={styles.sectionTitle}>Bản đồ khu vực</Text><Text style={styles.mapHint}>Bản đồ hỗ trợ ngữ cảnh</Text></View>
         <View style={styles.mapPreview}>
-          <RealityMap location={location} camera={{ mode: "OVERVIEW" }} markers={demoMarkers} selection={selection} onSelectMarker={(id) => setSelection((current) => selectMapItem(current, id, "MAP"))} accessibilityLabel="Bản đồ khu vực hiện tại. Các tình trạng quan trọng có danh sách tương đương phía trên." />
-          {location.status === "REQUESTING" || location.status === "IDLE" ? <View style={styles.locationPill}><Text style={styles.locationPillText}>Đang xác định vị trí…</Text></View> : null}
+          <RealityMap location={location} camera={{ mode: "OVERVIEW" }} accessibilityLabel="Bản đồ khu vực hiện tại. Chưa có tình trạng cộng đồng nào được xác minh để hiển thị." />
+          {location.status === "REQUESTING" || location.status === "IDLE" ? <View style={styles.locationPill}><Text style={styles.locationPillText}>Đang tìm vị trí · bản đồ vẫn dùng được</Text></View> : null}
+          {location.status === "UNAVAILABLE" ? <View style={styles.locationPill}><Text style={styles.locationPillText}>Chưa lấy được vị trí · đang hiển thị Hà Nội</Text></View> : null}
+          {location.status === "DENIED" ? <View style={styles.locationPill}><Text style={styles.locationPillText}>Vị trí đang tắt · bản đồ vẫn dùng được</Text></View> : null}
           <Pressable style={styles.mapButton} accessibilityRole="button"><Text style={styles.mapButtonText}>Xem trên bản đồ</Text></Pressable>
         </View>
       </ScrollView>
@@ -143,6 +122,8 @@ const styles = StyleSheet.create({
   stateCaution: { backgroundColor: "#FBE8E4" },
   stateTraffic: { backgroundColor: "#FFF1D9" },
   stateParking: { backgroundColor: "#E3F0F8" },
+  stateUnknown: { backgroundColor: "#EEF1F0" },
+  unknownState: { minHeight: 96, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 14, gap: 12 },
   stateIconText: { fontSize: 18, fontWeight: "800", color: theme.color.textPrimary },
   liveCopy: { flex: 1, gap: 2 },
   livePlace: { fontSize: 13, lineHeight: 17, fontWeight: "600", color: theme.color.textSecondary },
