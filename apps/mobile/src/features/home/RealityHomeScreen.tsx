@@ -4,11 +4,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
 import { useForegroundLocationLifecycle } from "../../infrastructure/location/useForegroundLocationLifecycle";
 import { theme } from "../../ui/theme";
+import { buildRealityHomeViewModel, type RealityPulse } from "@core/features/reality-home/reality-home";
+import { getWorldPulseDevelopmentFixtures } from "./worldPulseDevelopmentFixtures";
 
 export function RealityHomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const location = useForegroundLocationLifecycle();
+  const reality = buildRealityHomeViewModel(getWorldPulseDevelopmentFixtures(), { widthClass: "SMALL_PHONE", orientation: "PORTRAIT", dynamicTypeScale: 1 });
+  const pulses = [reality.pulse, ...reality.secondary].filter((pulse): pulse is RealityPulse => pulse !== null);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -26,14 +30,19 @@ export function RealityHomeScreen() {
           <View><Text style={styles.sectionTitle}>Reality Pulse</Text><Text style={styles.sectionMeta}>Tín hiệu quan trọng được ưu tiên theo tác động</Text></View>
           <Text style={styles.freshness}>Bây giờ</Text>
         </View>
-        <View style={styles.pulseCard}>
+        {pulses.length ? <View style={styles.pulseStack}>
+          {pulses.map((pulse, index) => <View key={pulse.id} style={[styles.pulseCard, index > 0 && styles.secondaryPulse]}>
+            <View style={[styles.pulseCue, pulse.tone === "caution" && styles.cueCaution, pulse.tone === "uncertainty" && styles.cueUncertainty]}><Text style={styles.pulseCueText}>{pulse.kind === "ROAD" ? "R" : "P"}</Text></View>
+            <View style={styles.flex}>
+              <View style={styles.pulseTop}><Text style={styles.pulseTitle}>{pulse.headline}</Text><Text style={styles.pulseKind}>{pulse.kind === "ROAD" ? "ĐƯỜNG" : "ĐỖ XE"}</Text></View>
+              {pulse.supportingText ? <Text style={styles.pulseBody}>{pulse.supportingText}</Text> : null}
+              <View style={styles.evidenceRow}><Text style={styles.evidence}>DEV FIXTURE</Text><Text style={styles.evidenceMuted}>Qua Reality engine</Text></View>
+            </View>
+          </View>)}
+        </View> : <View style={styles.pulseCard}>
           <View style={styles.unknownIcon}><Text style={styles.unknownMark}>?</Text></View>
-          <View style={styles.flex}>
-            <Text style={styles.pulseTitle}>Chưa có đủ tín hiệu gần đây</Text>
-            <Text style={styles.pulseBody}>Không có dữ liệu không có nghĩa khu vực đang an toàn. Tín hiệu đã xác minh sẽ xuất hiện tại đây cùng độ mới và mức tin cậy.</Text>
-            <View style={styles.evidenceRow}><Text style={styles.evidence}>UNKNOWN</Text><Text style={styles.evidenceMuted}>Đang chờ bằng chứng mới</Text></View>
-          </View>
-        </View>
+          <View style={styles.flex}><Text style={styles.pulseTitle}>Chưa có đủ tín hiệu gần đây</Text><Text style={styles.pulseBody}>{reality.emptyMessage}</Text></View>
+        </View>}
 
         <Pressable accessibilityRole="button" accessibilityLabel="Cập nhật tình hình quanh bạn" onPress={() => router.push("/report-action")} style={styles.reportCard}>
           <View style={styles.reportIcon}><Text style={styles.reportIconText}>+</Text></View>
@@ -76,7 +85,7 @@ const styles = StyleSheet.create({
   header:{paddingTop:14,flexDirection:"row",justifyContent:"space-between",alignItems:"flex-start",gap:12},eyebrow:{fontSize:11,lineHeight:15,fontWeight:"800",letterSpacing:1.4,color:"#D5B77A"},title:{fontSize:29,lineHeight:34,fontWeight:"800",letterSpacing:-.7,color:"#FFF",marginTop:4},subtitle:{fontSize:14,lineHeight:20,color:"#A9BFBA",marginTop:5,maxWidth:290},
   liveBadge:{flexDirection:"row",alignItems:"center",gap:6,borderWidth:1,borderColor:"rgba(255,255,255,.14)",borderRadius:16,paddingHorizontal:10,paddingVertical:7},liveDot:{width:7,height:7,borderRadius:4,backgroundColor:"#63C89B"},liveText:{fontSize:10,fontWeight:"800",color:"#CFE3DE"},
   sectionHead:{flexDirection:"row",alignItems:"flex-end",justifyContent:"space-between",marginTop:4},sectionTitle:{fontSize:18,lineHeight:23,fontWeight:"700",color:"#FFF"},sectionMeta:{fontSize:12,lineHeight:17,color:"#88A39D",marginTop:2},freshness:{fontSize:11,color:"#88A39D"},
-  pulseCard:{flexDirection:"row",gap:12,padding:15,borderRadius:20,borderWidth:1,borderColor:"rgba(255,255,255,.11)",backgroundColor:"#102622"},unknownIcon:{width:42,height:42,borderRadius:14,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(255,255,255,.09)"},unknownMark:{fontSize:19,fontWeight:"800",color:"#FFF"},flex:{flex:1},pulseTitle:{fontSize:16,lineHeight:21,fontWeight:"700",color:"#FFF"},pulseBody:{fontSize:12,lineHeight:18,color:"#ABC0BB",marginTop:4},evidenceRow:{flexDirection:"row",gap:8,alignItems:"center",marginTop:10},evidence:{fontSize:10,fontWeight:"800",color:"#E5C98F",borderWidth:1,borderColor:"rgba(229,201,143,.32)",paddingHorizontal:7,paddingVertical:4,borderRadius:8},evidenceMuted:{fontSize:10,color:"#78938D"},
+  pulseStack:{gap:8},pulseCard:{flexDirection:"row",gap:12,padding:15,borderRadius:20,borderWidth:1,borderColor:"rgba(255,255,255,.11)",backgroundColor:"#102622"},secondaryPulse:{paddingVertical:12,backgroundColor:"#0D211E"},pulseCue:{width:38,height:38,borderRadius:13,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(99,200,155,.13)"},cueCaution:{backgroundColor:"rgba(213,183,122,.16)"},cueUncertainty:{backgroundColor:"rgba(255,255,255,.10)"},pulseCueText:{fontSize:12,fontWeight:"800",color:"#E8F1EE"},pulseTop:{flexDirection:"row",alignItems:"flex-start",justifyContent:"space-between",gap:8},pulseKind:{fontSize:8,fontWeight:"800",letterSpacing:.8,color:"#78938D"},unknownIcon:{width:42,height:42,borderRadius:14,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(255,255,255,.09)"},unknownMark:{fontSize:19,fontWeight:"800",color:"#FFF"},flex:{flex:1},pulseTitle:{fontSize:16,lineHeight:21,fontWeight:"700",color:"#FFF"},pulseBody:{fontSize:12,lineHeight:18,color:"#ABC0BB",marginTop:4},evidenceRow:{flexDirection:"row",gap:8,alignItems:"center",marginTop:10},evidence:{fontSize:10,fontWeight:"800",color:"#E5C98F",borderWidth:1,borderColor:"rgba(229,201,143,.32)",paddingHorizontal:7,paddingVertical:4,borderRadius:8},evidenceMuted:{fontSize:10,color:"#78938D"},
   reportCard:{minHeight:74,flexDirection:"row",alignItems:"center",gap:12,padding:14,borderRadius:20,backgroundColor:"#15332D",borderWidth:1,borderColor:"rgba(99,200,155,.24)"},reportIcon:{width:40,height:40,borderRadius:14,backgroundColor:"rgba(99,200,155,.14)",alignItems:"center",justifyContent:"center"},reportIconText:{fontSize:23,color:"#75D4AA"},reportTitle:{fontSize:15,fontWeight:"700",color:"#FFF"},reportBody:{fontSize:11,lineHeight:16,color:"#9BB5AF",marginTop:3},chevron:{fontSize:28,color:"#719089"},
   mapPreview:{height:150,borderRadius:20,overflow:"hidden",borderWidth:1,borderColor:"rgba(255,255,255,.12)",backgroundColor:theme.color.brand[50]},locationPill:{position:"absolute",left:10,top:10,backgroundColor:"rgba(8,25,22,.88)",borderRadius:12,paddingHorizontal:9,paddingVertical:6},locationText:{fontSize:10,color:"#D3E1DE"},mapAction:{position:"absolute",right:10,bottom:10,borderRadius:13,paddingHorizontal:13,paddingVertical:9,backgroundColor:"rgba(8,25,22,.92)",borderWidth:1,borderColor:"rgba(255,255,255,.16)"},mapActionText:{fontSize:11,fontWeight:"700",color:"#FFF"},
   decideCard:{padding:17,borderRadius:22,backgroundColor:"#112A25",borderWidth:1,borderColor:"rgba(213,183,122,.2)"},decideTitle:{fontSize:20,lineHeight:25,fontWeight:"800",color:"#FFF",marginTop:5},decideBody:{fontSize:12,lineHeight:18,color:"#9CB5AF",marginTop:5},intentRow:{flexDirection:"row",gap:7,marginTop:13,flexWrap:"wrap"},intent:{borderRadius:14,borderWidth:1,borderColor:"rgba(255,255,255,.13)",paddingHorizontal:11,paddingVertical:7},intentText:{fontSize:11,color:"#D6E3E0"},decideAction:{minHeight:46,borderRadius:15,backgroundColor:"#D5B77A",marginTop:14,paddingHorizontal:14,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},decideActionText:{fontSize:13,fontWeight:"800",color:"#14231F"},locked:{fontSize:10,fontWeight:"700",color:"#4D493B"},
