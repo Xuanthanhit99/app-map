@@ -1,74 +1,70 @@
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { ResponsiveContract } from "../../../../../src/responsive/layout-contract";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
 import { useForegroundLocationLifecycle } from "../../infrastructure/location/useForegroundLocationLifecycle";
-import { selectMapItem, type MapMarker, type MapSelection } from "@core/map/map-contract";
 import { theme } from "../../ui/theme";
 
-const categories = ["Gần bạn", "Ăn uống", "Cà phê", "Đỗ xe", "Khác"] as const;
-
-function responsiveFor(width: number, height: number, fontScale: number): ResponsiveContract {
-  return { widthClass: width >= 768 ? "TABLET" : width >= 420 ? "LARGE_PHONE" : "SMALL_PHONE", orientation: width > height ? "LANDSCAPE" : "PORTRAIT", dynamicTypeScale: fontScale };
-}
-
 export function RealityHomeScreen() {
-  const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const location = useForegroundLocationLifecycle();
-  const [category, setCategory] = useState<(typeof categories)[number]>("Gần bạn");
-  const compact = width < 380 || fontScale >= 1.6;
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 88 }]} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
-          <View style={styles.heroTop}>
-            <View>
-              <Text style={styles.greeting}>Chào buổi sáng,</Text>
-              <Text accessibilityRole="header" style={styles.heroTitle}>Bạn muốn đi đâu?</Text>
-            </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Thông báo" style={styles.avatar}><Text style={styles.avatarText}>●</Text></Pressable>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.eyebrow}>WORLD PULSE</Text>
+            <Text accessibilityRole="header" style={styles.title}>Ngay quanh bạn</Text>
+            <Text style={styles.subtitle}>Điều gì đang thực sự xảy ra — và điều gì đáng chú ý với bạn.</Text>
           </View>
-
-          <View style={styles.search}>
-            <Text style={styles.searchIcon}>⌕</Text>
-            <TextInput accessibilityLabel="Tìm kiếm" placeholder="Tìm địa điểm, tuyến đường, tình trạng…" placeholderTextColor={theme.color.textSecondary} style={styles.searchInput} />
-            <Text style={styles.mic}>⌁</Text>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            {categories.map((item) => (
-              <Pressable key={item} onPress={() => setCategory(item)} style={[styles.chip, category === item && styles.chipActive]}>
-                <Text style={[styles.chipText, category === item && styles.chipTextActive]}>{item}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          <View style={styles.liveBadge}><View style={styles.liveDot} /><Text style={styles.liveText}>LIVE</Text></View>
         </View>
 
-        <View style={styles.sectionHeader}>
-          <View><Text style={styles.sectionTitle}>Tình hình xung quanh bạn</Text><Text style={styles.sectionEyebrow}>Dữ liệu thực tế gần vị trí của bạn</Text></View>
-          <Pressable accessibilityRole="button"><Text style={styles.seeAll}>Xem tất cả ›</Text></Pressable>
+        <View style={styles.sectionHead}>
+          <View><Text style={styles.sectionTitle}>Reality Pulse</Text><Text style={styles.sectionMeta}>Tín hiệu quan trọng được ưu tiên theo tác động</Text></View>
+          <Text style={styles.freshness}>Bây giờ</Text>
         </View>
-
-        <View style={styles.feed}>
-          <View style={styles.unknownState}>
-            <View style={[styles.stateIcon, styles.stateUnknown]}><Text style={styles.stateIconText}>?</Text></View>
-            <View style={styles.liveCopy}>
-              <Text style={styles.liveHeadline}>Chưa có đủ tín hiệu gần đây</Text>
-              <Text style={styles.liveMeta}>Không có dữ liệu không có nghĩa khu vực đang an toàn. Khi có tín hiệu thực tế được xác minh, chúng sẽ xuất hiện tại đây.</Text>
-            </View>
+        <View style={styles.pulseCard}>
+          <View style={styles.unknownIcon}><Text style={styles.unknownMark}>?</Text></View>
+          <View style={styles.flex}>
+            <Text style={styles.pulseTitle}>Chưa có đủ tín hiệu gần đây</Text>
+            <Text style={styles.pulseBody}>Không có dữ liệu không có nghĩa khu vực đang an toàn. Tín hiệu đã xác minh sẽ xuất hiện tại đây cùng độ mới và mức tin cậy.</Text>
+            <View style={styles.evidenceRow}><Text style={styles.evidence}>UNKNOWN</Text><Text style={styles.evidenceMuted}>Đang chờ bằng chứng mới</Text></View>
           </View>
         </View>
 
-        <View style={styles.mapHeader}><Text style={styles.sectionTitle}>Bản đồ khu vực</Text><Text style={styles.mapHint}>Bản đồ hỗ trợ ngữ cảnh</Text></View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Cập nhật tình hình quanh bạn" onPress={() => router.push("/report-action")} style={styles.reportCard}>
+          <View style={styles.reportIcon}><Text style={styles.reportIconText}>+</Text></View>
+          <View style={styles.flex}><Text style={styles.reportTitle}>Cập nhật tình hình quanh bạn</Text><Text style={styles.reportBody}>Một chạm để xác minh hoặc báo điều bạn đang thấy.</Text></View>
+          <Text style={styles.chevron}>›</Text>
+        </Pressable>
+
+        <View style={styles.sectionHead}><View><Text style={styles.sectionTitle}>Không gian quanh bạn</Text><Text style={styles.sectionMeta}>Bản đồ chỉ là bằng chứng không gian</Text></View></View>
         <View style={styles.mapPreview}>
-          <RealityMap location={location} camera={{ mode: "FOLLOW_USER", zoom: 14 }} accessibilityLabel="Bản đồ khu vực hiện tại. Chưa có tình trạng cộng đồng nào được xác minh để hiển thị." />
-          {location.status === "REQUESTING" || location.status === "IDLE" ? <View style={styles.locationPill}><Text style={styles.locationPillText}>Đang tìm vị trí · bản đồ vẫn dùng được</Text></View> : null}
-          {location.status === "UNAVAILABLE" ? <View style={styles.locationPill}><Text style={styles.locationPillText}>Chưa lấy được vị trí · chưa thể định tâm bản đồ</Text></View> : null}
-          {location.status === "DENIED" ? <View style={styles.locationPill}><Text style={styles.locationPillText}>Vị trí đang tắt · bản đồ vẫn dùng được</Text></View> : null}
-          <Pressable style={styles.mapButton} accessibilityRole="button"><Text style={styles.mapButtonText}>Xem trên bản đồ</Text></Pressable>
+          <RealityMap location={location} camera={{ mode: "FOLLOW_USER", zoom: 14 }} accessibilityLabel="Bản đồ bằng chứng không gian quanh vị trí hiện tại." />
+          {location.status !== "READY" ? <View style={styles.locationPill}><Text style={styles.locationText}>{location.status === "DENIED" ? "Vị trí đang tắt" : "Đang xác định vị trí"}</Text></View> : null}
+          <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/map")} style={styles.mapAction}><Text style={styles.mapActionText}>Mở Bản đồ</Text></Pressable>
+        </View>
+
+        <View style={styles.decideCard}>
+          <Text style={styles.eyebrow}>DECIDE</Text>
+          <Text style={styles.decideTitle}>Bạn muốn làm gì lúc này?</Text>
+          <Text style={styles.decideBody}>Nói tình huống của bạn. Reality sẽ được dùng để chọn ít phương án phù hợp thay vì đưa một danh sách địa điểm dài.</Text>
+          <View style={styles.intentRow}>
+            {["Ăn", "Thư giãn", "Hẹn hò", "Khám phá"].map((x) => <View key={x} style={styles.intent}><Text style={styles.intentText}>{x}</Text></View>)}
+          </View>
+          <View accessibilityLabel="Chọn giúp tôi sẽ mở ở Flow 06" style={styles.decideAction}><Text style={styles.decideActionText}>Chọn giúp tôi</Text><Text style={styles.locked}>Sắp mở</Text></View>
+        </View>
+
+        <View style={styles.sectionHead}><View><Text style={styles.sectionTitle}>Cơ hội phù hợp lúc này</Text><Text style={styles.sectionMeta}>Chỉ hiện khi có đủ ngữ cảnh đáng tin cậy</Text></View></View>
+        <View style={styles.quietCard}><Text style={styles.quietTitle}>Chưa đủ ngữ cảnh để đề xuất</Text><Text style={styles.quietBody}>Ứng dụng sẽ không đoán khi thiếu vị trí, điều kiện thực tế hoặc tín hiệu phù hợp.</Text></View>
+
+        <View style={styles.storyCard}>
+          <View style={styles.storyLabel}><Text style={styles.storyLabelText}>STORY SIGNAL</Text></View>
+          <Text style={styles.storyTitle}>Câu chuyện sẽ xuất hiện đúng nơi, đúng lúc</Text>
+          <Text style={styles.storyBody}>Khi có nội dung gần bạn với nguồn gốc rõ ràng, tín hiệu lịch sử và văn hóa sẽ xuất hiện nhẹ nhàng tại đây.</Text>
         </View>
       </ScrollView>
     </View>
@@ -76,56 +72,14 @@ export function RealityHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.color.background },
-  content: { paddingHorizontal: 14, gap: 12, backgroundColor: "#0C211E" },
-  hero: { paddingTop: 12, gap: 14, paddingHorizontal: 2 },
-  heroTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  greeting: { ...theme.typography.small, color: "#D8E4E1" },
-  heroTitle: { fontSize: 24, lineHeight: 29, fontWeight: "700", color: "#FFFFFF", letterSpacing: -0.4 },
-  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.35)", alignItems: "center", justifyContent: "center" },
-  avatarText: { color: "#FFFFFF", fontSize: 16 },
-  search: { minHeight: 54, borderRadius: 18, backgroundColor: theme.color.surface1, borderWidth: 1, borderColor: theme.color.border, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, gap: 10 },
-  searchIcon: { fontSize: 24, color: theme.color.brand[700] },
-  searchInput: { flex: 1, fontSize: 15, color: theme.color.textPrimary, paddingVertical: 0 },
-  mic: { fontSize: 20, color: theme.color.textSecondary },
-  chips: { gap: 8, paddingRight: 4 },
-  chip: { minHeight: 38, justifyContent: "center", paddingHorizontal: 14, borderRadius: 19, backgroundColor: theme.color.surface1, borderWidth: 1, borderColor: theme.color.border },
-  chipActive: { backgroundColor: theme.color.brand[900], borderColor: theme.color.brand[900] },
-  chipText: { ...theme.typography.label, color: theme.color.textPrimary },
-  chipTextActive: { color: "#FFFFFF", fontWeight: "600" },
-  areaCard: { minHeight: 82, backgroundColor: theme.color.brand[900], borderRadius: 20, padding: 16, flexDirection: "row", alignItems: "center", gap: 14 },
-  areaName: { ...theme.typography.headline, color: "#FFFFFF" },
-  areaMeta: { ...theme.typography.small, color: "#DDEDEA", marginTop: 2 },
-  weather: { marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 5 },
-  weatherIcon: { fontSize: 19, color: "#FFFFFF" },
-  temperature: { fontSize: 23, fontWeight: "700", color: "#FFFFFF" },
-  aqi: { borderLeftWidth: 1, borderLeftColor: "rgba(255,255,255,0.22)", paddingLeft: 12 },
-  aqiLabel: { fontSize: 10, color: "#DDEDEA" },
-  aqiValue: { fontSize: 12, fontWeight: "600", color: "#FFFFFF", marginTop: 2 },
-  sectionHeader: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 2 },
-  sectionEyebrow: { ...theme.typography.small, color: "#AFC6C0", marginTop: 2 },
-  sectionTitle: { fontSize: 19, lineHeight: 24, fontWeight: "700", color: "#FFFFFF" },
-  seeAll: { ...theme.typography.small, color: "#D8E4E1", fontWeight: "600", paddingBottom: 2 },
-  feed: { backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 18, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", overflow: "hidden" },
-  liveRow: { minHeight: 86, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.color.border, gap: 12 },
-  stateIcon: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-  stateCaution: { backgroundColor: "#FBE8E4" },
-  stateTraffic: { backgroundColor: "#FFF1D9" },
-  stateParking: { backgroundColor: "#E3F0F8" },
-  stateUnknown: { backgroundColor: "rgba(255,255,255,0.12)" },
-  unknownState: { minHeight: 96, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 14, gap: 12 },
-  stateIconText: { fontSize: 18, fontWeight: "800", color: "#FFFFFF" },
-  liveCopy: { flex: 1, gap: 2 },
-  livePlace: { fontSize: 13, lineHeight: 17, fontWeight: "600", color: theme.color.textSecondary },
-  liveHeadline: { fontSize: 16, lineHeight: 21, fontWeight: "700", color: "#FFFFFF" },
-  liveMeta: { fontSize: 12, lineHeight: 17, color: "#B8CBC6" },
-  chevron: { fontSize: 26, color: theme.color.textSecondary },
-  empty: { ...theme.typography.body, color: theme.color.textSecondary, padding: 16 },
-  mapHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  mapHint: { ...theme.typography.small, color: "#AFC6C0" },
-  mapPreview: { height: 190, borderRadius: 22, overflow: "hidden", borderWidth: 1, borderColor: theme.color.border, backgroundColor: theme.color.brand[50] },
-  locationPill: { position: "absolute", left: 12, top: 12, backgroundColor: "rgba(255,255,255,0.94)", borderRadius: 16, paddingHorizontal: 11, paddingVertical: 7 },
-  locationPillText: { fontSize: 12, color: theme.color.textPrimary },
-  mapButton: { position: "absolute", left: 12, right: 12, bottom: 12, minHeight: 44, borderRadius: 15, backgroundColor: theme.color.surface1, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: theme.color.border },
-  mapButtonText: { ...theme.typography.label, color: theme.color.brand[700], fontWeight: "700" },
+  root:{flex:1,backgroundColor:"#081916"},content:{paddingHorizontal:16,gap:14,backgroundColor:"#081916"},
+  header:{paddingTop:14,flexDirection:"row",justifyContent:"space-between",alignItems:"flex-start",gap:12},eyebrow:{fontSize:11,lineHeight:15,fontWeight:"800",letterSpacing:1.4,color:"#D5B77A"},title:{fontSize:29,lineHeight:34,fontWeight:"800",letterSpacing:-.7,color:"#FFF",marginTop:4},subtitle:{fontSize:14,lineHeight:20,color:"#A9BFBA",marginTop:5,maxWidth:290},
+  liveBadge:{flexDirection:"row",alignItems:"center",gap:6,borderWidth:1,borderColor:"rgba(255,255,255,.14)",borderRadius:16,paddingHorizontal:10,paddingVertical:7},liveDot:{width:7,height:7,borderRadius:4,backgroundColor:"#63C89B"},liveText:{fontSize:10,fontWeight:"800",color:"#CFE3DE"},
+  sectionHead:{flexDirection:"row",alignItems:"flex-end",justifyContent:"space-between",marginTop:4},sectionTitle:{fontSize:18,lineHeight:23,fontWeight:"750",color:"#FFF"},sectionMeta:{fontSize:12,lineHeight:17,color:"#88A39D",marginTop:2},freshness:{fontSize:11,color:"#88A39D"},
+  pulseCard:{flexDirection:"row",gap:12,padding:15,borderRadius:20,borderWidth:1,borderColor:"rgba(255,255,255,.11)",backgroundColor:"#102622"},unknownIcon:{width:42,height:42,borderRadius:14,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(255,255,255,.09)"},unknownMark:{fontSize:19,fontWeight:"800",color:"#FFF"},flex:{flex:1},pulseTitle:{fontSize:16,lineHeight:21,fontWeight:"750",color:"#FFF"},pulseBody:{fontSize:12,lineHeight:18,color:"#ABC0BB",marginTop:4},evidenceRow:{flexDirection:"row",gap:8,alignItems:"center",marginTop:10},evidence:{fontSize:10,fontWeight:"800",color:"#E5C98F",borderWidth:1,borderColor:"rgba(229,201,143,.32)",paddingHorizontal:7,paddingVertical:4,borderRadius:8},evidenceMuted:{fontSize:10,color:"#78938D"},
+  reportCard:{minHeight:74,flexDirection:"row",alignItems:"center",gap:12,padding:14,borderRadius:20,backgroundColor:"#15332D",borderWidth:1,borderColor:"rgba(99,200,155,.24)"},reportIcon:{width:40,height:40,borderRadius:14,backgroundColor:"rgba(99,200,155,.14)",alignItems:"center",justifyContent:"center"},reportIconText:{fontSize:23,color:"#75D4AA"},reportTitle:{fontSize:15,fontWeight:"750",color:"#FFF"},reportBody:{fontSize:11,lineHeight:16,color:"#9BB5AF",marginTop:3},chevron:{fontSize:28,color:"#719089"},
+  mapPreview:{height:150,borderRadius:20,overflow:"hidden",borderWidth:1,borderColor:"rgba(255,255,255,.12)",backgroundColor:theme.color.brand[50]},locationPill:{position:"absolute",left:10,top:10,backgroundColor:"rgba(8,25,22,.88)",borderRadius:12,paddingHorizontal:9,paddingVertical:6},locationText:{fontSize:10,color:"#D3E1DE"},mapAction:{position:"absolute",right:10,bottom:10,borderRadius:13,paddingHorizontal:13,paddingVertical:9,backgroundColor:"rgba(8,25,22,.92)",borderWidth:1,borderColor:"rgba(255,255,255,.16)"},mapActionText:{fontSize:11,fontWeight:"750",color:"#FFF"},
+  decideCard:{padding:17,borderRadius:22,backgroundColor:"#112A25",borderWidth:1,borderColor:"rgba(213,183,122,.2)"},decideTitle:{fontSize:20,lineHeight:25,fontWeight:"800",color:"#FFF",marginTop:5},decideBody:{fontSize:12,lineHeight:18,color:"#9CB5AF",marginTop:5},intentRow:{flexDirection:"row",gap:7,marginTop:13,flexWrap:"wrap"},intent:{borderRadius:14,borderWidth:1,borderColor:"rgba(255,255,255,.13)",paddingHorizontal:11,paddingVertical:7},intentText:{fontSize:11,color:"#D6E3E0"},decideAction:{minHeight:46,borderRadius:15,backgroundColor:"#D5B77A",marginTop:14,paddingHorizontal:14,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},decideActionText:{fontSize:13,fontWeight:"800",color:"#14231F"},locked:{fontSize:10,fontWeight:"700",color:"#4D493B"},
+  quietCard:{padding:15,borderRadius:18,backgroundColor:"rgba(255,255,255,.045)",borderWidth:1,borderColor:"rgba(255,255,255,.09)"},quietTitle:{fontSize:14,fontWeight:"700",color:"#DCE8E5"},quietBody:{fontSize:11,lineHeight:17,color:"#829D96",marginTop:4},
+  storyCard:{padding:17,borderRadius:22,backgroundColor:"#0D211E",borderWidth:1,borderColor:"rgba(255,255,255,.1)",marginBottom:4},storyLabel:{alignSelf:"flex-start",borderRadius:9,backgroundColor:"rgba(213,183,122,.12)",paddingHorizontal:8,paddingVertical:5},storyLabelText:{fontSize:9,fontWeight:"800",letterSpacing:1,color:"#D5B77A"},storyTitle:{fontSize:17,lineHeight:22,fontWeight:"750",color:"#FFF",marginTop:10},storyBody:{fontSize:11,lineHeight:17,color:"#8FA9A3",marginTop:4},
 });
