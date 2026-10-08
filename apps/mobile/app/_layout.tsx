@@ -1,10 +1,12 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { LocationPreferenceProvider } from "../src/infrastructure/location/LocationPreferenceContext";
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
+      <LocationPreferenceProvider>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
@@ -13,6 +15,7 @@ export default function RootLayout() {
         <Stack.Screen name="reality/[kind]" options={{ presentation: "transparentModal", animation: "fade", contentStyle: { backgroundColor: "transparent" } }} />
         <Stack.Screen name="place" />
       </Stack>
+      </LocationPreferenceProvider>
     </SafeAreaProvider>
   );
 }
