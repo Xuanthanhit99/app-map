@@ -9,8 +9,8 @@ export default function MapTab() {
   return (
     <View style={[styles.root,{paddingTop:insets.top}]}>
       <View style={styles.header}><Text style={styles.eyebrow}>SPATIAL REALITY</Text><Text style={styles.title}>Bản đồ</Text><Text style={styles.meta}>Không gian để kiểm tra tín hiệu thực tế, không thay thế World Pulse.</Text></View>
-      <View style={styles.map}><RealityMap location={location} camera={{mode:"FOLLOW_USER",zoom:14}} accessibilityLabel="Bản đồ tình hình thực tế" /></View>
+      <View style={styles.map}><RealityMap mode="FULL" location={location} camera={{mode:"FOLLOW_USER",zoom:14}} accessibilityLabel="Bản đồ tình hình thực tế" /></View>
     </View>
   );
 }
-const styles=StyleSheet.create({root:{flex:1,backgroundColor:"#081916"},header:{paddingHorizontal:16,paddingVertical:14},eyebrow:{fontSize:10,fontWeight:"800",letterSpacing:1.2,color:"#D5B77A"},title:{fontSize:26,lineHeight:32,fontWeight:"800",color:"#FFF",marginTop:3},meta:{fontSize:12,lineHeight:18,color:"#8FA9A3",marginTop:3},map:{flex:1,overflow:"hidden",borderTopWidth:1,borderTopColor:"rgba(255,255,255,.1)"}});
+const styles=StyleSheet.create({root:{flex:1,backgroundColor:"#FFFFFF"},header:{paddingHorizontal:16,paddingVertical:14},eyebrow:{fontSize:10,fontWeight:"800",letterSpacing:1.2,color:"#287158"},title:{fontSize:26,lineHeight:32,fontWeight:"800",color:"#1C352C",marginTop:3},meta:{fontSize:12,lineHeight:18,color:"#657A71",marginTop:3},map:{flex:1,overflow:"hidden",borderTopWidth:1,borderTopColor:"rgba(31,77,60,.12)"}});
