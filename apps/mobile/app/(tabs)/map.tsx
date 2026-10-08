@@ -9,7 +9,8 @@ export default function MapTab() {
   const location = useForegroundLocationLifecycle();
   const [cameraRevision, setCameraRevision] = useState(0);
   const [following, setFollowing] = useState(true);
-  const locationReady = location.status === "READY";
+  const locationReady = location.status === "READY" || location.status === "DEGRADED";
+  const [mapStyle, setMapStyle] = useState<"streets-v4" | "outdoor-v2" | "satellite">("streets-v4");
   const locationMessage = location.status === "READY"
     ? "Vị trí thiết bị · chưa có tín hiệu cộng đồng được xác minh"
     : location.status === "DENIED"
@@ -25,8 +26,11 @@ export default function MapTab() {
         <Text style={styles.meta}>Bản đồ nền là dữ liệu địa lý, không phải báo cáo tình hình trực tiếp.</Text>
       </View>
       <View style={styles.map}>
-        <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} followCamera={following} camera={{ mode: "FOLLOW_USER", zoom: 14 }} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
+        <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} followCamera={following} camera={{ mode: "FOLLOW_USER", zoom: 14 }} mapStyleId={mapStyle} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
         <View style={styles.controls} pointerEvents="box-none">
+          <Pressable accessibilityRole="button" accessibilityLabel="Đổi kiểu bản đồ" onPress={() => setMapStyle((current) => current === "streets-v4" ? "outdoor-v2" : current === "outdoor-v2" ? "satellite" : "streets-v4")} style={styles.controlButton}>
+            <Text style={styles.controlText}>Lớp nền: {mapStyle === "streets-v4" ? "Đường phố" : mapStyle === "outdoor-v2" ? "Địa hình" : "Vệ tinh"}</Text>
+          </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Đưa bản đồ về vị trí hiện tại" accessibilityState={{ disabled: !locationReady }} disabled={!locationReady} onPress={() => { setFollowing(true); setCameraRevision((n) => n + 1); }} style={[styles.controlButton, !locationReady && styles.disabled]}>
             <Text style={styles.controlSymbol}>◎</Text>
             <Text style={styles.controlText}>{following ? "Đang theo vị trí" : "Về vị trí của tôi"}</Text>
@@ -48,7 +52,7 @@ const styles=StyleSheet.create({
   title:{fontSize:26,lineHeight:33,fontWeight:"800",color:"#172C27",marginTop:3},
   meta:{fontSize:12,lineHeight:18,color:"#536A64",marginTop:4},
   map:{flex:1,overflow:"hidden",borderTopWidth:1,borderTopColor:"#E1EAE5"},
-  controls:{position:"absolute",right:14,top:16},
+  controls:{position:"absolute",right:14,top:16,gap:8},
   controlButton:{minHeight:48,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:14,borderRadius:15,backgroundColor:"#FFFFFF",borderWidth:1,borderColor:"#DCE9E2",elevation:3},
   disabled:{opacity:.5},
   controlSymbol:{fontSize:23,color:"#216D55"},
