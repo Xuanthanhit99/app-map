@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Linking } from "react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RealityMap } from "../../src/infrastructure/map/RealityMap";
@@ -6,7 +7,8 @@ import { useForegroundLocationLifecycle } from "../../src/infrastructure/locatio
 
 export default function MapTab() {
   const insets = useSafeAreaInsets();
-  const location = useForegroundLocationLifecycle();
+  const [locationChoice, setLocationChoice] = useState<"ASK" | "ENABLE" | "SKIP">("ASK");
+  const location = useForegroundLocationLifecycle(locationChoice === "ENABLE");
   const [cameraRevision, setCameraRevision] = useState(0);
   const [following, setFollowing] = useState(true);
   const locationReady = location.status === "READY" || location.status === "DEGRADED";
@@ -25,6 +27,7 @@ export default function MapTab() {
         <Text accessibilityRole="header" style={styles.title}>Bản đồ quanh bạn</Text>
         <Text style={styles.meta}>Bản đồ nền là dữ liệu địa lý, không phải báo cáo tình hình trực tiếp.</Text>
       </View>
+      {locationChoice === "ASK" ? <View style={styles.permissionPanel}><Text style={styles.permissionTitle}>Bạn muốn bật định vị?</Text><Text style={styles.permissionBody}>Bật để xem vị trí và nhận ngữ cảnh quanh bạn. Không bật vẫn xem được bản đồ.</Text><View style={styles.permissionActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.permissionPrimary}><Text style={styles.permissionPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.permissionSecondary}><Text style={styles.permissionSecondaryText}>Không bật</Text></Pressable></View></View> : locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.permissionPanel}><Text style={styles.permissionTitle}>Chưa có quyền vị trí · Mở cài đặt</Text><Text style={styles.permissionBody}>Bạn vẫn có thể xem bản đồ mà không cấp quyền.</Text></Pressable> : null}
       <View style={styles.map}>
         <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} followCamera={following} camera={{ mode: "FOLLOW_USER", zoom: 14 }} mapStyleId={mapStyle} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
         <View style={styles.controls} pointerEvents="box-none">
@@ -47,6 +50,8 @@ export default function MapTab() {
 }
 const styles=StyleSheet.create({
   root:{flex:1,backgroundColor:"#FFFFFF"},
+  permissionPanel:{marginHorizontal:16,marginBottom:10,padding:13,borderRadius:15,backgroundColor:"#EFF7F2",borderWidth:1,borderColor:"#D5E7DA"},
+  permissionTitle:{fontSize:14,fontWeight:"800",color:"#17382D"},permissionBody:{fontSize:12,lineHeight:18,color:"#526A60",marginTop:4},permissionActions:{flexDirection:"row",gap:10,marginTop:10},permissionPrimary:{minHeight:44,justifyContent:"center",paddingHorizontal:15,borderRadius:12,backgroundColor:"#287158"},permissionPrimaryText:{fontSize:13,fontWeight:"700",color:"#FFFFFF"},permissionSecondary:{minHeight:44,justifyContent:"center",paddingHorizontal:15,borderRadius:12,borderWidth:1,borderColor:"#B8D4C4"},permissionSecondaryText:{fontSize:13,fontWeight:"700",color:"#286F5A"},
   header:{paddingHorizontal:18,paddingVertical:14},
   eyebrow:{fontSize:11,fontWeight:"800",letterSpacing:1.2,color:"#287158"},
   title:{fontSize:26,lineHeight:33,fontWeight:"800",color:"#172C27",marginTop:3},
