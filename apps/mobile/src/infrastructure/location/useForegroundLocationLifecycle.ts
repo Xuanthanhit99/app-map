@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import * as Location from "expo-location";
 import { reduceLocation, type LocationLifecycle } from "@core/location/location-lifecycle";
+import { createForegroundRestartGate } from "./foreground-restart-gate";
 
 const STALE_AFTER_MS = 30_000;
 const LOCATION_DEBUG_PREFIX = "[RealityLocation]";
@@ -38,8 +39,8 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
     let foreground = AppState.currentState === "active";
     let subscription: Location.LocationSubscription | undefined;
     let staleTimer: ReturnType<typeof setTimeout> | undefined;
-    let starting = false;
-    let restartPending = false;
+    const restartGate = createForegroundRestartGate();
+    if (!foreground) restartGate.transition(false);
 
     const commit = (next: LocationLifecycle) => {
       if (!mounted || !foreground) return;
@@ -64,11 +65,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
 
     const start = async () => {
       if (!mounted || !foreground || subscription) return;
-      if (starting) {
-        restartPending = true;
-        return;
-      }
-      starting = true;
+      if (restartGate.begin() !== "START") return;
       dispatch({ type: "REQUEST" });
       try {
         const servicesEnabled = await Location.hasServicesEnabledAsync();
@@ -132,11 +129,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
           dispatch({ type: "UNAVAILABLE", reason: "NO_FIX" });
         }
       } finally {
-        starting = false;
-        if (mounted && foreground && restartPending && !subscription) {
-          restartPending = false;
-          void start();
-        }
+        if (restartGate.finish(Boolean(subscription))) void start();
       }
     };
 
@@ -144,12 +137,12 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
     const appState = AppState.addEventListener("change", (next) => {
       foreground = next === "active";
       if (foreground) {
-        restartPending = true;
+        restartGate.transition(true);
         subscription?.remove();
         subscription = undefined;
         void start();
       } else {
-        restartPending = false;
+        restartGate.transition(false);
         subscription?.remove();
         subscription = undefined;
         if (staleTimer) clearTimeout(staleTimer);
@@ -158,6 +151,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
 
     return () => {
       mounted = false;
+      restartGate.dispose();
       subscription?.remove();
       if (staleTimer) clearTimeout(staleTimer);
       appState.remove();
