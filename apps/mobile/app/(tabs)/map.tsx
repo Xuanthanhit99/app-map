@@ -8,6 +8,7 @@ export default function MapTab() {
   const insets = useSafeAreaInsets();
   const location = useForegroundLocationLifecycle();
   const [cameraRevision, setCameraRevision] = useState(0);
+  const [following, setFollowing] = useState(true);
   const locationReady = location.status === "READY";
   const locationMessage = location.status === "READY"
     ? "Vị trí thiết bị · chưa có tín hiệu cộng đồng được xác minh"
@@ -24,17 +25,17 @@ export default function MapTab() {
         <Text style={styles.meta}>Bản đồ nền là dữ liệu địa lý, không phải báo cáo tình hình trực tiếp.</Text>
       </View>
       <View style={styles.map}>
-        <RealityMap key={cameraRevision} mode="FULL" location={location} camera={{ mode: "FOLLOW_USER", zoom: 14 }} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
+        <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} camera={following ? { mode: "FOLLOW_USER", zoom: 14 } : { mode: "OVERVIEW" }} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
         <View style={styles.controls} pointerEvents="box-none">
-          <Pressable accessibilityRole="button" accessibilityLabel="Đưa bản đồ về vị trí hiện tại" accessibilityState={{ disabled: !locationReady }} disabled={!locationReady} onPress={() => { setCameraRevision((n) => n + 1); }} style={[styles.controlButton, !locationReady && styles.disabled]}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Đưa bản đồ về vị trí hiện tại" accessibilityState={{ disabled: !locationReady }} disabled={!locationReady} onPress={() => { setFollowing(true); setCameraRevision((n) => n + 1); }} style={[styles.controlButton, !locationReady && styles.disabled]}>
             <Text style={styles.controlSymbol}>◎</Text>
-            <Text style={styles.controlText}>Vị trí của tôi</Text>
+            <Text style={styles.controlText}>{following ? "Đang theo vị trí" : "Về vị trí của tôi"}</Text>
           </Pressable>
         </View>
         <View style={styles.statePanel} accessible accessibilityRole="summary">
           <View style={styles.stateHeader}><View style={styles.stateDot} /><Text style={styles.stateTitle}>CHƯA CÓ DỮ LIỆU THỰC TẾ</Text></View>
           <Text style={styles.stateText}>{locationMessage}</Text>
-          <Text style={styles.stateFoot}>Không có marker, sự cố hoặc thời gian cập nhật giả.</Text>
+          <Text style={styles.stateFoot}>{following ? "Camera theo vị trí khi khả dụng. Kéo bản đồ để khám phá tự do." : "Chế độ khám phá tự do. Chạm nút vị trí để theo lại."}</Text>
         </View>
       </View>
     </View>
