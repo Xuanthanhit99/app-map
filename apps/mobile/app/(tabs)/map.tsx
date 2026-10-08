@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocationPreference } from "../../src/infrastructure/location/LocationPreferenceContext";
 import { Linking } from "react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,7 +8,7 @@ import { useForegroundLocationLifecycle } from "../../src/infrastructure/locatio
 
 export default function MapTab() {
   const insets = useSafeAreaInsets();
-  const [locationChoice, setLocationChoice] = useState<"ASK" | "ENABLE" | "SKIP">("ASK");
+  const { choice: locationChoice, setChoice: setLocationChoice } = useLocationPreference();
   const location = useForegroundLocationLifecycle(locationChoice === "ENABLE");
   const [cameraRevision, setCameraRevision] = useState(0);
   const [following, setFollowing] = useState(true);
