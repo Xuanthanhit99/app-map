@@ -23,13 +23,14 @@ function fix(position: Location.LocationObject) {
   };
 }
 
-export function useForegroundLocationLifecycle(): LocationLifecycle {
+export function useForegroundLocationLifecycle(enabled = true): LocationLifecycle {
   const [state, setState] = useState<LocationLifecycle>({ status: "IDLE" });
   const stateRef = useRef<LocationLifecycle>(state);
   const startingRef = useRef(false);
   stateRef.current = state;
 
   useEffect(() => {
+    if (!enabled) return;
     let mounted = true;
     let subscription: Location.LocationSubscription | undefined;
     let staleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -138,7 +139,7 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
       if (staleTimer) clearTimeout(staleTimer);
       appState.remove();
     };
-  }, []);
+  }, [enabled]);
 
-  return state;
+  return enabled ? state : { status: "IDLE" };
 }
