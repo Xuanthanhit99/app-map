@@ -14,13 +14,21 @@ export default function MapTab() {
   const [following, setFollowing] = useState(true);
   const locationReady = location.status === "READY" || location.status === "DEGRADED";
   const [mapStyle, setMapStyle] = useState<"streets-v4" | "outdoor-v2" | "satellite">("streets-v4");
-  const locationMessage = location.status === "READY"
+  const locationMessage = !hydrated
+    ? "Đang tải tùy chọn định vị đã lưu."
+    : locationChoice !== "ENABLE"
+      ? "Định vị chưa bật. Bạn vẫn có thể khám phá bản đồ thủ công."
+    : location.status === "READY"
     ? "Vị trí thiết bị · chưa có tín hiệu cộng đồng được xác minh"
     : location.status === "DENIED"
       ? "Quyền vị trí bị từ chối. Bạn vẫn có thể khám phá bản đồ."
       : location.status === "DEGRADED"
         ? "Đang dùng vị trí gần nhất; có thể không còn chính xác."
-        : "Đang xác định vị trí. Bản đồ vẫn có thể khám phá thủ công.";
+        : location.status === "UNAVAILABLE"
+          ? "Chưa thể lấy vị trí. Bạn vẫn có thể khám phá bản đồ thủ công."
+          : location.status === "IDLE"
+            ? "Định vị chưa hoạt động. Bạn vẫn có thể khám phá bản đồ thủ công."
+            : "Đang xác định vị trí. Bản đồ vẫn có thể khám phá thủ công.";
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.header}>
