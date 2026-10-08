@@ -36,11 +36,12 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
       return;
     }
     let mounted = true;
+    let foreground = AppState.currentState === "active";
     let subscription: Location.LocationSubscription | undefined;
     let staleTimer: ReturnType<typeof setTimeout> | undefined;
 
     const commit = (next: LocationLifecycle) => {
-      if (!mounted) return;
+      if (!mounted || !foreground) return;
       stateRef.current = next;
       setState(next);
     };
@@ -61,7 +62,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
     };
 
     const start = async () => {
-      if (startingRef.current || subscription) return;
+      if (!mounted || !foreground || startingRef.current || subscription) return;
       startingRef.current = true;
       dispatch({ type: "REQUEST" });
       try {
@@ -78,7 +79,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
           ? currentPermission
           : await Location.requestForegroundPermissionsAsync();
         debugLocation("permission", { granted: permission.granted, canAskAgain: permission.canAskAgain });
-        if (!mounted) return;
+        if (!mounted || !foreground) return;
         if (!permission.granted) {
           dispatch({ type: "DENY", canAskAgain: permission.canAskAgain });
           return;
@@ -88,6 +89,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
           maxAge: 5 * 60_000,
           requiredAccuracy: 1_000,
         });
+        if (!mounted || !foreground) return;
         if (lastKnown) {
           debugLocation("lastKnown:position", {
             latitude: lastKnown.coords.latitude,
@@ -113,7 +115,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
           acceptPosition,
         );
         debugLocation("watch:registered");
-        if (!mounted) {
+        if (!mounted || !foreground) {
           subscription.remove();
           subscription = undefined;
         }
@@ -131,8 +133,12 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
 
     void start();
     const appState = AppState.addEventListener("change", (next) => {
-      if (next === "active") void start();
-      else {
+      foreground = next === "active";
+      if (foreground) {
+        subscription?.remove();
+        subscription = undefined;
+        void start();
+      } else {
         subscription?.remove();
         subscription = undefined;
         if (staleTimer) clearTimeout(staleTimer);
