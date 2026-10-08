@@ -17,13 +17,11 @@ function validChoice(value: string | null): LocationChoice {
 export function LocationPreferenceProvider({ children }: { children: ReactNode }) {
   const [choice, setChoiceState] = useState<LocationChoice>("ASK");
   const [hydrated, setHydrated] = useState(false);
-  const choiceRef = useRef<LocationChoice>("ASK");
   const changedDuringLoad = useRef(false);
   const writeQueue = useRef<Promise<unknown>>(Promise.resolve());
 
   const setChoice = (next: LocationChoice) => {
     changedDuringLoad.current = true;
-    choiceRef.current = next;
     setChoiceState(next);
     writeQueue.current = writeQueue.current
       .catch(() => undefined)
@@ -39,7 +37,6 @@ export function LocationPreferenceProvider({ children }: { children: ReactNode }
       .then((stored) => {
         if (!mounted || changedDuringLoad.current) return;
         const restored = validChoice(stored);
-        choiceRef.current = restored;
         setChoiceState(restored);
       })
       .catch((error: unknown) => {
