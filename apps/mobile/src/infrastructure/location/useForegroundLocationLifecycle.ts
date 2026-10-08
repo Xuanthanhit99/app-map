@@ -5,6 +5,7 @@ import { reduceLocation, type LocationLifecycle } from "@core/location/location-
 
 const STALE_AFTER_MS = 30_000;
 const LOCATION_DEBUG_PREFIX = "[RealityLocation]";
+const POSITION_LOGS_ENABLED = false;
 
 function debugLocation(event: string, detail?: unknown) {
   if (!__DEV__) return;
@@ -44,7 +45,7 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
       staleTimer = setTimeout(() => dispatch({ type: "DEGRADE", reason: "STALE" }), STALE_AFTER_MS);
     };
     const acceptPosition = (position: Location.LocationObject) => {
-      debugLocation("position", {
+      if (POSITION_LOGS_ENABLED) debugLocation("position", {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy,
@@ -96,9 +97,9 @@ export function useForegroundLocationLifecycle(): LocationLifecycle {
         debugLocation("watch:request");
         subscription = await Location.watchPositionAsync(
           {
-            accuracy: Location.Accuracy.High,
-            distanceInterval: 0,
-            timeInterval: 1_000,
+            accuracy: Location.Accuracy.Balanced,
+            distanceInterval: 10,
+            timeInterval: 5_000,
             mayShowUserSettingsDialog: true,
           },
           acceptPosition,
