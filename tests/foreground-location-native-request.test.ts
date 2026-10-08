@@ -15,7 +15,12 @@ describe("foreground location native request regression", () => {
     expect(watch).toBeGreaterThan(-1);
     expect(lastKnown).toBeLessThan(watch);
     expect(source).not.toContain("Location.getCurrentPositionAsync(");
-    expect(source).toContain("if (!mounted || !foreground || startingRef.current || subscription) return;");
+    expect(source).toContain("if (!mounted || !foreground || subscription) return;");
+    expect(source).toContain("if (starting) {");
+    expect(source).toContain("restartPending = true;");
+    expect(source).toContain("if (mounted && foreground && restartPending && !subscription) {");
+    expect(source).toContain("void start();");
+    expect(source).not.toContain("startingRef.current");
     expect(source).toContain('foreground = next === "active"');
     expect(source).toContain("if (!mounted || !foreground) return;");
     expect(source).toContain("Location.getProviderStatusAsync()");
