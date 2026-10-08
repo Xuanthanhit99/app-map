@@ -23,6 +23,12 @@ try {
   try {
     const page = await browser.newPage({ viewport: { width: 1536, height: 1024 }, deviceScaleFactor: 1 });
     await page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: "load" });
+    await page.waitForFunction(() => {
+      const status = document.querySelector("[data-map-status]")?.textContent || "";
+      return status.includes("Không tải") || status.includes("chưa khả dụng") || status.includes("Bản đồ nền ·");
+    }, { timeout: 18000 }).catch(() => {});
+    const mapStatus = await page.locator("[data-map-status]").textContent();
+    console.log(`MapLibre state at capture: ${mapStatus}`);
     await page.screenshot({ path: out, fullPage: true, animations: "disabled" });
     console.log(`Desktop screenshot: ${out}`);
     console.log(`Viewport: 1536x1024, fullPage: true`);
