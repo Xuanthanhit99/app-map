@@ -25,7 +25,7 @@ export default function MapTab() {
         <Text style={styles.meta}>Bản đồ nền là dữ liệu địa lý, không phải báo cáo tình hình trực tiếp.</Text>
       </View>
       <View style={styles.map}>
-        <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} camera={following ? { mode: "FOLLOW_USER", zoom: 14 } : { mode: "OVERVIEW" }} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
+        <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} followCamera={following} camera={{ mode: "FOLLOW_USER", zoom: 14 }} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
         <View style={styles.controls} pointerEvents="box-none">
           <Pressable accessibilityRole="button" accessibilityLabel="Đưa bản đồ về vị trí hiện tại" accessibilityState={{ disabled: !locationReady }} disabled={!locationReady} onPress={() => { setFollowing(true); setCameraRevision((n) => n + 1); }} style={[styles.controlButton, !locationReady && styles.disabled]}>
             <Text style={styles.controlSymbol}>◎</Text>
