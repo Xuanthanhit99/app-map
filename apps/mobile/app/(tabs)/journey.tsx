@@ -1,17 +1,17 @@
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../../src/ui/theme";
 
 export default function JourneyTab() {
+  const router = useRouter();
   return (
     <View style={styles.root}>
-      <Text accessibilityRole="header" style={styles.title}>Journey</Text>
-      <Text style={styles.body}>Xem trước tuyến đường, Reality phía trước và bắt đầu hành trình.</Text>
-      <Link href="/active-journey" asChild>
-        <Pressable accessibilityRole="button" accessibilityLabel="Bắt đầu hành trình mẫu" style={styles.button}>
-          <Text style={styles.buttonText}>Bắt đầu hành trình</Text>
-        </Pressable>
-      </Link>
+      <Text accessibilityRole="header" style={styles.title}>Hành trình</Text>
+      <Text style={styles.body}>Chọn điểm đến và kiểm tra tình hình phía trước trước khi bắt đầu di chuyển. Không có hành trình giả được tạo khi chưa có tuyến đường xác minh.</Text>
+      <Pressable onPress={() => router.push("/(tabs)/map")} accessibilityRole="button" accessibilityLabel="Mở bản đồ để chọn điểm đến" style={styles.button}>
+
+          <Text style={styles.buttonText}>Chọn điểm đến trên bản đồ</Text>
+      </Pressable>
     </View>
   );
 }
