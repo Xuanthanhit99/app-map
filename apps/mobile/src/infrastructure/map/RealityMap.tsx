@@ -14,9 +14,9 @@ function initialView(camera: CameraMode, location: LocationLifecycle) {
   return undefined;
 }
 
-export function RealityMap({ location, camera, route, markers = [], selection, onSelectMarker, accessibilityLabel, onUserGesture, followCamera = true, mode = "FULL" }: {
+export function RealityMap({ location, camera, route, markers = [], selection, onSelectMarker, accessibilityLabel, onUserGesture, followCamera = true, mapStyleId, mode = "FULL" }: {
   location: LocationLifecycle; camera: CameraMode; route?: RouteGeometry; markers?: readonly MapMarker[];
-  selection?: MapSelection; onSelectMarker?: (id: string) => void; accessibilityLabel: string; onUserGesture?: () => void; followCamera?: boolean; mode?: "PREVIEW" | "FULL";
+  selection?: MapSelection; onSelectMarker?: (id: string) => void; accessibilityLabel: string; onUserGesture?: () => void; followCamera?: boolean; mapStyleId?: string; mode?: "PREVIEW" | "FULL";
 }) {
   const [previewFailed, setPreviewFailed] = useState(false);
   const [previewRetry, setPreviewRetry] = useState(0);
@@ -29,6 +29,9 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
   const selectionSummary = selection?.selectedId ? ` Đang chọn ${selection.selectedId}.` : "";
 
   const provider = resolveMapProviderConfig();
+  const activeStyleUrl = provider.provider === "MAPTILER" && mapStyleId
+    ? `https://api.maptiler.com/maps/${encodeURIComponent(mapStyleId)}/style.json?key=${encodeURIComponent(process.env.EXPO_PUBLIC_MAPTILER_KEY?.trim() || "")}`
+    : provider.styleUrl;
 
   if (provider.status !== "READY" || !provider.styleUrl) {
     return <View style={styles.degraded} accessible accessibilityRole="summary" accessibilityLabel={accessibilityLabel + " Bản đồ nền chưa được cấu hình."}>
@@ -53,7 +56,7 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
   }
 
   return <View style={styles.root} accessible={false} onTouchStart={onUserGesture ? () => onUserGesture() : undefined}>
-    <Map style={styles.map} mapStyle={provider.styleUrl} dragPan={mode === "FULL"} touchZoom={mode === "FULL"} doubleTapZoom={mode === "FULL"} doubleTapHoldZoom={mode === "FULL"} touchRotate={mode === "FULL"} touchPitch={mode === "FULL"} compass={mode === "FULL"}>
+    <Map style={styles.map} mapStyle={activeStyleUrl} dragPan={mode === "FULL"} touchZoom={mode === "FULL"} doubleTapZoom={mode === "FULL"} doubleTapHoldZoom={mode === "FULL"} touchRotate={mode === "FULL"} touchPitch={mode === "FULL"} compass={mode === "FULL"}>
       {followCamera && view ? <Camera center={view.center} zoom={view.zoom} duration={500} easing="ease" /> : null}
       {routeFeature ? <GeoJSONSource id="active-route" data={routeFeature}><Layer id="active-route-line" type="line" paint={{ "line-width": 4 }} /></GeoJSONSource> : null}
       {markers.length ? <GeoJSONSource id="reality-markers" data={markerCollection} onPress={(event) => { const id=event.nativeEvent.features?.[0]?.properties?.id; if(typeof id==="string") onSelectMarker?.(id); }}><Layer id="reality-marker-dots" type="circle" paint={{ "circle-radius": 7 }} /></GeoJSONSource> : null}
