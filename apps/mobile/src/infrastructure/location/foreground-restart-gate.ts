@@ -8,6 +8,7 @@ export function createForegroundRestartGate() {
       if (disposed || !foreground) return "SKIP";
       if (starting) { pending = true; return "QUEUED"; }
       starting = true;
+      pending = false;
       return "START";
     },
     transition(active: boolean): boolean {
