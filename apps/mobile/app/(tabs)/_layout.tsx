@@ -1,18 +1,17 @@
 import { Tabs } from "expo-router";
 import { Text } from "react-native";
-import { theme } from "../../src/ui/theme";
 
 function TabIcon({ symbol, focused }: { symbol: string; focused: boolean }) {
-  return <Text style={{ fontSize: 19, color: focused ? "#D5B77A" : "#78938D" }}>{symbol}</Text>;
+  return <Text style={{ fontSize: 19, color: focused ? "#1B7155" : "#82938B" }}>{symbol}</Text>;
 }
 
 export default function TabsLayout() {
   return (
     <Tabs screenOptions={{
       headerShown: false,
-      tabBarActiveTintColor: "#D5B77A",
-      tabBarInactiveTintColor: "#78938D",
-      tabBarStyle: { minHeight: 68, paddingTop: 7, paddingBottom: 7, backgroundColor: "#0A1D1A", borderTopColor: "rgba(255,255,255,0.10)" },
+      tabBarActiveTintColor: "#1B7155",
+      tabBarInactiveTintColor: "#82938B",
+      tabBarStyle: { minHeight: 68, paddingTop: 8, paddingBottom: 8, backgroundColor: "#FFFFFF", borderTopWidth: 1, borderTopColor: "#DDE9E2" },
       tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
     }}>
       <Tabs.Screen name="index" options={{ title: "Khám phá", tabBarAccessibilityLabel: "Khám phá", tabBarIcon: ({ focused }) => <TabIcon symbol="✦" focused={focused} /> }} />
