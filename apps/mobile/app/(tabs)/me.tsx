@@ -4,7 +4,7 @@ import { useLocationPreference } from "../../src/infrastructure/location/Locatio
 
 export default function MeTab() {
   const insets = useSafeAreaInsets();
-  const { choice, setChoice } = useLocationPreference();
+  const { choice, hydrated, setChoice } = useLocationPreference();
   return <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 96 }]}>
     <Text style={styles.eyebrow}>ME / PRIVACY</Text>
     <Text accessibilityRole="header" style={styles.title}>Tôi</Text>
@@ -12,13 +12,13 @@ export default function MeTab() {
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Quyền riêng tư · Định vị</Text>
       <Text style={styles.body}>Ứng dụng chỉ yêu cầu quyền vị trí khi bạn chọn bật. Tắt trong ứng dụng không thay đổi quyền hệ thống đã cấp.</Text>
-      <Text style={styles.status}>Lựa chọn hiện tại: {choice === "ENABLE" ? "Bật định vị" : choice === "SKIP" ? "Không bật" : "Chưa lựa chọn"}</Text>
+      <Text style={styles.status}>Lựa chọn hiện tại: {!hydrated ? "Đang tải lựa chọn đã lưu" : choice === "ENABLE" ? "Bật định vị" : choice === "SKIP" ? "Không bật" : "Chưa lựa chọn"}</Text>
       <View style={styles.actions}>
-        <Pressable accessibilityRole="button" accessibilityState={{ selected: choice === "ENABLE" }} onPress={() => setChoice("ENABLE")} style={[styles.action, choice === "ENABLE" && styles.selected]}><Text style={[styles.actionText, choice === "ENABLE" && styles.selectedText]}>Bật định vị</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityState={{ selected: choice === "SKIP" }} onPress={() => setChoice("SKIP")} style={[styles.action, choice === "SKIP" && styles.selected]}><Text style={[styles.actionText, choice === "SKIP" && styles.selectedText]}>Không bật</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityState={{ selected: choice === "ENABLE" }} disabled={!hydrated} onPress={() => setChoice("ENABLE")} style={[styles.action, choice === "ENABLE" && styles.selected]}><Text style={[styles.actionText, choice === "ENABLE" && styles.selectedText]}>Bật định vị</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityState={{ selected: choice === "SKIP" }} disabled={!hydrated} onPress={() => setChoice("SKIP")} style={[styles.action, choice === "SKIP" && styles.selected]}><Text style={[styles.actionText, choice === "SKIP" && styles.selectedText]}>Không bật</Text></Pressable>
       </View>
       <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.settings}><Text style={styles.settingsText}>Quản lý quyền trong cài đặt Android</Text></Pressable>
-      <Text style={styles.note}>Lựa chọn hiện được giữ trong phiên sử dụng. Cần hoàn tất lưu trên thiết bị để giữ sau khi mở lại ứng dụng.</Text>
+      <Text style={styles.note}>Lựa chọn được lưu trên thiết bị để sử dụng khi mở lại ứng dụng. Quyền định vị của hệ thống Android được quản lý riêng trong Cài đặt.</Text>
     </View>
     <View style={styles.card}><Text style={styles.cardTitle}>Phương tiện và ngữ cảnh</Text><Text style={styles.body}>Chưa có hồ sơ phương tiện. Không tự suy đoán thông tin cá nhân hoặc phương tiện.</Text></View>
   </ScrollView>;
