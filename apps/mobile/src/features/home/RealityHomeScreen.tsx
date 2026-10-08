@@ -10,8 +10,8 @@ import { getWorldPulseDevelopmentFixtures } from "./worldPulseDevelopmentFixture
 export function RealityHomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { choice: locationChoice, setChoice: setLocationChoice } = useLocationPreference();
-  const location = useForegroundLocationLifecycle(locationChoice === "ENABLE");
+  const { choice: locationChoice, hydrated, setChoice: setLocationChoice } = useLocationPreference();
+  const location = useForegroundLocationLifecycle(hydrated && locationChoice === "ENABLE");
   const reality = buildRealityHomeViewModel(getWorldPulseDevelopmentFixtures(), { widthClass: "SMALL_PHONE", orientation: "PORTRAIT", dynamicTypeScale: 1 });
   const pulses = [reality.pulse, ...reality.secondary].filter((pulse): pulse is RealityPulse => pulse !== null);
 
@@ -27,7 +27,7 @@ export function RealityHomeScreen() {
           <View style={styles.liveBadge}><Text style={styles.liveText}>DỮ LIỆU THỬ</Text></View>
         </View>
 
-        {locationChoice === "ASK" ? <View style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị là tùy chọn</Text><Text style={styles.consentBody}>Bật để xem ngữ cảnh quanh bạn. Bạn vẫn có thể khám phá khi không bật.</Text><View style={styles.consentActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.consentPrimary}><Text style={styles.consentPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.consentSecondary}><Text style={styles.consentSecondaryText}>Không bật</Text></Pressable></View></View> : locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị bị từ chối · Mở cài đặt</Text><Text style={styles.consentBody}>Không cấp quyền vẫn sử dụng được các tính năng khám phá.</Text></Pressable> : null}
+        {hydrated && locationChoice === "ASK" ? <View style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị là tùy chọn</Text><Text style={styles.consentBody}>Bật để xem ngữ cảnh quanh bạn. Bạn vẫn có thể khám phá khi không bật.</Text><View style={styles.consentActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.consentPrimary}><Text style={styles.consentPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.consentSecondary}><Text style={styles.consentSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị bị từ chối · Mở cài đặt</Text><Text style={styles.consentBody}>Không cấp quyền vẫn sử dụng được các tính năng khám phá.</Text></Pressable> : null}
         <View style={styles.sectionHead}>
           <View><Text style={styles.sectionTitle}>Reality Pulse</Text><Text style={styles.sectionMeta}>Tín hiệu quan trọng được ưu tiên theo tác động</Text></View>
           <Text style={styles.freshness}>Minh họa</Text>
