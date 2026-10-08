@@ -30,7 +30,11 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
   stateRef.current = state;
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      stateRef.current = { status: "IDLE" };
+      setState({ status: "IDLE" });
+      return;
+    }
     let mounted = true;
     let subscription: Location.LocationSubscription | undefined;
     let staleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -69,7 +73,10 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
           return;
         }
 
-        const permission = await Location.requestForegroundPermissionsAsync();
+        const currentPermission = await Location.getForegroundPermissionsAsync();
+        const permission = currentPermission.granted || !currentPermission.canAskAgain
+          ? currentPermission
+          : await Location.requestForegroundPermissionsAsync();
         debugLocation("permission", { granted: permission.granted, canAskAgain: permission.canAskAgain });
         if (!mounted) return;
         if (!permission.granted) {
