@@ -22,12 +22,12 @@ export function RealityHomeScreen() {
             <Text accessibilityRole="header" style={styles.title}>Ngay quanh bạn</Text>
             <Text style={styles.subtitle}>Điều gì đang thực sự xảy ra — và điều gì đáng chú ý với bạn.</Text>
           </View>
-          <View style={styles.liveBadge}><View style={styles.liveDot} /><Text style={styles.liveText}>LIVE</Text></View>
+          <View style={styles.liveBadge}><Text style={styles.liveText}>DỮ LIỆU THỬ</Text></View>
         </View>
 
         <View style={styles.sectionHead}>
           <View><Text style={styles.sectionTitle}>Reality Pulse</Text><Text style={styles.sectionMeta}>Tín hiệu quan trọng được ưu tiên theo tác động</Text></View>
-          <Text style={styles.freshness}>Bây giờ</Text>
+          <Text style={styles.freshness}>Minh họa</Text>
         </View>
         {pulses.length ? <View style={styles.pulseStack}>
           {pulses.map((pulse, index) => <View key={pulse.id} style={[styles.pulseCard, index === 0 ? styles.primaryPulse : styles.secondaryPulse]}>
