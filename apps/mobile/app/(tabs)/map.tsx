@@ -7,7 +7,6 @@ import { useForegroundLocationLifecycle } from "../../src/infrastructure/locatio
 export default function MapTab() {
   const insets = useSafeAreaInsets();
   const location = useForegroundLocationLifecycle();
-  const [follow, setFollow] = useState(true);
   const [cameraRevision, setCameraRevision] = useState(0);
   const locationReady = location.status === "READY";
   const locationMessage = location.status === "READY"
@@ -27,7 +26,7 @@ export default function MapTab() {
       <View style={styles.map}>
         <RealityMap key={cameraRevision} mode="FULL" location={location} camera={{ mode: "FOLLOW_USER", zoom: 14 }} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
         <View style={styles.controls} pointerEvents="box-none">
-          <Pressable accessibilityRole="button" accessibilityLabel="Đưa bản đồ về vị trí hiện tại" accessibilityState={{ disabled: !locationReady }} disabled={!locationReady} onPress={() => { setFollow(true); setCameraRevision((n) => n + 1); }} style={[styles.controlButton, !locationReady && styles.disabled]}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Đưa bản đồ về vị trí hiện tại" accessibilityState={{ disabled: !locationReady }} disabled={!locationReady} onPress={() => { setCameraRevision((n) => n + 1); }} style={[styles.controlButton, !locationReady && styles.disabled]}>
             <Text style={styles.controlSymbol}>◎</Text>
             <Text style={styles.controlText}>Vị trí của tôi</Text>
           </Pressable>
