@@ -14,9 +14,9 @@ function initialView(camera: CameraMode, location: LocationLifecycle) {
   return undefined;
 }
 
-export function RealityMap({ location, camera, route, markers = [], selection, onSelectMarker, accessibilityLabel, onUserGesture, mode = "FULL" }: {
+export function RealityMap({ location, camera, route, markers = [], selection, onSelectMarker, accessibilityLabel, onUserGesture, followCamera = true, mode = "FULL" }: {
   location: LocationLifecycle; camera: CameraMode; route?: RouteGeometry; markers?: readonly MapMarker[];
-  selection?: MapSelection; onSelectMarker?: (id: string) => void; accessibilityLabel: string; onUserGesture?: () => void; mode?: "PREVIEW" | "FULL";
+  selection?: MapSelection; onSelectMarker?: (id: string) => void; accessibilityLabel: string; onUserGesture?: () => void; followCamera?: boolean; mode?: "PREVIEW" | "FULL";
 }) {
   const [previewFailed, setPreviewFailed] = useState(false);
   const [previewRetry, setPreviewRetry] = useState(0);
@@ -54,7 +54,7 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
 
   return <View style={styles.root} accessible={false}>
     <Map style={styles.map} mapStyle={provider.styleUrl} dragPan={mode === "FULL"} touchZoom={mode === "FULL"} doubleTapZoom={mode === "FULL"} doubleTapHoldZoom={mode === "FULL"} touchRotate={mode === "FULL"} touchPitch={mode === "FULL"} compass={mode === "FULL"} onRegionWillChange={(event) => { if (event.properties?.isUserInteraction) onUserGesture?.(); }}>
-      {view ? <Camera center={view.center} zoom={view.zoom} duration={500} easing="ease" /> : <Camera />}
+      {followCamera && view ? <Camera center={view.center} zoom={view.zoom} duration={500} easing="ease" /> : null}
       {routeFeature ? <GeoJSONSource id="active-route" data={routeFeature}><Layer id="active-route-line" type="line" paint={{ "line-width": 4 }} /></GeoJSONSource> : null}
       {markers.length ? <GeoJSONSource id="reality-markers" data={markerCollection} onPress={(event) => { const id=event.nativeEvent.features?.[0]?.properties?.id; if(typeof id==="string") onSelectMarker?.(id); }}><Layer id="reality-marker-dots" type="circle" paint={{ "circle-radius": 7 }} /></GeoJSONSource> : null}
       {userFeature ? <GeoJSONSource id="reality-user-location" data={userFeature}><Layer id="reality-user-location-dot" type="circle" paint={{ "circle-radius": 7, "circle-color": "#148EAE", "circle-stroke-color": "#FFFFFF", "circle-stroke-width": 3 }} /></GeoJSONSource> : null}
