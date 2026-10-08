@@ -12,6 +12,7 @@ const server = createServer((_request, response) => {
 });
 await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 try {
+  await mkdir(dirname(out), { recursive: true });
   const { chromium } = await import("playwright");
   const browser = await chromium.launch({ headless: true });
   try {
