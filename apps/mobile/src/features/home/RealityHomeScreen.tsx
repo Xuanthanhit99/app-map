@@ -80,7 +80,7 @@ export function RealityHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:{flex:1,backgroundColor:"#172C27FFF"},content:{paddingHorizontal:18,gap:12,backgroundColor:"#172C27FFF"},
+  root:{flex:1,backgroundColor:"#FFFFFF"},content:{paddingHorizontal:18,gap:12,backgroundColor:"#FFFFFF"},
   header:{paddingTop:10,flexDirection:"row",justifyContent:"space-between",alignItems:"flex-start",gap:12},eyebrow:{fontSize:11,lineHeight:15,fontWeight:"800",letterSpacing:1.4,color:"#286F5A"},title:{fontSize:28,lineHeight:32,fontWeight:"800",letterSpacing:-.7,color:"#172C27",marginTop:4},subtitle:{fontSize:13,lineHeight:18,color:"#536A64",marginTop:5,maxWidth:290},
   liveBadge:{flexDirection:"row",alignItems:"center",gap:6,borderWidth:1,borderColor:"rgba(24,75,55,.14)",borderRadius:16,paddingHorizontal:10,paddingVertical:7},liveDot:{width:7,height:7,borderRadius:4,backgroundColor:"#63C89B"},liveText:{fontSize:10,fontWeight:"800",color:"#285C4B"},
   sectionHead:{flexDirection:"row",alignItems:"flex-end",justifyContent:"space-between",marginTop:6},sectionTitle:{fontSize:17,lineHeight:22,fontWeight:"700",color:"#172C27"},sectionMeta:{fontSize:11,lineHeight:16,color:"#667E76",marginTop:2},freshness:{fontSize:11,color:"#667E76"},
