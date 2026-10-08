@@ -55,7 +55,7 @@ export function RealityHomeScreen() {
         <View style={styles.sectionHead}><View><Text style={styles.sectionTitle}>Không gian quanh bạn</Text><Text style={styles.sectionMeta}>Bản đồ chỉ là bằng chứng không gian</Text></View></View>
         <View style={styles.mapPreview}>
           <RealityMap mode="PREVIEW" location={location} camera={{ mode: "FOLLOW_USER", zoom: 14 }} accessibilityLabel="Bản đồ bằng chứng không gian quanh vị trí hiện tại." />
-          {location.status !== "READY" ? <View style={styles.locationPill}><Text style={styles.locationText}>{location.status === "DENIED" ? "Vị trí đang tắt" : "Đang xác định vị trí"}</Text></View> : null}
+          {location.status !== "READY" ? <View style={styles.locationPill}><Text style={styles.locationText}>{!hydrated ? "Đang tải tùy chọn định vị" : locationChoice !== "ENABLE" ? "Định vị chưa bật" : location.status === "DENIED" ? "Chưa có quyền vị trí" : location.status === "IDLE" ? "Định vị chưa hoạt động" : location.status === "DEGRADED" ? "Vị trí có thể đã cũ" : location.status === "UNAVAILABLE" ? "Chưa lấy được vị trí" : "Đang xác định vị trí"}</Text></View> : null}
           <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/map")} style={styles.mapAction}><Text style={styles.mapActionText}>Mở Bản đồ</Text></Pressable>
         </View>
 
@@ -66,7 +66,7 @@ export function RealityHomeScreen() {
           <View style={styles.intentRow}>
             {["Ăn", "Thư giãn", "Hẹn hò", "Khám phá"].map((x) => <View key={x} style={styles.intent}><Text style={styles.intentText}>{x}</Text></View>)}
           </View>
-          <View accessibilityLabel="Chọn giúp tôi sẽ mở ở Flow 06" style={styles.decideAction}><Text style={styles.decideActionText}>Chọn giúp tôi</Text><Text style={styles.locked}>Sắp mở</Text></View>
+          <View accessibilityLabel="Chọn giúp tôi sẽ mở ở Flow 06" style={styles.decideAction}><Text style={styles.decideActionText}>Chọn giúp tôi</Text><Text style={styles.locked}>Chưa khả dụng</Text></View>
         </View>
 
         <View style={styles.sectionHead}><View><Text style={styles.sectionTitle}>Cơ hội phù hợp lúc này</Text><Text style={styles.sectionMeta}>Chỉ hiện khi có đủ ngữ cảnh đáng tin cậy</Text></View></View>
