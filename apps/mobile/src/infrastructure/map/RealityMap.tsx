@@ -1,6 +1,5 @@
 import { Camera, GeoJSONSource, Layer, Map } from "@maplibre/maplibre-react-native";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import type { CameraMode, MapMarker, MapSelection, RouteGeometry } from "@core/map/map-contract";
 import { isRenderableRoute } from "@core/map/map-contract";
 import type { LocationLifecycle } from "@core/location/location-lifecycle";
@@ -18,8 +17,6 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
   location: LocationLifecycle; camera: CameraMode; route?: RouteGeometry; markers?: readonly MapMarker[];
   selection?: MapSelection; onSelectMarker?: (id: string) => void; accessibilityLabel: string; onUserGesture?: () => void; followCamera?: boolean; mapStyleId?: string; mode?: "PREVIEW" | "FULL";
 }) {
-  const [previewFailed, setPreviewFailed] = useState(false);
-  const [previewRetry, setPreviewRetry] = useState(0);
   const view = initialView(camera, location);
   const userCoordinate = location.status === "READY" ? [location.longitude, location.latitude] as [number, number] : location.status === "DEGRADED" ? [location.lastKnown.longitude, location.lastKnown.latitude] as [number, number] : undefined;
   const userFeature = userCoordinate ? { type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: userCoordinate } } : undefined;
@@ -40,18 +37,16 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
     </View>;
   }
 
-  // Native vector surfaces inside a short scrolling Home card can render blank.
-  // MapTiler static imagery is a real geographic preview, never fabricated map data.
+  // Use the same verified MapLibre vector provider as the full map.
+  // Static MapTiler image requests can fail independently of valid style tiles.
   if (mode === "PREVIEW") {
-    const key = process.env.EXPO_PUBLIC_MAPTILER_KEY?.trim();
-    const style = process.env.EXPO_PUBLIC_MAPTILER_STYLE?.trim() || "streets-v4";
-    const staticUrl = provider.provider === "MAPTILER" && key && view
-      ? `https://api.maptiler.com/maps/${encodeURIComponent(style)}/static/${view.center[0]},${view.center[1]},${view.zoom}/600x280@2x.png?key=${encodeURIComponent(key)}`
-      : undefined;
-    return <View style={styles.preview} accessible accessibilityRole="image" accessibilityLabel={accessibilityLabel}>
-      {staticUrl && !previewFailed ? <Image source={{ uri: staticUrl, cache: previewRetry ? "reload" : "default" }} style={styles.previewImage} resizeMode="cover" onError={(event) => { console.warn("[RealityMap] static preview image failed:", event.nativeEvent.error?.replace(/key=[^&\\s]+/g, "key=[REDACTED]")); setPreviewFailed(true); }} />
-        : <View style={styles.previewFallback}><Text style={styles.previewMessage}>{previewFailed ? "Không tải được ảnh bản đồ xem nhanh." : "Đang chờ vị trí hoặc bản đồ xem nhanh chưa khả dụng."}</Text>{previewFailed ? <Pressable accessibilityRole="button" onPress={() => { setPreviewRetry((value) => value + 1); setPreviewFailed(false); }} style={styles.previewRetry}><Text style={styles.previewRetryText}>Thử tải lại</Text></Pressable> : null}</View>}
-      {provider.attribution && staticUrl && !previewFailed ? <View style={styles.attribution}><Text style={styles.attributionText}>{provider.attribution}</Text></View> : null}
+    return <View style={styles.preview} accessible={false}>
+      <Map style={styles.map} mapStyle={activeStyleUrl} dragPan={false} touchZoom={false} doubleTapZoom={false} doubleTapHoldZoom={false} touchRotate={false} touchPitch={false} compass={false}>
+        {view ? <Camera center={view.center} zoom={view.zoom} /> : null}
+        {userFeature ? <GeoJSONSource id="preview-user-location" data={userFeature}><Layer id="preview-user-location-dot" type="circle" paint={{ "circle-radius": 6, "circle-color": "#148EAE", "circle-stroke-color": "#FFFFFF", "circle-stroke-width": 2 }} /></GeoJSONSource> : null}
+      </Map>
+      {provider.attribution ? <View style={styles.attribution}><Text style={styles.attributionText}>{provider.attribution}</Text></View> : null}
+      <View accessible accessibilityRole="summary" accessibilityLabel={accessibilityLabel} style={styles.accessibleEquivalent}/>
     </View>;
   }
 
