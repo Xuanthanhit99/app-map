@@ -8,8 +8,8 @@ import { useForegroundLocationLifecycle } from "../../src/infrastructure/locatio
 
 export default function MapTab() {
   const insets = useSafeAreaInsets();
-  const { choice: locationChoice, setChoice: setLocationChoice } = useLocationPreference();
-  const location = useForegroundLocationLifecycle(locationChoice === "ENABLE");
+  const { choice: locationChoice, hydrated, setChoice: setLocationChoice } = useLocationPreference();
+  const location = useForegroundLocationLifecycle(hydrated && locationChoice === "ENABLE");
   const [cameraRevision, setCameraRevision] = useState(0);
   const [following, setFollowing] = useState(true);
   const locationReady = location.status === "READY" || location.status === "DEGRADED";
@@ -28,7 +28,7 @@ export default function MapTab() {
         <Text accessibilityRole="header" style={styles.title}>Bản đồ quanh bạn</Text>
         <Text style={styles.meta}>Bản đồ nền là dữ liệu địa lý, không phải báo cáo tình hình trực tiếp.</Text>
       </View>
-      {locationChoice === "ASK" ? <View style={styles.permissionPanel}><Text style={styles.permissionTitle}>Bạn muốn bật định vị?</Text><Text style={styles.permissionBody}>Bật để xem vị trí và nhận ngữ cảnh quanh bạn. Không bật vẫn xem được bản đồ.</Text><View style={styles.permissionActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.permissionPrimary}><Text style={styles.permissionPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.permissionSecondary}><Text style={styles.permissionSecondaryText}>Không bật</Text></Pressable></View></View> : locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.permissionPanel}><Text style={styles.permissionTitle}>Chưa có quyền vị trí · Mở cài đặt</Text><Text style={styles.permissionBody}>Bạn vẫn có thể xem bản đồ mà không cấp quyền.</Text></Pressable> : null}
+      {hydrated && locationChoice === "ASK" ? <View style={styles.permissionPanel}><Text style={styles.permissionTitle}>Bạn muốn bật định vị?</Text><Text style={styles.permissionBody}>Bật để xem vị trí và nhận ngữ cảnh quanh bạn. Không bật vẫn xem được bản đồ.</Text><View style={styles.permissionActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.permissionPrimary}><Text style={styles.permissionPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.permissionSecondary}><Text style={styles.permissionSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.permissionPanel}><Text style={styles.permissionTitle}>Chưa có quyền vị trí · Mở cài đặt</Text><Text style={styles.permissionBody}>Bạn vẫn có thể xem bản đồ mà không cấp quyền.</Text></Pressable> : null}
       <View style={styles.map}>
         <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} followCamera={following} camera={{ mode: "FOLLOW_USER", zoom: 14 }} mapStyleId={mapStyle} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
         <View style={styles.controls} pointerEvents="box-none">
