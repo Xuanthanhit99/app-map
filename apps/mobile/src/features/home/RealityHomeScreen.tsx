@@ -1,5 +1,5 @@
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useState } from "react";
+import { useLocationPreference } from "../../infrastructure/location/LocationPreferenceContext";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
@@ -10,7 +10,7 @@ import { getWorldPulseDevelopmentFixtures } from "./worldPulseDevelopmentFixture
 export function RealityHomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [locationChoice, setLocationChoice] = useState<"ASK" | "ENABLE" | "SKIP">("ASK");
+  const { choice: locationChoice, setChoice: setLocationChoice } = useLocationPreference();
   const location = useForegroundLocationLifecycle(locationChoice === "ENABLE");
   const reality = buildRealityHomeViewModel(getWorldPulseDevelopmentFixtures(), { widthClass: "SMALL_PHONE", orientation: "PORTRAIT", dynamicTypeScale: 1 });
   const pulses = [reality.pulse, ...reality.secondary].filter((pulse): pulse is RealityPulse => pulse !== null);
