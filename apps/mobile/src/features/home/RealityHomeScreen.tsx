@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
@@ -9,7 +10,8 @@ import { getWorldPulseDevelopmentFixtures } from "./worldPulseDevelopmentFixture
 export function RealityHomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const location = useForegroundLocationLifecycle();
+  const [locationChoice, setLocationChoice] = useState<"ASK" | "ENABLE" | "SKIP">("ASK");
+  const location = useForegroundLocationLifecycle(locationChoice === "ENABLE");
   const reality = buildRealityHomeViewModel(getWorldPulseDevelopmentFixtures(), { widthClass: "SMALL_PHONE", orientation: "PORTRAIT", dynamicTypeScale: 1 });
   const pulses = [reality.pulse, ...reality.secondary].filter((pulse): pulse is RealityPulse => pulse !== null);
 
@@ -25,6 +27,7 @@ export function RealityHomeScreen() {
           <View style={styles.liveBadge}><Text style={styles.liveText}>DỮ LIỆU THỬ</Text></View>
         </View>
 
+        {locationChoice === "ASK" ? <View style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị là tùy chọn</Text><Text style={styles.consentBody}>Bật để xem ngữ cảnh quanh bạn. Bạn vẫn có thể khám phá khi không bật.</Text><View style={styles.consentActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.consentPrimary}><Text style={styles.consentPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.consentSecondary}><Text style={styles.consentSecondaryText}>Không bật</Text></Pressable></View></View> : locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị bị từ chối · Mở cài đặt</Text><Text style={styles.consentBody}>Không cấp quyền vẫn sử dụng được các tính năng khám phá.</Text></Pressable> : null}
         <View style={styles.sectionHead}>
           <View><Text style={styles.sectionTitle}>Reality Pulse</Text><Text style={styles.sectionMeta}>Tín hiệu quan trọng được ưu tiên theo tác động</Text></View>
           <Text style={styles.freshness}>Minh họa</Text>
@@ -80,6 +83,7 @@ export function RealityHomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  locationConsent:{padding:12,borderRadius:15,backgroundColor:"#EFF7F2",borderWidth:1,borderColor:"#D5E7DA"},consentTitle:{fontSize:13,fontWeight:"800",color:"#17382D"},consentBody:{fontSize:11,lineHeight:16,color:"#526A60",marginTop:3},consentActions:{flexDirection:"row",gap:9,marginTop:9},consentPrimary:{minHeight:44,paddingHorizontal:14,justifyContent:"center",borderRadius:11,backgroundColor:"#287158"},consentPrimaryText:{fontSize:12,fontWeight:"700",color:"#FFFFFF"},consentSecondary:{minHeight:44,paddingHorizontal:14,justifyContent:"center",borderRadius:11,borderWidth:1,borderColor:"#B8D4C4"},consentSecondaryText:{fontSize:12,fontWeight:"700",color:"#286F5A"},
   root:{flex:1,backgroundColor:"#FFFFFF"},content:{paddingHorizontal:18,gap:12,backgroundColor:"#FFFFFF"},
   header:{paddingTop:10,flexDirection:"row",justifyContent:"space-between",alignItems:"flex-start",gap:12},eyebrow:{fontSize:11,lineHeight:15,fontWeight:"800",letterSpacing:1.4,color:"#286F5A"},title:{fontSize:28,lineHeight:32,fontWeight:"800",letterSpacing:-.7,color:"#172C27",marginTop:4},subtitle:{fontSize:13,lineHeight:18,color:"#536A64",marginTop:5,maxWidth:290},
   liveBadge:{flexDirection:"row",alignItems:"center",gap:6,borderWidth:1,borderColor:"rgba(24,75,55,.14)",borderRadius:16,paddingHorizontal:10,paddingVertical:7},liveDot:{width:7,height:7,borderRadius:4,backgroundColor:"#63C89B"},liveText:{fontSize:10,fontWeight:"800",color:"#285C4B"},
