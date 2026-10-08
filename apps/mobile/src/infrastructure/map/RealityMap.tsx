@@ -13,9 +13,9 @@ function initialView(camera: CameraMode, location: LocationLifecycle) {
   return undefined;
 }
 
-export function RealityMap({ location, camera, route, markers = [], selection, onSelectMarker, accessibilityLabel }: {
+export function RealityMap({ location, camera, route, markers = [], selection, onSelectMarker, accessibilityLabel, mode = "FULL" }: {
   location: LocationLifecycle; camera: CameraMode; route?: RouteGeometry; markers?: readonly MapMarker[];
-  selection?: MapSelection; onSelectMarker?: (id: string) => void; accessibilityLabel: string;
+  selection?: MapSelection; onSelectMarker?: (id: string) => void; accessibilityLabel: string; mode?: "PREVIEW" | "FULL";
 }) {
   const view = initialView(camera, location);
   const userCoordinate = location.status === "READY" ? [location.longitude, location.latitude] as [number, number] : location.status === "DEGRADED" ? [location.lastKnown.longitude, location.lastKnown.latitude] as [number, number] : undefined;
@@ -35,8 +35,8 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
   }
 
   return <View style={styles.root} accessible={false}>
-    <Map style={styles.map} mapStyle={provider.styleUrl}>
-      {view ? <Camera center={view.center} zoom={view.zoom} duration={500} easing="ease" /> : <Camera />}
+    <Map style={styles.map} mapStyle={provider.styleUrl} compassEnabled={mode === "FULL"} scrollEnabled={mode === "FULL"} zoomEnabled={mode === "FULL"} rotateEnabled={mode === "FULL"} pitchEnabled={mode === "FULL"}>
+      {view ? <Camera center={view.center} zoom={view.zoom} duration={mode === "PREVIEW" ? 0 : 500} easing="ease" /> : <Camera />}
       {routeFeature ? <GeoJSONSource id="active-route" data={routeFeature}><Layer id="active-route-line" type="line" paint={{ "line-width": 4 }} /></GeoJSONSource> : null}
       {markers.length ? <GeoJSONSource id="reality-markers" data={markerCollection} onPress={(event) => { const id=event.nativeEvent.features?.[0]?.properties?.id; if(typeof id==="string") onSelectMarker?.(id); }}><Layer id="reality-marker-dots" type="circle" paint={{ "circle-radius": 7 }} /></GeoJSONSource> : null}
       {userFeature ? <GeoJSONSource id="reality-user-location" data={userFeature}><Layer id="reality-user-location-dot" type="circle" paint={{ "circle-radius": 8, "circle-stroke-width": 3 }} /></GeoJSONSource> : null}
