@@ -30,7 +30,7 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
     ? `https://api.maptiler.com/maps/${encodeURIComponent(mapStyleId)}/style.json?key=${encodeURIComponent(process.env.EXPO_PUBLIC_MAPTILER_KEY?.trim() || "")}`
     : provider.styleUrl;
 
-  if (provider.status !== "READY" || !provider.styleUrl) {
+  if (provider.status !== "READY" || !activeStyleUrl) {
     return <View style={styles.degraded} accessible accessibilityRole="summary" accessibilityLabel={accessibilityLabel + " Bản đồ nền chưa được cấu hình."}>
       <View style={styles.gridA}/><View style={styles.gridB}/>{userCoordinate ? <View style={styles.userDot}/> : null}
       <Text style={styles.degradedTitle}>SPATIAL EVIDENCE</Text><Text style={styles.degradedText}>Chưa cấu hình nhà cung cấp bản đồ nền</Text>
