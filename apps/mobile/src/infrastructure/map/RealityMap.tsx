@@ -1,5 +1,5 @@
 import { Camera, GeoJSONSource, Layer, Map } from "@maplibre/maplibre-react-native";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
 import type { CameraMode, MapMarker, MapSelection, RouteGeometry } from "@core/map/map-contract";
 import { isRenderableRoute } from "@core/map/map-contract";
@@ -19,6 +19,7 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
   selection?: MapSelection; onSelectMarker?: (id: string) => void; accessibilityLabel: string; mode?: "PREVIEW" | "FULL";
 }) {
   const [previewFailed, setPreviewFailed] = useState(false);
+  const [previewRetry, setPreviewRetry] = useState(0);
   const view = initialView(camera, location);
   const userCoordinate = location.status === "READY" ? [location.longitude, location.latitude] as [number, number] : location.status === "DEGRADED" ? [location.lastKnown.longitude, location.lastKnown.latitude] as [number, number] : undefined;
   const userFeature = userCoordinate ? { type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: userCoordinate } } : undefined;
@@ -45,8 +46,8 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
       ? `https://api.maptiler.com/maps/${encodeURIComponent(style)}/static/${view.center[0]},${view.center[1]},${view.zoom}/600x280@2x.png?key=${encodeURIComponent(key)}`
       : undefined;
     return <View style={styles.preview} accessible accessibilityRole="image" accessibilityLabel={accessibilityLabel}>
-      {staticUrl && !previewFailed ? <Image source={{ uri: staticUrl }} style={styles.previewImage} resizeMode="cover" onError={() => setPreviewFailed(true)} />
-        : <Text style={styles.previewMessage}>{previewFailed ? "Không tải được bản đồ xem nhanh. Mở Bản đồ để thử lại." : "Đang chờ vị trí hoặc bản đồ xem nhanh chưa khả dụng."}</Text>}
+      {staticUrl && !previewFailed ? <Image source={{ uri: staticUrl, cache: previewRetry ? "reload" : "default" }} style={styles.previewImage} resizeMode="cover" onError={(event) => { console.warn("[RealityMap] static preview image failed:", event.nativeEvent.error?.replace(/key=[^&\\s]+/g, "key=[REDACTED]")); setPreviewFailed(true); }} />
+        : <View style={styles.previewFallback}><Text style={styles.previewMessage}>{previewFailed ? "Không tải được ảnh bản đồ xem nhanh." : "Đang chờ vị trí hoặc bản đồ xem nhanh chưa khả dụng."}</Text>{previewFailed ? <Pressable accessibilityRole="button" onPress={() => { setPreviewRetry((value) => value + 1); setPreviewFailed(false); }} style={styles.previewRetry}><Text style={styles.previewRetryText}>Thử tải lại</Text></Pressable> : null}</View>}
       {provider.attribution && staticUrl && !previewFailed ? <View style={styles.attribution}><Text style={styles.attributionText}>{provider.attribution}</Text></View> : null}
     </View>;
   }
@@ -62,4 +63,4 @@ export function RealityMap({ location, camera, route, markers = [], selection, o
     <View accessible accessibilityRole="summary" accessibilityLabel={accessibilityLabel + routeSummary + selectionSummary} style={styles.accessibleEquivalent}/>
   </View>;
 }
-const styles=StyleSheet.create({preview:{flex:1,justifyContent:"center",backgroundColor:"#E8F1EE"},previewImage:{width:"100%",height:"100%"},previewMessage:{paddingHorizontal:18,fontSize:12,textAlign:"center",color:"#526E63"},root:{flex:1},map:{flex:1},degraded:{flex:1,alignItems:"center",justifyContent:"center",overflow:"hidden",backgroundColor:"#0D211E"},gridA:{position:"absolute",width:"140%",height:1,backgroundColor:"rgba(137,166,158,.12)",transform:[{rotate:"22deg"}]},gridB:{position:"absolute",width:1,height:"140%",backgroundColor:"rgba(137,166,158,.12)",transform:[{rotate:"22deg"}]},userDot:{width:14,height:14,borderRadius:7,backgroundColor:"#D5B77A",borderWidth:3,borderColor:"#17332D",marginBottom:10},degradedTitle:{fontSize:10,fontWeight:"700",letterSpacing:1,color:"#8DA7A0"},degradedText:{fontSize:10,color:"#6F8D85",marginTop:3},attribution:{position:"absolute",right:6,bottom:5,backgroundColor:"rgba(8,25,22,.72)",paddingHorizontal:5,paddingVertical:2,borderRadius:5},attributionText:{fontSize:8,color:"#9BB2AC"},accessibleEquivalent:{position:"absolute",width:1,height:1,opacity:0}});
+const styles=StyleSheet.create({preview:{flex:1,justifyContent:"center",backgroundColor:"#E8F1EE"},previewImage:{width:"100%",height:"100%"},previewFallback:{alignItems:"center",gap:10,paddingHorizontal:12},previewRetry:{minHeight:44,paddingHorizontal:18,borderRadius:12,justifyContent:"center",backgroundColor:"#FFFFFF"},previewRetryText:{fontWeight:"700",fontSize:12,color:"#286F5A"},previewMessage:{paddingHorizontal:18,fontSize:12,textAlign:"center",color:"#526E63"},root:{flex:1},map:{flex:1},degraded:{flex:1,alignItems:"center",justifyContent:"center",overflow:"hidden",backgroundColor:"#0D211E"},gridA:{position:"absolute",width:"140%",height:1,backgroundColor:"rgba(137,166,158,.12)",transform:[{rotate:"22deg"}]},gridB:{position:"absolute",width:1,height:"140%",backgroundColor:"rgba(137,166,158,.12)",transform:[{rotate:"22deg"}]},userDot:{width:14,height:14,borderRadius:7,backgroundColor:"#D5B77A",borderWidth:3,borderColor:"#17332D",marginBottom:10},degradedTitle:{fontSize:10,fontWeight:"700",letterSpacing:1,color:"#8DA7A0"},degradedText:{fontSize:10,color:"#6F8D85",marginTop:3},attribution:{position:"absolute",right:6,bottom:5,backgroundColor:"rgba(8,25,22,.72)",paddingHorizontal:5,paddingVertical:2,borderRadius:5},attributionText:{fontSize:8,color:"#9BB2AC"},accessibleEquivalent:{position:"absolute",width:1,height:1,opacity:0}});
