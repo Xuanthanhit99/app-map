@@ -26,7 +26,7 @@ try {
     await page.waitForFunction(() => {
       const status = document.querySelector("[data-map-status]")?.textContent || "";
       return status.includes("Không tải") || status.includes("chưa khả dụng") || status.includes("Bản đồ nền ·");
-    }, { timeout: 18000 }).catch(() => {});
+    }, null, { timeout: 18000 }).catch(() => {});
     const mapStatus = await page.locator("[data-map-status]").textContent();
     console.log(`MapLibre state at capture: ${mapStatus}`);
     await page.screenshot({ path: out, fullPage: true, animations: "disabled" });
