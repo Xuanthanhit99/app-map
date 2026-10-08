@@ -26,7 +26,6 @@ function fix(position: Location.LocationObject) {
 export function useForegroundLocationLifecycle(enabled = true): LocationLifecycle {
   const [state, setState] = useState<LocationLifecycle>({ status: "IDLE" });
   const stateRef = useRef<LocationLifecycle>(state);
-  const startingRef = useRef(false);
   stateRef.current = state;
 
   useEffect(() => {
@@ -39,6 +38,8 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
     let foreground = AppState.currentState === "active";
     let subscription: Location.LocationSubscription | undefined;
     let staleTimer: ReturnType<typeof setTimeout> | undefined;
+    let starting = false;
+    let restartPending = false;
 
     const commit = (next: LocationLifecycle) => {
       if (!mounted || !foreground) return;
@@ -62,8 +63,12 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
     };
 
     const start = async () => {
-      if (!mounted || !foreground || startingRef.current || subscription) return;
-      startingRef.current = true;
+      if (!mounted || !foreground || subscription) return;
+      if (starting) {
+        restartPending = true;
+        return;
+      }
+      starting = true;
       dispatch({ type: "REQUEST" });
       try {
         const servicesEnabled = await Location.hasServicesEnabledAsync();
@@ -127,7 +132,11 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
           dispatch({ type: "UNAVAILABLE", reason: "NO_FIX" });
         }
       } finally {
-        startingRef.current = false;
+        starting = false;
+        if (mounted && foreground && restartPending && !subscription) {
+          restartPending = false;
+          void start();
+        }
       }
     };
 
@@ -135,10 +144,12 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
     const appState = AppState.addEventListener("change", (next) => {
       foreground = next === "active";
       if (foreground) {
+        restartPending = true;
         subscription?.remove();
         subscription = undefined;
         void start();
       } else {
+        restartPending = false;
         subscription?.remove();
         subscription = undefined;
         if (staleTimer) clearTimeout(staleTimer);
@@ -147,7 +158,6 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
 
     return () => {
       mounted = false;
-      startingRef.current = false;
       subscription?.remove();
       if (staleTimer) clearTimeout(staleTimer);
       appState.remove();
