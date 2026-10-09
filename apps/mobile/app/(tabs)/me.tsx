@@ -1,4 +1,4 @@
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocationPreference } from "../../src/infrastructure/location/LocationPreferenceContext";
 
@@ -17,8 +17,8 @@ export default function MeTab() {
         <Pressable accessibilityRole="button" accessibilityState={{ selected: choice === "ENABLE" }} disabled={!hydrated} onPress={() => setChoice("ENABLE")} style={[styles.action, choice === "ENABLE" && styles.selected]}><Text style={[styles.actionText, choice === "ENABLE" && styles.selectedText]}>Bật định vị</Text></Pressable>
         <Pressable accessibilityRole="button" accessibilityState={{ selected: choice === "SKIP" }} disabled={!hydrated} onPress={() => setChoice("SKIP")} style={[styles.action, choice === "SKIP" && styles.selected]}><Text style={[styles.actionText, choice === "SKIP" && styles.selectedText]}>Không bật</Text></Pressable>
       </View>
-      <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.settings}><Text style={styles.settingsText}>Quản lý quyền trong cài đặt Android</Text></Pressable>
-      <Text style={styles.note}>Lựa chọn được lưu trên thiết bị để sử dụng khi mở lại ứng dụng. Quyền định vị của hệ thống Android được quản lý riêng trong Cài đặt.</Text>
+      <Pressable accessibilityRole="button" onPress={() => { if (Platform.OS !== "web") void Linking.openSettings(); }} style={styles.settings}><Text style={styles.settingsText}>{Platform.OS === "web" ? "Quản lý quyền vị trí trong trình duyệt" : Platform.OS === "ios" ? "Quản lý quyền trong cài đặt iOS" : "Quản lý quyền trong cài đặt Android"}</Text></Pressable>
+      <Text style={styles.note}>Lựa chọn được lưu trên thiết bị để sử dụng khi mở lại ứng dụng. {Platform.OS === "web" ? "Quyền định vị được quản lý trong phần quyền trang web của trình duyệt." : "Quyền định vị của hệ thống được quản lý riêng trong Cài đặt thiết bị."}</Text>
     </View>
     <View style={styles.card}><Text style={styles.cardTitle}>Phương tiện và ngữ cảnh</Text><Text style={styles.body}>Chưa có hồ sơ phương tiện. Không tự suy đoán thông tin cá nhân hoặc phương tiện.</Text></View>
   </ScrollView>;
