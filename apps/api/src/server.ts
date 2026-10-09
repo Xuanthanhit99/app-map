@@ -2,10 +2,13 @@ import { createServer } from "node:http";
 import { TomTomRoutingProvider } from "./tomtom-routing-provider";
 import { handleRoutingRequest } from "./routing-http-handler";
 import { handleRealityDecisionRead } from "./reality-decision-read";
+import { handleVerifiedDecisionRead } from "./verified-decision-http";
+import { UnconfiguredEvidenceRepository } from "./verified-evidence-repository";
 
 const port = Number(process.env.PORT ?? 3001);
 const key = process.env.TOMTOM_API_KEY;
 const primary = key ? new TomTomRoutingProvider(key) : null;
+const evidenceRepository = new UnconfiguredEvidenceRepository();
 
 createServer(async (request, response) => {
   const origin = request.headers.origin;
@@ -17,6 +20,7 @@ createServer(async (request, response) => {
     response.setHeader("Access-Control-Allow-Headers", "Content-Type");
   }
   if (request.method === "OPTIONS" && origin && allowedOrigins.includes(origin)) { response.writeHead(204); response.end(); return; }
+  if (await handleVerifiedDecisionRead(request, response, evidenceRepository)) return;
   if (handleRealityDecisionRead(request, response)) return;
   if (request.method !== "POST" || request.url !== "/v1/routing/route") {
     response.writeHead(404, { "content-type": "application/json" });
