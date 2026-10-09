@@ -1,12 +1,18 @@
 import { resolveEvidence, resolveCollection } from "./state-engine.mjs";
 
 const MAX_ITEMS = 30;
+const REQUEST_TIMEOUT_MS = 8000;
 function validItem(item) {
   return item && typeof item === "object" && typeof item.id === "string" && item.id.length <= 128;
 }
 async function fetchCollection(url, fetcher, signal) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const onAbort = () => controller.abort();
+  signal?.addEventListener("abort", onAbort, { once: true });
   try {
-    const response = await fetcher(url, { headers: { Accept: "application/json" }, signal, cache: "no-store" });
+    if (signal?.aborted) controller.abort();
+    const response = await fetcher(url, { headers: { Accept: "application/json" }, signal: controller.signal, cache: "no-store" });
     if (!response.ok) return { status: "error", items: [], reason: `HTTP_${response.status}` };
     const data = await response.json();
     if (!data || !["empty", "ready"].includes(data.status) || !Array.isArray(data.items) || data.items.length > MAX_ITEMS || !data.items.every(validItem)) {
@@ -14,7 +20,10 @@ async function fetchCollection(url, fetcher, signal) {
     }
     return resolveCollection({ status: data.status, items: data.items });
   } catch {
-    return { status: "error", items: [], reason: "NETWORK_UNAVAILABLE" };
+    return { status: "error", items: [], reason: controller.signal.aborted ? "REQUEST_ABORTED_OR_TIMEOUT" : "NETWORK_UNAVAILABLE" };
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener("abort", onAbort);
   }
 }
 
