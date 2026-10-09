@@ -82,7 +82,7 @@ export default function JourneyTab() {
               field.results?.status === "ready" && field.results.items.length === 0 ? <Text style={styles.body}>Không có kết quả phù hợp.</Text> :
               field.query.trim().length < 3 ? <Text style={styles.body}>Nhập ít nhất 3 ký tự để tìm địa điểm thật.</Text> : null}
             {field.results?.status === "ready" && !field.selectedPlace ? field.results.items.map(place =>
-              <Pressable key={place.id} accessibilityRole="button" onPress={() => { field.setPlace(place); field.setQuery(place.name); setRouteCheck(null); setPlacesConfirmed(false); }} style={styles.result}>
+              <Pressable key={place.id} accessibilityRole="button" onPress={() => { field.setPlace(place); field.setQuery(place.name); setRouteCheck(null); }} style={styles.result}>
                 <Text style={styles.heading}>{place.name}</Text>
                 <Text style={styles.body}>{place.address} · TomTom</Text>
               </Pressable>) : null}
