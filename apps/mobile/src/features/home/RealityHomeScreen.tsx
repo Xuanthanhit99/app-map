@@ -6,8 +6,6 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RealityMap } from "../../infrastructure/map/RealityMap";
 import { useForegroundLocationLifecycle } from "../../infrastructure/location/useForegroundLocationLifecycle";
-import { buildRealityHomeViewModel, type RealityPulse } from "@core/features/reality-home/reality-home";
-import { getWorldPulseDevelopmentFixtures } from "./worldPulseDevelopmentFixtures";
 
 export function RealityHomeScreen() {
   const insets = useSafeAreaInsets();
@@ -28,8 +26,6 @@ export function RealityHomeScreen() {
   const router = useRouter();
   const { choice: locationChoice, hydrated, setChoice: setLocationChoice } = useLocationPreference();
   const location = useForegroundLocationLifecycle(hydrated && locationChoice === "ENABLE");
-  const reality = buildRealityHomeViewModel(getWorldPulseDevelopmentFixtures(), { widthClass: "SMALL_PHONE", orientation: "PORTRAIT", dynamicTypeScale: 1 });
-  const pulses = [reality.pulse, ...reality.secondary].filter((pulse): pulse is RealityPulse => pulse !== null);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -40,7 +36,7 @@ export function RealityHomeScreen() {
             <Text accessibilityRole="header" style={styles.title}>Ngay quanh bạn</Text>
             <Text style={styles.subtitle}>Điều gì đang thực sự xảy ra — và điều gì đáng chú ý với bạn.</Text>
           </View>
-          <View style={styles.liveBadge}><Text style={styles.liveText}>DỮ LIỆU THỬ</Text></View>
+          <View style={styles.liveBadge}><Text style={styles.liveText}>CHƯA XÁC MINH</Text></View>
         </View>
 
         {hydrated && locationChoice === "ASK" ? <View style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị là tùy chọn</Text><Text style={styles.consentBody}>Bật để xem ngữ cảnh quanh bạn. Bạn vẫn có thể khám phá khi không bật.</Text><View style={styles.consentActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.consentPrimary}><Text style={styles.consentPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.consentSecondary}><Text style={styles.consentSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị bị từ chối · Mở cài đặt</Text><Text style={styles.consentBody}>Không cấp quyền vẫn sử dụng được các tính năng khám phá.</Text></Pressable> : null}
@@ -49,19 +45,13 @@ export function RealityHomeScreen() {
           <Text style={styles.freshness}>{apiLoading ? "Đang tải" : realityApi.status === "error" ? "Lỗi kết nối" : realityApi.status === "empty" ? "Chưa có dữ liệu xác minh" : "Có dữ liệu API"}</Text>
         </View>
         <Text accessibilityRole="text" style={styles.sectionMeta}>{apiLoading ? "Đang kiểm tra tín hiệu từ API…" : realityApi.status === "error" ? "Không tải được tín hiệu. Hãy kiểm tra kết nối." : realityApi.status === "empty" ? "API chưa có tín hiệu đủ điều kiện hiển thị LIVE." : "API đã có tín hiệu; cần kiểm chứng provenance trước khi hiển thị."}</Text>
-        {pulses.length ? <View style={styles.pulseStack}>
-          {pulses.map((pulse, index) => <View key={pulse.id} style={[styles.pulseCard, index === 0 ? styles.primaryPulse : styles.secondaryPulse]}>
-            <View style={[styles.pulseCue, pulse.tone === "caution" && styles.cueCaution, pulse.tone === "uncertainty" && styles.cueUncertainty]}><Text style={styles.pulseCueText}>{pulse.kind === "ROAD" ? "R" : "P"}</Text></View>
-            <View style={styles.flex}>
-              <View style={styles.pulseTop}><Text style={styles.pulseTitle}>{pulse.headline}</Text><Text style={styles.pulseKind}>{pulse.kind === "ROAD" ? "ĐƯỜNG" : "ĐỖ XE"}</Text></View>
-              {index === 0 && pulse.supportingText ? <Text style={styles.pulseBody} numberOfLines={2}>{pulse.supportingText}</Text> : null}
-              {index === 0 ? <View style={styles.evidenceRow}><Text style={styles.evidence}>DEV FIXTURE</Text><Text style={styles.evidenceMuted}>Qua Reality engine</Text></View> : <Text style={styles.secondaryFixture}>DỮ LIỆU THỬ</Text>}
-            </View>
-          </View>)}
-        </View> : <View style={styles.pulseCard}>
+        <View style={styles.pulseCard} accessibilityLabel="Reality Pulse: trạng thái bằng chứng">
           <View style={styles.unknownIcon}><Text style={styles.unknownMark}>?</Text></View>
-          <View style={styles.flex}><Text style={styles.pulseTitle}>Chưa có đủ tín hiệu gần đây</Text><Text style={styles.pulseBody}>{reality.emptyMessage}</Text></View>
-        </View>}
+          <View style={styles.flex}>
+            <Text style={styles.pulseTitle}>{apiLoading ? "Đang tải tín hiệu" : realityApi.status === "error" ? "Không tải được Reality Pulse" : realityApi.status === "empty" ? "Chưa có tín hiệu xác minh" : "Đang chờ kiểm chứng bằng chứng"}</Text>
+            <Text style={styles.pulseBody}>Không hiển thị dữ liệu LIVE khi chưa kiểm tra provenance, TruthStatus và Freshness.</Text>
+          </View>
+        </View>
 
         <Pressable accessibilityRole="button" accessibilityLabel="Cập nhật tình hình quanh bạn" onPress={() => router.push("/report-action")} style={styles.reportCard}>
           <View style={styles.reportIcon}><Text style={styles.reportIconText}>+</Text></View>
