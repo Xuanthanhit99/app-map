@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { getRealityDecisionCollection } from "../apps/mobile/src/infrastructure/api/realityDecisionClient";
 
 const base = "http://127.0.0.1:3001";
-const mock = (body: unknown, status = 200) => (async () => ({
-  ok: status >= 200 && status < 300, status, json: async () => body,
-})) as typeof fetch;
+const mock = (body: unknown, status = 200): typeof fetch => async () =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 
 describe("mobile Reality and Decision API client", () => {
   it("does not request an unconfigured endpoint", async () => {
