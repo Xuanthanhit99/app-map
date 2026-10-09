@@ -12,7 +12,7 @@ const evidenceRepository = new UnconfiguredEvidenceRepository();
 
 createServer(async (request, response) => {
   const origin = request.headers.origin;
-  const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:4173,http://localhost:4173").split(",").map(value => value.trim());
+  const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:4173,http://localhost:4173,http://localhost:8081,http://127.0.0.1:8081").split(",").map(value => value.trim());
   if (origin && allowedOrigins.includes(origin)) {
     response.setHeader("Access-Control-Allow-Origin", origin);
     response.setHeader("Vary", "Origin");
