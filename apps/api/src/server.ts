@@ -5,15 +5,28 @@ import { handleRealityDecisionRead } from "./reality-decision-read";
 
 const port = Number(process.env.PORT ?? 3001);
 const key = process.env.TOMTOM_API_KEY;
-if (!key) throw new Error("TOMTOM_API_KEY is required");
-
-const primary = new TomTomRoutingProvider(key);
+const primary = key ? new TomTomRoutingProvider(key) : null;
 
 createServer(async (request, response) => {
+  const origin = request.headers.origin;
+  const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:4173,http://localhost:4173").split(",").map(value => value.trim());
+  if (origin && allowedOrigins.includes(origin)) {
+    response.setHeader("Access-Control-Allow-Origin", origin);
+    response.setHeader("Vary", "Origin");
+    response.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  }
+  if (request.method === "OPTIONS" && origin && allowedOrigins.includes(origin)) { response.writeHead(204); response.end(); return; }
   if (handleRealityDecisionRead(request, response)) return;
   if (request.method !== "POST" || request.url !== "/v1/routing/route") {
     response.writeHead(404, { "content-type": "application/json" });
     response.end(JSON.stringify({ error: "NOT_FOUND" }));
+    return;
+  }
+
+  if (!primary) {
+    response.writeHead(503, { "content-type": "application/json", "cache-control": "no-store" });
+    response.end(JSON.stringify({ error: "ROUTING_PROVIDER_NOT_CONFIGURED" }));
     return;
   }
 
