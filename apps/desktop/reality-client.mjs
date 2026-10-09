@@ -9,10 +9,10 @@ async function fetchCollection(url, fetcher, signal) {
     const response = await fetcher(url, { headers: { Accept: "application/json" }, signal, cache: "no-store" });
     if (!response.ok) return { status: "error", items: [], reason: `HTTP_${response.status}` };
     const data = await response.json();
-    if (!data || !Array.isArray(data.items) || data.items.length > MAX_ITEMS || !data.items.every(validItem)) {
+    if (!data || !["empty", "ready"].includes(data.status) || !Array.isArray(data.items) || data.items.length > MAX_ITEMS || !data.items.every(validItem)) {
       return { status: "error", items: [], reason: "INVALID_CONTRACT" };
     }
-    return resolveCollection({ status: "ready", items: data.items });
+    return resolveCollection({ status: data.status, items: data.items });
   } catch {
     return { status: "error", items: [], reason: "NETWORK_UNAVAILABLE" };
   }
