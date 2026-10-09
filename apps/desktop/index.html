@@ -12,7 +12,25 @@
 <script type="module">
 import { resolveEvidence, resolveCollection } from "./state-engine.mjs";
 import { mountDesktopMap } from "./desktop-map.mjs";
+import { loadReality, loadDecisionPlans } from "./reality-client.mjs";
 void mountDesktopMap(document.getElementById("map"));
+const apiBase = new URLSearchParams(location.search).get("api") || "";
+const realityStatus = document.querySelector(".pulse-stack");
+const decisionStatus = document.querySelector(".plan-list");
+if (realityStatus) realityStatus.dataset.collectionStatus = "loading";
+if (decisionStatus) decisionStatus.dataset.collectionStatus = "loading";
+Promise.all([loadReality(apiBase), loadDecisionPlans(apiBase)]).then(([reality, plans]) => {
+  if (realityStatus) {
+    realityStatus.dataset.collectionStatus = reality.status;
+    realityStatus.setAttribute("aria-label", `Reality API: ${reality.status}`);
+  }
+  if (decisionStatus) {
+    decisionStatus.dataset.collectionStatus = plans.status;
+    decisionStatus.setAttribute("aria-label", `Decision API: ${plans.status}`);
+  }
+  // Do not render unverified API payloads into the master layout.
+  // Real cards require the next data-to-UI contract and provenance validation.
+});
 const evidence = resolveEvidence(null);
 document.querySelectorAll(".pulse small").forEach((element) => {
   element.dataset.truth = evidence.truth;
