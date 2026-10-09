@@ -15,7 +15,11 @@ const server = createServer(async (request, response) => {
   response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
   response.end(html);
 });
-await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
+const capturePort = Number(process.env.DESKTOP_CAPTURE_PORT ?? 4173);
+await new Promise((ok, reject) => {
+  server.once("error", reject);
+  server.listen(capturePort, "127.0.0.1", ok);
+});
 try {
   await mkdir(dirname(out), { recursive: true });
   const { chromium } = await import("playwright");
@@ -25,6 +29,8 @@ try {
     const apiBase = process.env.DESKTOP_API_BASE_URL || "";
     const apiRequests = [];
     const apiResponses = [];
+    const apiFailures = [];
+    page.on("requestfailed", (request) => { if (/\/v1\/(reality\/pulses|decision\/plans)$/.test(new URL(request.url()).pathname)) apiFailures.push({ url: request.url(), error: request.failure()?.errorText }); });
     page.on("request", (request) => { if (/\/v1\/(reality\/pulses|decision\/plans)$/.test(new URL(request.url()).pathname)) apiRequests.push(request.url()); });
     page.on("response", (response) => { if (/\/v1\/(reality\/pulses|decision\/plans)$/.test(new URL(response.url()).pathname)) apiResponses.push({ url: response.url(), status: response.status() }); });
     const pageUrl = new URL(`http://127.0.0.1:${server.address().port}/`);
@@ -35,6 +41,7 @@ try {
     console.log("Desktop API states:", JSON.stringify(collectionStates));
     console.log("Desktop API requests:", JSON.stringify(apiRequests));
     console.log("Desktop API responses:", JSON.stringify(apiResponses));
+    console.log("Desktop API failures:", JSON.stringify(apiFailures));
     if (apiBase && (apiRequests.length !== 2 || apiResponses.length !== 2 || apiResponses.some((r) => r.status !== 200) || collectionStates.reality !== "empty" || collectionStates.decision !== "empty")) throw new Error("Desktop API empty-state integration gate failed");
     await page.waitForFunction(() => {
       const status = document.querySelector("[data-map-status]")?.textContent || "";
