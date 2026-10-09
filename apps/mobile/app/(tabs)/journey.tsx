@@ -45,10 +45,10 @@ export default function JourneyTab() {
     return () => { clearTimeout(timer); controller.abort(); };
   }, [destinationQuery, destination]);
   async function verifyRoute() {
-    if (!origin || !destination || !active) return;
+    if (!origin || !destination) return;
     setConfirming(true);
     setRouteCheck({ status: "loading" });
-    const result = await checkPlanRoute({ baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL, planId: active.id, origin: origin.coordinate, destination: destination.coordinate });
+    const result = await checkPlanRoute({ baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL, planId: active?.id ?? "manual-route", origin: origin.coordinate, destination: destination.coordinate });
     setRouteCheck(result);
     setConfirming(false);
   }
@@ -63,19 +63,11 @@ export default function JourneyTab() {
   const active = plans.find(plan => plan.id === selected);
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
-      <Text accessibilityRole="header" style={styles.title}>Quyết định & hành trình</Text>
-      <Text style={styles.body}>Chỉ hiển thị phương án có nguồn, thời gian quan sát và bằng chứng hợp lệ.</Text>
-      {state.status === "loading" ? <ActivityIndicator accessibilityLabel="Đang tải phương án" /> : null}
-      {state.status === "error" ? <Text accessibilityRole="alert" style={styles.body}>Không tải được phương án. Kiểm tra kết nối và thử lại.</Text> : null}
-      {state.status === "empty" || (state.status === "ready" && plans.length === 0) ?
-        <View style={styles.card}><Text style={styles.heading}>Chưa có phương án được xác minh</Text><Text style={styles.body}>Không tự tạo ba kế hoạch khi thiếu dữ liệu hoặc ngữ cảnh.</Text></View> : null}
-      {plans.map(plan => <Pressable key={plan.id} accessibilityRole="button" accessibilityLabel={`Xem phương án ${plan.title}`} onPress={() => setSelected(plan.id)} style={styles.card}>
-        <Text style={styles.heading}>{plan.title}</Text>
-        <Text style={styles.body}>KNOWN · FRESH · {plan.stops?.length ?? 0} điểm dừng</Text>
-      </Pressable>)}
+      <Text style={styles.eyebrow}>JOURNEY</Text>
+      <Text accessibilityRole="header" style={styles.title}>Bạn muốn đi đâu?</Text>
+      <Text style={styles.body}>Tìm địa chỉ, chọn đúng địa điểm rồi xem tuyến đường. Không cần nhập tọa độ.</Text>
       <View style={styles.card}>
-        <Text style={styles.heading}>Chi tiết kế hoạch</Text>
-        <Text style={styles.body}>{active ? active.title : "Chọn phương án đã xác minh để xem chi tiết."}</Text>
+        <Text style={styles.heading}>Tìm đường</Text>
         {([
           { label: "Điểm xuất phát", query: originQuery, setQuery: setOriginQuery, selectedPlace: origin, setPlace: setOrigin, results: originResults },
           { label: "Điểm đến", query: destinationQuery, setQuery: setDestinationQuery, selectedPlace: destination, setPlace: setDestination, results: destinationResults },
@@ -90,27 +82,36 @@ export default function JourneyTab() {
               field.results?.status === "ready" && field.results.items.length === 0 ? <Text style={styles.body}>Không có kết quả phù hợp.</Text> :
               field.query.trim().length < 3 ? <Text style={styles.body}>Nhập ít nhất 3 ký tự để tìm địa điểm thật.</Text> : null}
             {field.results?.status === "ready" && !field.selectedPlace ? field.results.items.map(place =>
-              <Pressable key={place.id} accessibilityRole="button" onPress={() => { field.setPlace(place); field.setQuery(place.address); setRouteCheck(null); }} style={styles.result}>
+              <Pressable key={place.id} accessibilityRole="button" onPress={() => { field.setPlace(place); field.setQuery(place.name); setRouteCheck(null); setPlacesConfirmed(false); }} style={styles.result}>
                 <Text style={styles.heading}>{place.name}</Text>
                 <Text style={styles.body}>{place.address} · TomTom</Text>
               </Pressable>) : null}
           </View>
         ))}
-        {origin && destination ? <View style={styles.placeCard}>
-          <Text style={styles.heading}>Xác nhận địa điểm</Text>
-          <Text style={styles.body}>Đi: {origin.address}</Text>
-          <Text style={styles.body}>Đến: {destination.address}</Text>
-          <Pressable accessibilityRole="button" disabled={!active || confirming} style={styles.button} onPress={() => { void verifyRoute(); }}>
-            <Text style={styles.buttonText}>{!active ? "Chưa có phương án được xác minh" : confirming ? "Đang kiểm tra tuyến…" : "Xác nhận và kiểm tra tuyến"}</Text>
+        {origin && destination ? <View style={styles.confirmCard}>
+          <Text style={styles.heading}>Hai địa điểm đã chọn</Text>
+          <Text style={styles.body}>Từ: {origin.name}</Text>
+          <Text style={styles.body}>Đến: {destination.name}</Text>
+          <Pressable accessibilityRole="button" style={styles.button} disabled={confirming} onPress={() => { void verifyRoute(); }}>
+            <Text style={styles.buttonText}>{confirming ? "Đang tìm tuyến…" : "Xác nhận & tìm tuyến đường"}</Text>
           </Pressable>
-        </View> : <Text style={styles.hint}>Hãy chọn hai kết quả địa điểm thật để xác nhận. Không tự dùng vị trí thiết bị.</Text>}
-        {routeCheck ? <Text accessibilityRole="alert" style={styles.body}>{routeCheck.status === "loading" ? "Đang kiểm tra tuyến…" :
-          routeCheck.status === "route_found_unverified" ? "Đã tìm được tuyến, nhưng chưa đủ bằng chứng độc lập để bắt đầu hành trình." :
-          routeCheck.status === "error" ? "Không kiểm tra được tuyến: " + routeCheck.reason :
-          routeCheck.status === "timeout" ? "Hết thời gian kiểm tra tuyến." : "Chưa thể kiểm tra tuyến."}</Text> : null}
-        <View accessibilityRole="button" accessibilityState={{ disabled: true }} style={styles.disabled}>
-          <Text style={styles.disabledText}>Đi kế hoạch này · Chưa khả dụng</Text>
-        </View>
+        </View> : <Text style={styles.hint}>Chọn một kết quả thực cho mỗi địa điểm để tiếp tục.</Text>}
+        {routeCheck ? <View style={styles.result}>
+          <Text accessibilityRole="alert" style={styles.heading}>{routeCheck.status === "loading" ? "Đang tìm tuyến đường" : routeCheck.status === "route_found_unverified" ? "Đã tìm thấy tuyến đường" : "Chưa tìm được tuyến đường"}</Text>
+          <Text style={styles.body}>{routeCheck.status === "route_found_unverified" ?
+            `${(routeCheck.distanceMeters / 1000).toFixed(1)} km · ${Math.round(routeCheck.durationSeconds / 60)} phút · Nguồn: ${routeCheck.provider}. Chưa xác minh điều kiện giao thông thực tế.` :
+            routeCheck.status === "error" ? routeCheck.reason === "HTTP_503" ? "Dịch vụ định tuyến chưa được cấu hình. Bạn vẫn có thể tìm và chọn địa chỉ." : "Không thể tìm tuyến: " + routeCheck.reason :
+            routeCheck.status === "timeout" ? "Yêu cầu hết thời gian. Vui lòng thử lại." : routeCheck.status === "loading" ? "Đang lấy tuyến từ nhà cung cấp…" : "Chưa đủ điều kiện định tuyến."}</Text>
+        </View> : null}
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.heading}>Tình hình và phương án thông minh</Text>
+        <Text style={styles.body}>Thông tin giao thông thực tế được xác minh riêng, không ảnh hưởng đến việc tìm địa chỉ.</Text>
+        {state.status === "loading" ? <ActivityIndicator accessibilityLabel="Đang tải phương án" /> : null}
+        {state.status === "error" ? <Text style={styles.body}>Chưa tải được dữ liệu phương án.</Text> : null}
+        {state.status === "empty" || (state.status === "ready" && plans.length === 0) ? <Text style={styles.body}>Chưa có phương án được xác minh. Bạn vẫn có thể tìm đường phía trên.</Text> : null}
+        {plans.map(plan => <Pressable key={plan.id} accessibilityRole="button" onPress={() => setSelected(plan.id)} style={styles.result}><Text style={styles.heading}>{plan.title}</Text><Text style={styles.body}>{selected === plan.id ? "Đã chọn phương án" : "Xem phương án có bằng chứng"}</Text></Pressable>)}
+        <Text style={styles.hint}>Bắt đầu theo dõi hành trình chưa khả dụng cho đến khi có bằng chứng và kiểm thử an toàn đầy đủ.</Text>
       </View>
       <Pressable onPress={() => router.push("/(tabs)/map")} accessibilityRole="button" accessibilityLabel="Mở bản đồ" style={styles.button}>
         <Text style={styles.buttonText}>Xem bản đồ</Text>
@@ -121,6 +122,8 @@ export default function JourneyTab() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#071C2C" },
   content: { padding: 24, gap: 16, paddingBottom: 100 },
+  eyebrow: { color: "#F4C979", fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
+  confirmCard: { padding: 12, gap: 9, borderRadius: 12, backgroundColor: "#17364A" },
   title: { ...theme.typography.display, color: "#F4F4F0" },
   heading: { ...theme.typography.headline, color: "#F4F4F0" },
   body: { ...theme.typography.body, color: "#A9BFCE" },
