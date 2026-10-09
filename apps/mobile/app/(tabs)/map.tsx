@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocationPreference } from "../../src/infrastructure/location/LocationPreferenceContext";
-import { Linking, Platform } from "react-native";
+import { Linking, Platform, Modal } from "react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RealityMap } from "../../src/infrastructure/map/RealityMap";
@@ -11,6 +11,7 @@ export default function MapTab() {
   const { choice: locationChoice, hydrated, setChoice: setLocationChoice } = useLocationPreference();
   const location = useForegroundLocationLifecycle(hydrated && locationChoice === "ENABLE");
   const [cameraRevision, setCameraRevision] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
   const [following, setFollowing] = useState(true);
   const locationReady = location.status === "READY" || location.status === "DEGRADED";
   const [mapStyle, setMapStyle] = useState<"streets-v4" | "outdoor-v2" | "satellite">("streets-v4");
@@ -36,7 +37,7 @@ export default function MapTab() {
         <Text accessibilityRole="header" style={styles.title}>Bản đồ quanh bạn</Text>
         <Text style={styles.meta}>Bản đồ nền là dữ liệu địa lý, không phải báo cáo tình hình trực tiếp.</Text>
       </View>
-      {hydrated && locationChoice === "ASK" ? <View style={styles.permissionPanel}><Text style={styles.permissionTitle}>Bạn muốn bật định vị?</Text><Text style={styles.permissionBody}>Bật để xem vị trí và nhận ngữ cảnh quanh bạn. Không bật vẫn xem được bản đồ.</Text><View style={styles.permissionActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.permissionPrimary}><Text style={styles.permissionPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.permissionSecondary}><Text style={styles.permissionSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { if (Platform.OS !== "web") void Linking.openSettings(); }} style={styles.permissionPanel}><Text style={styles.permissionTitle}>{Platform.OS === "web" ? "Chưa có quyền vị trí · Kiểm tra quyền trang web trong trình duyệt" : "Chưa có quyền vị trí · Mở cài đặt"}</Text><Text style={styles.permissionBody}>Bạn vẫn có thể xem bản đồ mà không cấp quyền.</Text></Pressable> : null}
+      {hydrated && locationChoice === "ASK" ? <View style={styles.permissionPanel}><Text style={styles.permissionTitle}>Bạn muốn bật định vị?</Text><Text style={styles.permissionBody}>Bật để xem vị trí và nhận ngữ cảnh quanh bạn. Không bật vẫn xem được bản đồ.</Text><View style={styles.permissionActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.permissionPrimary}><Text style={styles.permissionPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.permissionSecondary}><Text style={styles.permissionSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { if (Platform.OS !== "web") void Linking.openSettings(); else setNotice("Trong Chrome, chọn biểu tượng bên trái địa chỉ trang → Quyền trang web → Vị trí. Sau khi cho phép, tải lại trang hoặc bật lại định vị trong mục Tôi."); }} style={styles.permissionPanel}><Text style={styles.permissionTitle}>{Platform.OS === "web" ? "Chưa có quyền vị trí · Kiểm tra quyền trang web trong trình duyệt" : "Chưa có quyền vị trí · Mở cài đặt"}</Text><Text style={styles.permissionBody}>Bạn vẫn có thể xem bản đồ mà không cấp quyền.</Text></Pressable> : null}
       <View style={styles.map}>
         <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} followCamera={following} camera={{ mode: "FOLLOW_USER", zoom: 14 }} mapStyleId={mapStyle} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
         <View style={styles.controls} pointerEvents="box-none">
@@ -54,18 +55,25 @@ export default function MapTab() {
           <Text style={styles.stateFoot}>{following ? "Camera theo vị trí khi khả dụng. Kéo bản đồ để khám phá tự do." : "Chế độ khám phá tự do. Chạm nút vị trí để theo lại."}</Text>
         </View>
       </View>
+      <Modal visible={notice !== null} transparent animationType="fade" onRequestClose={() => setNotice(null)}><View style={styles.modalBackdrop}><View style={styles.modalCard}><Text style={styles.modalTitle}>Thông báo</Text><Text style={styles.modalBody}>{notice}</Text><Pressable accessibilityRole="button" onPress={() => setNotice(null)} style={styles.modalButton}><Text style={styles.modalButtonText}>Đã hiểu</Text></Pressable></View></View></Modal>
     </View>
   );
 }
 const styles=StyleSheet.create({
-  root:{flex:1,backgroundColor:"#FFFFFF"},
-  permissionPanel:{marginHorizontal:16,marginBottom:10,padding:13,borderRadius:15,backgroundColor:"#EFF7F2",borderWidth:1,borderColor:"#D5E7DA"},
-  permissionTitle:{fontSize:14,fontWeight:"800",color:"#17382D"},permissionBody:{fontSize:12,lineHeight:18,color:"#526A60",marginTop:4},permissionActions:{flexDirection:"row",gap:10,marginTop:10},permissionPrimary:{minHeight:44,justifyContent:"center",paddingHorizontal:15,borderRadius:12,backgroundColor:"#287158"},permissionPrimaryText:{fontSize:13,fontWeight:"700",color:"#FFFFFF"},permissionSecondary:{minHeight:44,justifyContent:"center",paddingHorizontal:15,borderRadius:12,borderWidth:1,borderColor:"#B8D4C4"},permissionSecondaryText:{fontSize:13,fontWeight:"700",color:"#286F5A"},
+  modalBackdrop:{flex:1,backgroundColor:"rgba(0,0,0,.65)",justifyContent:"center",padding:24},
+  modalCard:{backgroundColor:"#102A3B",borderRadius:20,padding:22,gap:14,borderWidth:1,borderColor:"#345569"},
+  modalTitle:{fontSize:20,fontWeight:"800",color:"#F4C979"},
+  modalBody:{fontSize:14,lineHeight:22,color:"#F4F4F0"},
+  modalButton:{minHeight:48,backgroundColor:"#F4C979",borderRadius:12,justifyContent:"center",alignItems:"center"},
+  modalButtonText:{fontSize:14,fontWeight:"800",color:"#071C2C"},
+  root:{flex:1,backgroundColor:"#071C2C"},
+  permissionPanel:{marginHorizontal:16,marginBottom:10,padding:13,borderRadius:15,backgroundColor:"#17364A",borderWidth:1,borderColor:"#345569"},
+  permissionTitle:{fontSize:14,fontWeight:"800",color:"#F4F4F0"},permissionBody:{fontSize:12,lineHeight:18,color:"#BED0DD",marginTop:4},permissionActions:{flexDirection:"row",gap:10,marginTop:10},permissionPrimary:{minHeight:44,justifyContent:"center",paddingHorizontal:15,borderRadius:12,backgroundColor:"#F4C979"},permissionPrimaryText:{fontSize:13,fontWeight:"700",color:"#FFFFFF"},permissionSecondary:{minHeight:44,justifyContent:"center",paddingHorizontal:15,borderRadius:12,borderWidth:1,borderColor:"#B8D4C4"},permissionSecondaryText:{fontSize:13,fontWeight:"700",color:"#F4C979"},
   header:{paddingHorizontal:18,paddingVertical:14},
-  eyebrow:{fontSize:11,fontWeight:"800",letterSpacing:1.2,color:"#287158"},
-  title:{fontSize:26,lineHeight:33,fontWeight:"800",color:"#172C27",marginTop:3},
-  meta:{fontSize:12,lineHeight:18,color:"#536A64",marginTop:4},
-  map:{flex:1,overflow:"hidden",borderTopWidth:1,borderTopColor:"#E1EAE5"},
+  eyebrow:{fontSize:11,fontWeight:"800",letterSpacing:1.2,color:"#F4C979"},
+  title:{fontSize:26,lineHeight:33,fontWeight:"800",color:"#F4F4F0",marginTop:3},
+  meta:{fontSize:12,lineHeight:18,color:"#BED0DD",marginTop:4},
+  map:{flex:1,overflow:"hidden",borderTopWidth:1,borderTopColor:"#345569"},
   controls:{position:"absolute",right:14,top:16,gap:8},
   controlButton:{minHeight:48,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:14,borderRadius:15,backgroundColor:"#FFFFFF",borderWidth:1,borderColor:"#DCE9E2",elevation:3},
   disabled:{opacity:.5},
