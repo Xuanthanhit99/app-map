@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { TomTomRoutingProvider } from "./tomtom-routing-provider";
 import { handleRoutingRequest } from "./routing-http-handler";
+import { handleRealityDecisionRead } from "./reality-decision-read";
 
 const port = Number(process.env.PORT ?? 3001);
 const key = process.env.TOMTOM_API_KEY;
@@ -9,6 +10,7 @@ if (!key) throw new Error("TOMTOM_API_KEY is required");
 const primary = new TomTomRoutingProvider(key);
 
 createServer(async (request, response) => {
+  if (handleRealityDecisionRead(request, response)) return;
   if (request.method !== "POST" || request.url !== "/v1/routing/route") {
     response.writeHead(404, { "content-type": "application/json" });
     response.end(JSON.stringify({ error: "NOT_FOUND" }));
