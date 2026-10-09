@@ -7,7 +7,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const html = await readFile(resolve(here, "index.html"));
 const out = resolve(here, "evidence", "desktop-v2-1536.png");
 const server = createServer(async (request, response) => {
-  if (request.url === "/state-engine.mjs" || request.url === "/desktop-map.mjs") {
+  if (request.url === "/state-engine.mjs" || request.url === "/desktop-map.mjs" || request.url === "/reality-client.mjs") {
     response.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8" });
     response.end(await readFile(resolve(here, request.url.slice(1))));
     return;
