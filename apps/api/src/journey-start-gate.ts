@@ -16,3 +16,16 @@ export function canStartJourney(plan: DecisionPlan | null | undefined, route: Ve
   return evaluateEvidence(plan.evidence, now).safeToAssert &&
     evaluateEvidence(route.evidence, now).safeToAssert;
 }
+
+/** Routing gateway SUCCESS is necessary but not sufficient: route evidence must be independently sourced. */
+export function canStartWithRoutingResult(
+  plan: DecisionPlan | null | undefined,
+  route: VerifiedRoute | null | undefined,
+  routingResult: import("../../../src/routing/routing-contract").RoutingResult | null | undefined,
+  now = Date.now(),
+): boolean {
+  if (!canStartJourney(plan, route, now) || !routingResult || routingResult.status !== "SUCCESS") return false;
+  return Boolean(routingResult.provider.trim()) &&
+    Number.isFinite(routingResult.distanceMeters) && routingResult.distanceMeters > 0 &&
+    Number.isFinite(routingResult.durationSeconds) && routingResult.durationSeconds > 0;
+}
