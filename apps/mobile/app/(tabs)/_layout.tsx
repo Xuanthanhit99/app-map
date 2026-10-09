@@ -3,16 +3,16 @@ import { Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 function TabIcon({ name, focused }: { name: ComponentProps<typeof Ionicons>["name"]; focused: boolean }) {
-  return <Ionicons name={name} size={22} color={focused ? "#1B7155" : "#82938B"} />;
+  return <Ionicons name={name} size={22} color={focused ? "#F4C979" : "#9AB0C0"} />;
 }
 
 export default function TabsLayout() {
   return (
     <Tabs screenOptions={{
       headerShown: false,
-      tabBarActiveTintColor: "#1B7155",
-      tabBarInactiveTintColor: "#82938B",
-      tabBarStyle: { minHeight: 68, paddingTop: 8, paddingBottom: 8, backgroundColor: "#FFFFFF", borderTopWidth: 1, borderTopColor: "#DDE9E2" },
+      tabBarActiveTintColor: "#F4C979",
+      tabBarInactiveTintColor: "#9AB0C0",
+      tabBarStyle: { minHeight: 68, paddingTop: 8, paddingBottom: 8, backgroundColor: "#071C2C", borderTopWidth: 1, borderTopColor: "#284357" },
       tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
     }}>
       <Tabs.Screen name="index" options={{ title: "Khám phá", tabBarAccessibilityLabel: "Khám phá", tabBarIcon: ({ focused }) => <TabIcon name="compass-outline" focused={focused} /> }} />
