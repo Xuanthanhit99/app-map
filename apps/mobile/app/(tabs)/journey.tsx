@@ -1,24 +1,70 @@
+import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { getRealityDecisionCollection, type ApiCollection } from "../../src/infrastructure/api/realityDecisionClient";
 import { theme } from "../../src/ui/theme";
+
+type PlanItem = { id: string; title?: string; stops?: { placeId: string }[]; evidence?: { truth?: string; source?: string; observedAt?: string; provenanceId?: string } };
+type ScreenState = ApiCollection<PlanItem> | { status: "loading"; items: [] };
+
+function isVerified(plan: PlanItem): boolean {
+  const e = plan.evidence;
+  const observed = typeof e?.observedAt === "string" ? Date.parse(e.observedAt) : NaN;
+  return typeof plan.title === "string" && plan.title.trim().length > 0 &&
+    Array.isArray(plan.stops) && plan.stops.length > 0 &&
+    plan.stops.every(stop => typeof stop?.placeId === "string" && stop.placeId.length > 0) &&
+    e?.truth === "KNOWN" && Boolean(e.source?.trim()) && Boolean(e.provenanceId?.trim()) &&
+    Number.isFinite(observed) && observed <= Date.now() && Date.now() - observed <= 300000;
+}
 
 export default function JourneyTab() {
   const router = useRouter();
+  const [state, setState] = useState<ScreenState>({ status: "loading", items: [] });
+  const [selected, setSelected] = useState<string | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    getRealityDecisionCollection(process.env.EXPO_PUBLIC_API_BASE_URL, "decision").then(result => {
+      if (mounted) setState(result);
+    });
+    return () => { mounted = false; };
+  }, []);
+  const plans = state.status === "ready" ? state.items.filter(isVerified) : [];
+  const active = plans.find(plan => plan.id === selected);
   return (
-    <View style={styles.root}>
-      <Text accessibilityRole="header" style={styles.title}>Hành trình</Text>
-      <Text style={styles.body}>Chọn điểm đến và kiểm tra tình hình phía trước trước khi bắt đầu di chuyển. Không có hành trình giả được tạo khi chưa có tuyến đường xác minh.</Text>
-      <Pressable onPress={() => router.push("/(tabs)/map")} accessibilityRole="button" accessibilityLabel="Mở bản đồ để chọn điểm đến" style={styles.button}>
-
-          <Text style={styles.buttonText}>Chọn điểm đến trên bản đồ</Text>
+    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+      <Text accessibilityRole="header" style={styles.title}>Quyết định & hành trình</Text>
+      <Text style={styles.body}>Chỉ hiển thị phương án có nguồn, thời gian quan sát và bằng chứng hợp lệ.</Text>
+      {state.status === "loading" ? <ActivityIndicator accessibilityLabel="Đang tải phương án" /> : null}
+      {state.status === "error" ? <Text accessibilityRole="alert" style={styles.body}>Không tải được phương án. Kiểm tra kết nối và thử lại.</Text> : null}
+      {state.status === "empty" || (state.status === "ready" && plans.length === 0) ?
+        <View style={styles.card}><Text style={styles.heading}>Chưa có phương án được xác minh</Text><Text style={styles.body}>Không tự tạo ba kế hoạch khi thiếu dữ liệu hoặc ngữ cảnh.</Text></View> : null}
+      {plans.map(plan => <Pressable key={plan.id} accessibilityRole="button" accessibilityLabel={`Xem phương án ${plan.title}`} onPress={() => setSelected(plan.id)} style={styles.card}>
+        <Text style={styles.heading}>{plan.title}</Text>
+        <Text style={styles.body}>KNOWN · FRESH · {plan.stops?.length ?? 0} điểm dừng</Text>
+      </Pressable>)}
+      <View style={styles.card}>
+        <Text style={styles.heading}>Chi tiết kế hoạch</Text>
+        <Text style={styles.body}>{active ? active.title : "Chọn phương án đã xác minh để xem chi tiết."}</Text>
+        <Text style={styles.body}>Chưa có tuyến đường độc lập được xác minh. Không thể bắt đầu hành trình.</Text>
+        <View accessibilityRole="button" accessibilityState={{ disabled: true }} style={styles.disabled}>
+          <Text style={styles.disabledText}>Đi kế hoạch này · Chưa khả dụng</Text>
+        </View>
+      </View>
+      <Pressable onPress={() => router.push("/(tabs)/map")} accessibilityRole="button" accessibilityLabel="Mở bản đồ" style={styles.button}>
+        <Text style={styles.buttonText}>Xem bản đồ</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
-const styles=StyleSheet.create({
-  root:{flex:1,justifyContent:"center",padding:24,gap:16,backgroundColor:theme.color.background},
-  title:{...theme.typography.display,color:theme.color.textPrimary},
-  body:{...theme.typography.body,color:theme.color.textSecondary},
-  button:{minHeight:56,justifyContent:"center",alignItems:"center",borderRadius:theme.radius.control,backgroundColor:theme.color.brand[800],paddingHorizontal:20},
-  buttonText:{...theme.typography.headline,color:"#FFFFFF"}
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: theme.color.background },
+  content: { padding: 24, gap: 16, paddingBottom: 100 },
+  title: { ...theme.typography.display, color: theme.color.textPrimary },
+  heading: { ...theme.typography.headline, color: theme.color.textPrimary },
+  body: { ...theme.typography.body, color: theme.color.textSecondary },
+  card: { padding: 18, borderRadius: theme.radius.control, backgroundColor: "#FFFFFF", gap: 10 },
+  disabled: { minHeight: 52, justifyContent: "center", alignItems: "center", borderRadius: theme.radius.control, backgroundColor: "#D1D5DB", paddingHorizontal: 16 },
+  disabledText: { ...theme.typography.headline, color: "#4B5563" },
+  button: { minHeight: 56, justifyContent: "center", alignItems: "center", borderRadius: theme.radius.control, backgroundColor: theme.color.brand[800], paddingHorizontal: 20 },
+  buttonText: { ...theme.typography.headline, color: "#FFFFFF" },
 });
