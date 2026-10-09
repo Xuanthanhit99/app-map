@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canStartJourney } from "../apps/api/src/journey-start-gate";
+import { canStartJourney, canStartWithRoutingResult } from "../apps/api/src/journey-start-gate";
 import type { DecisionPlan } from "../apps/api/src/decision-engine";
 
 const now = Date.parse("2026-10-09T04:00:00Z");
@@ -23,5 +23,12 @@ describe("journey start gate", () => {
   });
   it("accepts only independently verified plan and matching route", () => {
     expect(canStartJourney(plan, route, now)).toBe(true);
+  });
+  it("requires routing SUCCESS with positive distance and duration", () => {
+    const success = { status: "SUCCESS" as const, provider: "verified-routing", distanceMeters: 1200, durationSeconds: 900, route: { coordinates: [] } as never };
+    expect(canStartWithRoutingResult(plan, route, null, now)).toBe(false);
+    expect(canStartWithRoutingResult(plan, route, { status: "FAILURE", reason: "NO_ROUTE", retryable: false, provider: "verified-routing" }, now)).toBe(false);
+    expect(canStartWithRoutingResult(plan, route, { ...success, distanceMeters: 0 }, now)).toBe(false);
+    expect(canStartWithRoutingResult(plan, route, success, now)).toBe(true);
   });
 });
