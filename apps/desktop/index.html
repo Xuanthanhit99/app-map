@@ -36,7 +36,7 @@ document.querySelectorAll(".pulse small").forEach((element) => {
   element.dataset.truth = evidence.truth;
   element.setAttribute("aria-label", `Trạng thái ${evidence.truth}: ${element.textContent}`);
 });
-for (const selector of [".plan-list", ".story-list", ".opportunities"]) {
+for (const selector of [".story-list", ".opportunities"]) {
   const element = document.querySelector(selector);
   if (element) element.dataset.collectionStatus = resolveCollection({ status: "ready", items: [] }).status;
 }
