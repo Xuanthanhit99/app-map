@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { verifySelectedPlanRoute } from "../apps/desktop/route-verification-client.mjs";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { verifySelectedPlanRoute } = require("../apps/desktop/route-verification-client.mjs") as { verifySelectedPlanRoute: (input: Record<string, unknown>) => Promise<{ status: string; reason?: string; canStart?: boolean }> };
 
 const input = { baseUrl: "http://127.0.0.1:3001", plan: { id: "plan-1" }, origin: [105.8, 21.0], destination: [105.9, 21.1] };
 describe("Desktop route verification", () => {
