@@ -22,7 +22,20 @@ try {
   const browser = await chromium.launch({ headless: true });
   try {
     const page = await browser.newPage({ viewport: { width: 1536, height: 1024 }, deviceScaleFactor: 1 });
-    await page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: "load" });
+    const apiBase = process.env.DESKTOP_API_BASE_URL || "";
+    const apiRequests = [];
+    const apiResponses = [];
+    page.on("request", (request) => { if (/\/v1\/(reality\/pulses|decision\/plans)$/.test(new URL(request.url()).pathname)) apiRequests.push(request.url()); });
+    page.on("response", (response) => { if (/\/v1\/(reality\/pulses|decision\/plans)$/.test(new URL(response.url()).pathname)) apiResponses.push({ url: response.url(), status: response.status() }); });
+    const pageUrl = new URL(`http://127.0.0.1:${server.address().port}/`);
+    if (apiBase) pageUrl.searchParams.set("api", apiBase);
+    await page.goto(pageUrl.toString(), { waitUntil: "load" });
+    await page.waitForFunction(() => ["empty", "error", "ready"].includes(document.querySelector(".pulse-stack")?.dataset.collectionStatus) && ["empty", "error", "ready"].includes(document.querySelector(".plan-list")?.dataset.collectionStatus), null, { timeout: 12000 });
+    const collectionStates = await page.evaluate(() => ({ reality: document.querySelector(".pulse-stack")?.dataset.collectionStatus, decision: document.querySelector(".plan-list")?.dataset.collectionStatus }));
+    console.log("Desktop API states:", JSON.stringify(collectionStates));
+    console.log("Desktop API requests:", JSON.stringify(apiRequests));
+    console.log("Desktop API responses:", JSON.stringify(apiResponses));
+    if (apiBase && (apiRequests.length !== 2 || apiResponses.length !== 2 || apiResponses.some((r) => r.status !== 200) || collectionStates.reality !== "empty" || collectionStates.decision !== "empty")) throw new Error("Desktop API empty-state integration gate failed");
     await page.waitForFunction(() => {
       const status = document.querySelector("[data-map-status]")?.textContent || "";
       return status.includes("Không tải") || status.includes("chưa khả dụng") || status.includes("Bản đồ nền ·");
