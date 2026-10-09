@@ -13,10 +13,12 @@
 import { resolveEvidence, resolveCollection } from "./state-engine.mjs";
 import { mountDesktopMap } from "./desktop-map.mjs";
 import { loadReality, loadDecisionPlans } from "./reality-client.mjs";
+import { verifySelectedPlanRoute } from "./route-verification-client.mjs";
 void mountDesktopMap(document.getElementById("map"));
 const apiBase = new URLSearchParams(location.search).get("api") || "";
 const realityStatus = document.querySelector(".pulse-stack");
 const decisionStatus = document.querySelector(".plan-list");
+let activeRouteController = null;
 if (realityStatus) realityStatus.dataset.collectionStatus = "loading";
 if (decisionStatus) decisionStatus.dataset.collectionStatus = "loading";
 Promise.all([loadReality(apiBase), loadDecisionPlans(apiBase)]).then(([reality, plans]) => {
@@ -44,11 +46,17 @@ Promise.all([loadReality(apiBase), loadDecisionPlans(apiBase)]).then(([reality, 
       const heading = inspector?.querySelector("h3");
       const explanation = inspector?.querySelector("p");
       const meta = inspector?.querySelector(".meta");
-      const choose = (plan, element) => {
+      const choose = async (plan, element) => {
+        activeRouteController?.abort();
+        const controller = new AbortController();
+        activeRouteController = controller;
         decisionStatus.querySelectorAll(".plan").forEach(node => node.classList.remove("selected"));
         element.classList.add("selected");
         if (heading) heading.textContent = plan.title;
-        if (explanation) explanation.textContent = "Địa điểm có provenance; chưa có tuyến đường độc lập được xác minh.";
+        if (explanation) explanation.textContent = "Đang kiểm tra điều kiện tuyến đường…";
+        const route = await verifySelectedPlanRoute({ baseUrl: apiBase, plan, origin: null, destination: null, signal: controller.signal });
+        if (controller.signal.aborted) return;
+        if (explanation) explanation.textContent = route.reason === "ORIGIN_REQUIRED" ? "Cần điểm xuất phát do bạn chọn để kiểm tra tuyến đường." : route.status === "timeout" ? "Hết thời gian kiểm tra tuyến đường." : route.status === "error" ? "Không thể xác minh tuyến đường." : "Chưa có tuyến đường độc lập được xác minh.";
         if (meta) meta.textContent = "KNOWN · FRESH · Chưa đủ điều kiện bắt đầu hành trình";
       };
       for (const plan of plans.items) {
