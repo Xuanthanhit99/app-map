@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { getRealityDecisionCollection, type ApiCollection } from "../../infrastructure/api/realityDecisionClient";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocationPreference } from "../../infrastructure/location/LocationPreferenceContext";
 import { useRouter } from "expo-router";
@@ -9,6 +11,20 @@ import { getWorldPulseDevelopmentFixtures } from "./worldPulseDevelopmentFixture
 
 export function RealityHomeScreen() {
   const insets = useSafeAreaInsets();
+  const [realityApi, setRealityApi] = useState<ApiCollection<{ id: string }>>({ status: "empty", items: [], reason: "API_NOT_CONFIGURED" });
+  const [decisionApi, setDecisionApi] = useState<ApiCollection<{ id: string }>>({ status: "empty", items: [], reason: "API_NOT_CONFIGURED" });
+  const [apiLoading, setApiLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    const base = process.env.EXPO_PUBLIC_API_BASE_URL;
+    Promise.all([getRealityDecisionCollection(base, "reality"), getRealityDecisionCollection(base, "decision")]).then(([reality, decision]) => {
+      if (!active) return;
+      setRealityApi(reality);
+      setDecisionApi(decision);
+      setApiLoading(false);
+    });
+    return () => { active = false; };
+  }, []);
   const router = useRouter();
   const { choice: locationChoice, hydrated, setChoice: setLocationChoice } = useLocationPreference();
   const location = useForegroundLocationLifecycle(hydrated && locationChoice === "ENABLE");
@@ -30,8 +46,9 @@ export function RealityHomeScreen() {
         {hydrated && locationChoice === "ASK" ? <View style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị là tùy chọn</Text><Text style={styles.consentBody}>Bật để xem ngữ cảnh quanh bạn. Bạn vẫn có thể khám phá khi không bật.</Text><View style={styles.consentActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.consentPrimary}><Text style={styles.consentPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.consentSecondary}><Text style={styles.consentSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị bị từ chối · Mở cài đặt</Text><Text style={styles.consentBody}>Không cấp quyền vẫn sử dụng được các tính năng khám phá.</Text></Pressable> : null}
         <View style={styles.sectionHead}>
           <View><Text style={styles.sectionTitle}>Reality Pulse</Text><Text style={styles.sectionMeta}>Tín hiệu quan trọng được ưu tiên theo tác động</Text></View>
-          <Text style={styles.freshness}>Minh họa</Text>
+          <Text style={styles.freshness}>{apiLoading ? "Đang tải" : realityApi.status === "error" ? "Lỗi kết nối" : realityApi.status === "empty" ? "Chưa có dữ liệu xác minh" : "Có dữ liệu API"}</Text>
         </View>
+        <Text accessibilityRole="text" style={styles.sectionMeta}>{apiLoading ? "Đang kiểm tra tín hiệu từ API…" : realityApi.status === "error" ? "Không tải được tín hiệu. Hãy kiểm tra kết nối." : realityApi.status === "empty" ? "API chưa có tín hiệu đủ điều kiện hiển thị LIVE." : "API đã có tín hiệu; cần kiểm chứng provenance trước khi hiển thị."}</Text>
         {pulses.length ? <View style={styles.pulseStack}>
           {pulses.map((pulse, index) => <View key={pulse.id} style={[styles.pulseCard, index === 0 ? styles.primaryPulse : styles.secondaryPulse]}>
             <View style={[styles.pulseCue, pulse.tone === "caution" && styles.cueCaution, pulse.tone === "uncertainty" && styles.cueUncertainty]}><Text style={styles.pulseCueText}>{pulse.kind === "ROAD" ? "R" : "P"}</Text></View>
@@ -62,7 +79,7 @@ export function RealityHomeScreen() {
         <View style={styles.decideCard}>
           <Text style={styles.eyebrow}>DECIDE</Text>
           <Text style={styles.decideTitle}>Bạn muốn làm gì lúc này?</Text>
-          <Text style={styles.decideBody}>Nói tình huống của bạn. Reality sẽ được dùng để chọn ít phương án phù hợp thay vì đưa một danh sách địa điểm dài.</Text>
+          <Text style={styles.decideBody}>{apiLoading ? "Đang kiểm tra phương án…" : decisionApi.status === "error" ? "Không kết nối được Decision API." : decisionApi.status === "empty" ? "Chưa có phương án được xác minh. Không tạo kế hoạch khi thiếu dữ liệu." : "Đã nhận dữ liệu API; chờ kiểm chứng điều kiện và provenance."}</Text>
           <View style={styles.intentRow}>
             {["Ăn", "Thư giãn", "Hẹn hò", "Khám phá"].map((x) => <View key={x} style={styles.intent}><Text style={styles.intentText}>{x}</Text></View>)}
           </View>
