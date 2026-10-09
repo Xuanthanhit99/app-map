@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocationPreference } from "../../src/infrastructure/location/LocationPreferenceContext";
-import { Linking } from "react-native";
+import { Linking, Platform } from "react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RealityMap } from "../../src/infrastructure/map/RealityMap";
@@ -36,13 +36,13 @@ export default function MapTab() {
         <Text accessibilityRole="header" style={styles.title}>Bản đồ quanh bạn</Text>
         <Text style={styles.meta}>Bản đồ nền là dữ liệu địa lý, không phải báo cáo tình hình trực tiếp.</Text>
       </View>
-      {hydrated && locationChoice === "ASK" ? <View style={styles.permissionPanel}><Text style={styles.permissionTitle}>Bạn muốn bật định vị?</Text><Text style={styles.permissionBody}>Bật để xem vị trí và nhận ngữ cảnh quanh bạn. Không bật vẫn xem được bản đồ.</Text><View style={styles.permissionActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.permissionPrimary}><Text style={styles.permissionPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.permissionSecondary}><Text style={styles.permissionSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.permissionPanel}><Text style={styles.permissionTitle}>Chưa có quyền vị trí · Mở cài đặt</Text><Text style={styles.permissionBody}>Bạn vẫn có thể xem bản đồ mà không cấp quyền.</Text></Pressable> : null}
+      {hydrated && locationChoice === "ASK" ? <View style={styles.permissionPanel}><Text style={styles.permissionTitle}>Bạn muốn bật định vị?</Text><Text style={styles.permissionBody}>Bật để xem vị trí và nhận ngữ cảnh quanh bạn. Không bật vẫn xem được bản đồ.</Text><View style={styles.permissionActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.permissionPrimary}><Text style={styles.permissionPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.permissionSecondary}><Text style={styles.permissionSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { if (Platform.OS !== "web") void Linking.openSettings(); }} style={styles.permissionPanel}><Text style={styles.permissionTitle}>{Platform.OS === "web" ? "Chưa có quyền vị trí · Kiểm tra quyền trang web trong trình duyệt" : "Chưa có quyền vị trí · Mở cài đặt"}</Text><Text style={styles.permissionBody}>Bạn vẫn có thể xem bản đồ mà không cấp quyền.</Text></Pressable> : null}
       <View style={styles.map}>
         <RealityMap key={cameraRevision} mode="FULL" location={location} onUserGesture={() => setFollowing(false)} followCamera={following} camera={{ mode: "FOLLOW_USER", zoom: 14 }} mapStyleId={mapStyle} accessibilityLabel="Bản đồ địa lý. Chưa có marker tình hình được xác minh." />
         <View style={styles.controls} pointerEvents="box-none">
-          <Pressable accessibilityRole="button" accessibilityLabel="Đổi kiểu bản đồ" onPress={() => setMapStyle((current) => current === "streets-v4" ? "outdoor-v2" : current === "outdoor-v2" ? "satellite" : "streets-v4")} style={styles.controlButton}>
+          {Platform.OS !== "web" ? <Pressable accessibilityRole="button" accessibilityLabel="Đổi kiểu bản đồ" onPress={() => setMapStyle((current) => current === "streets-v4" ? "outdoor-v2" : current === "outdoor-v2" ? "satellite" : "streets-v4")} style={styles.controlButton}>
             <Text style={styles.controlText}>Lớp nền: {mapStyle === "streets-v4" ? "Đường phố" : mapStyle === "outdoor-v2" ? "Địa hình" : "Vệ tinh"}</Text>
-          </Pressable>
+          </Pressable> : null}
           <Pressable accessibilityRole="button" accessibilityLabel="Đưa bản đồ về vị trí hiện tại" accessibilityState={{ disabled: !locationReady }} disabled={!locationReady} onPress={() => { setFollowing(true); setCameraRevision((n) => n + 1); }} style={[styles.controlButton, !locationReady && styles.disabled]}>
             <Text style={styles.controlSymbol}>◎</Text>
             <Text style={styles.controlText}>{following ? "Đang theo vị trí" : "Về vị trí của tôi"}</Text>
