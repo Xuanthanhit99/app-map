@@ -3,6 +3,8 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { getRealityDecisionCollection, type ApiCollection } from "../../src/infrastructure/api/realityDecisionClient";
 import { theme } from "../../src/ui/theme";
+import { RealityMap } from "../../src/infrastructure/map/RealityMap";
+import { useForegroundLocationLifecycle } from "../../src/infrastructure/location/useForegroundLocationLifecycle";
 import { searchPlaces, type PlaceResult, type PlaceSearch } from "../../src/infrastructure/api/placeSearchClient";
 import { checkPlanRoute, type RouteCheck } from "../../src/infrastructure/api/routeVerificationClient";
 
