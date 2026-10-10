@@ -22,6 +22,7 @@ function isVerified(plan: PlanItem): boolean {
 
 export default function JourneyTab() {
   const router = useRouter();
+  const mapLocation = useForegroundLocationLifecycle(false);
   const [state, setState] = useState<ScreenState>({ status: "loading", items: [] });
   const [selected, setSelected] = useState<string | null>(null);
   const [originQuery, setOriginQuery] = useState("");
@@ -113,6 +114,16 @@ export default function JourneyTab() {
             routeCheck.status === "timeout" ? "Yêu cầu hết thời gian. Vui lòng thử lại." : routeCheck.status === "loading" ? "Đang lấy tuyến từ nhà cung cấp…" : "Chưa đủ điều kiện định tuyến."}</Text>
         </View> : null}
       </View>
+      {origin || destination ? <View style={styles.routeMapCard}>
+        <Text style={styles.heading}>Bản đồ hành trình</Text>
+        <View style={styles.routeMap}>
+          <RealityMap location={mapLocation} camera={{mode:"FOLLOW_ROUTE",padding:32}} followCamera={false}
+            route={routeCheck?.status === "route_found_unverified" ? routeCheck.route : undefined}
+            markers={[...(origin ? [{id:"origin",coordinate:origin.coordinate}] : []),...(destination ? [{id:"destination",coordinate:destination.coordinate}] : [])]}
+            accessibilityLabel="Bản đồ điểm xuất phát, điểm đến và tuyến đường do nhà cung cấp trả về" />
+        </View>
+        {routeCheck?.status === "route_found_unverified" && !routeCheck.route ? <Text style={styles.hint}>Nhà cung cấp chưa trả geometry hợp lệ. Không hiển thị tuyến đường suy đoán.</Text> : null}
+      </View> : null}
       <View style={styles.card}>
         <Text style={styles.heading}>Tình hình và phương án thông minh</Text>
         <Text style={styles.body}>Thông tin giao thông thực tế được xác minh riêng, không ảnh hưởng đến việc tìm địa chỉ.</Text>
@@ -130,6 +141,8 @@ export default function JourneyTab() {
 }
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#071C2C" },
+  routeMapCard:{padding:14,gap:10,borderRadius:16,backgroundColor:"#102A3B"},
+  routeMap:{height:340,overflow:"hidden",borderRadius:12},
   swapButton:{minHeight:48,justifyContent:"center",alignItems:"center",borderRadius:12,borderWidth:1,borderColor:"#36556A"},
   swapText:{fontSize:13,fontWeight:"700",color:"#F4C979"},
   modes:{flexDirection:"row",gap:8},
