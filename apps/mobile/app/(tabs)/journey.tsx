@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { getRealityDecisionCollection, type ApiCollection } from "../../src/infrastructure/api/realityDecisionClient";
@@ -35,6 +35,11 @@ export default function JourneyTab() {
   const [destinationResults, setDestinationResults] = useState<PlaceSearch | null>(null);
   const [routeCheck, setRouteCheck] = useState<RouteCheck | { status: "loading" } | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [screenMode, setScreenMode] = useState<"SEARCH" | "ROUTE_PREVIEW">("SEARCH");
+  const [editingRoute, setEditingRoute] = useState(false);
+  const requestEpoch = useRef(0);
+  const invalidateRoute = () => { requestEpoch.current += 1; setRouteCheck(null); setConfirming(false); };
+  const validRoute = routeCheck?.status === "route_found_unverified" && routeCheck.route?.source === "ROUTING_ENGINE" && routeCheck.route.coordinates.length >= 2;
   const [mode, setMode] = useState<"DRIVING" | "WALKING" | "CYCLING">("DRIVING");
   useEffect(() => {
     if (origin || originQuery.trim().length < 3) { setOriginResults(null); return; }
@@ -50,11 +55,14 @@ export default function JourneyTab() {
   }, [destinationQuery, destination]);
   async function verifyRoute() {
     if (!origin || !destination) return;
+    const epoch = ++requestEpoch.current;
     setConfirming(true);
     setRouteCheck({ status: "loading" });
     const result = await checkPlanRoute({ baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL, planId: active?.id ?? "manual-route", origin: origin.coordinate, destination: destination.coordinate, mode });
+    if (epoch !== requestEpoch.current) return;
     setRouteCheck(result);
     setConfirming(false);
+    if (result.status === "route_found_unverified" && result.route?.source === "ROUTING_ENGINE" && result.route.coordinates.length >= 2) { setScreenMode("ROUTE_PREVIEW"); setEditingRoute(false); }
   }
   useEffect(() => {
     let mounted = true;
@@ -65,8 +73,27 @@ export default function JourneyTab() {
   }, []);
   const plans = state.status === "ready" ? state.items.filter(isVerified) : [];
   const active = plans.find(plan => plan.id === selected);
+  if (screenMode === "ROUTE_PREVIEW" && validRoute && !editingRoute) return (
+    <View style={styles.previewRoot}>
+      <View style={styles.previewHeader}>
+        <Pressable accessibilityRole="button" onPress={() => { setScreenMode("SEARCH"); setEditingRoute(false); }} style={styles.previewAction}><Text style={styles.previewActionText}>← Tìm đường</Text></Pressable>
+        <View style={{flex:1}}>
+          <Text numberOfLines={1} style={styles.heading}>{origin?.name} → {destination?.name}</Text>
+          <Text style={styles.body}>{Math.round(routeCheck.durationSeconds / 60)} phút · {(routeCheck.distanceMeters / 1000).toFixed(1)} km · {mode === "DRIVING" ? "Ô tô" : mode === "WALKING" ? "Đi bộ" : "Xe đạp"}</Text>
+          <Text style={styles.hint}>Nguồn: {routeCheck.provider}. Chưa xác minh điều kiện giao thông thực tế.</Text>
+        </View>
+        <Pressable accessibilityRole="button" onPress={() => setEditingRoute(true)} style={styles.previewAction}><Text style={styles.previewActionText}>Chỉnh sửa</Text></Pressable>
+      </View>
+      <View style={styles.previewMap}>
+        <RealityMap location={mapLocation} camera={{mode:"FOLLOW_ROUTE",padding:32}} followCamera={false}
+          route={routeCheck.route} markers={[...(origin ? [{id:"origin",coordinate:origin.coordinate}] : []),...(destination ? [{id:"destination",coordinate:destination.coordinate}] : [])]}
+          accessibilityLabel="Bản đồ lớn hiển thị tuyến TomTom và hai địa điểm" />
+      </View>
+    </View>
+  );
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+      {screenMode === "ROUTE_PREVIEW" && editingRoute ? <Pressable accessibilityRole="button" onPress={() => setEditingRoute(false)} style={styles.previewAction}><Text style={styles.previewActionText}>← Quay lại bản đồ</Text></Pressable> : null}
       <Text style={styles.eyebrow}>JOURNEY</Text>
       <Text accessibilityRole="header" style={styles.title}>Bạn muốn đi đâu?</Text>
       <Text style={styles.body}>Tìm địa chỉ, chọn đúng địa điểm rồi xem tuyến đường. Không cần nhập tọa độ.</Text>
@@ -143,6 +170,11 @@ export default function JourneyTab() {
 }
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#071C2C" },
+  previewRoot: { flex: 1, backgroundColor: "#071C2C" },
+  previewHeader: { padding: 12, flexDirection: "row", gap: 10, alignItems: "center", backgroundColor: "#102A3B" },
+  previewAction: { minHeight: 44, paddingHorizontal: 10, justifyContent: "center", borderRadius: 10, borderWidth: 1, borderColor: "#577084" },
+  previewActionText: { color: "#F4C979", fontWeight: "700", fontSize: 12 },
+  previewMap: { flex: 1, minHeight: 340 },
   routeMapCard:{padding:14,gap:10,borderRadius:16,backgroundColor:"#102A3B"},
   routeMap:{height:340,overflow:"hidden",borderRadius:12},
   swapButton:{minHeight:48,justifyContent:"center",alignItems:"center",borderRadius:12,borderWidth:1,borderColor:"#36556A"},
