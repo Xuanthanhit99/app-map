@@ -2,7 +2,7 @@ export type RouteCheck =
   | { status: "unavailable"; reason: "API_NOT_CONFIGURED" | "ORIGIN_REQUIRED" | "DESTINATION_REQUIRED" }
   | { status: "error"; reason: string }
   | { status: "timeout"; reason: "REQUEST_ABORTED_OR_TIMEOUT" }
-  | { status: "route_found_unverified"; provider: string; distanceMeters: number; durationSeconds: number; canStart: false; geometry?: readonly Coordinate[] };
+  | { status: "route_found_unverified"; provider: string; distanceMeters: number; durationSeconds: number; canStart: false; route?: { id: string; source: "ROUTING_ENGINE"; generatedAt: number; coordinates: readonly Coordinate[] } };
 
 type Coordinate = readonly [number, number];
 function validCoordinate(value: unknown): value is Coordinate {
@@ -46,12 +46,15 @@ export async function checkPlanRoute(input: {
       typeof result.durationSeconds !== "number" || !Number.isFinite(result.durationSeconds) || result.durationSeconds <= 0) {
       return { status: "error", reason: "INVALID_ROUTING_RESULT" };
     }
-    // Only accept provider-supplied route coordinates; never infer geometry from endpoints.
-    const raw = result.geometry;
-    const geometry = Array.isArray(raw) ? raw : null;
-    const coordinates = geometry && geometry.length >= 2 && geometry.length <= 20000 && geometry.every(validCoordinate)
-      ? geometry as Coordinate[] : undefined;
-    return { status: "route_found_unverified", provider: result.provider, distanceMeters: result.distanceMeters, durationSeconds: result.durationSeconds, canStart: false, ...(coordinates ? { geometry: coordinates } : {}) };
+    // The backend contract is result.route.coordinates, not result.geometry.
+    const candidate = result.route && typeof result.route === "object" ? result.route as Record<string, unknown> : null;
+    const points = candidate?.coordinates;
+    const valid = candidate?.source === "ROUTING_ENGINE" && typeof candidate.id === "string" &&
+      typeof candidate.generatedAt === "number" && Number.isFinite(candidate.generatedAt) &&
+      Array.isArray(points) && points.length >= 2 && points.length <= 20000 && points.every(validCoordinate);
+    const route = valid ? { id: candidate!.id as string, source: "ROUTING_ENGINE" as const,
+      generatedAt: candidate!.generatedAt as number, coordinates: points as Coordinate[] } : undefined;
+    return { status: "route_found_unverified", provider: result.provider, distanceMeters: result.distanceMeters, durationSeconds: result.durationSeconds, canStart: false, ...(route ? { route } : {}) };
   } catch {
     return controller.signal.aborted ? { status: "timeout", reason: "REQUEST_ABORTED_OR_TIMEOUT" } : { status: "error", reason: "NETWORK_UNAVAILABLE" };
   } finally {
