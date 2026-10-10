@@ -32,6 +32,7 @@ export default function JourneyTab() {
   const [destinationResults, setDestinationResults] = useState<PlaceSearch | null>(null);
   const [routeCheck, setRouteCheck] = useState<RouteCheck | { status: "loading" } | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [mode, setMode] = useState<"DRIVING" | "WALKING" | "CYCLING">("DRIVING");
   useEffect(() => {
     if (origin || originQuery.trim().length < 3) { setOriginResults(null); return; }
     const controller = new AbortController();
@@ -48,7 +49,7 @@ export default function JourneyTab() {
     if (!origin || !destination) return;
     setConfirming(true);
     setRouteCheck({ status: "loading" });
-    const result = await checkPlanRoute({ baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL, planId: active?.id ?? "manual-route", origin: origin.coordinate, destination: destination.coordinate });
+    const result = await checkPlanRoute({ baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL, planId: active?.id ?? "manual-route", origin: origin.coordinate, destination: destination.coordinate, mode });
     setRouteCheck(result);
     setConfirming(false);
   }
@@ -88,6 +89,14 @@ export default function JourneyTab() {
               </Pressable>) : null}
           </View>
         ))}
+        <Pressable accessibilityRole="button" accessibilityLabel="Đổi chiều điểm xuất phát và điểm đến" style={styles.swapButton} onPress={() => {
+          setOrigin(destination); setDestination(origin);
+          setOriginQuery(destination?.name ?? ""); setDestinationQuery(origin?.name ?? "");
+          setOriginResults(null); setDestinationResults(null); setRouteCheck(null);
+        }}><Text style={styles.swapText}>⇅  Đổi chiều điểm đi / điểm đến</Text></Pressable>
+        <Text style={styles.heading}>Phương tiện</Text>
+        <View style={styles.modes}>{([["DRIVING","Ô tô"],["WALKING","Đi bộ"],["CYCLING","Xe đạp"]] as const).map(([value,label]) => <Pressable key={value} accessibilityRole="button" accessibilityState={{selected:mode===value}} onPress={() => {setMode(value);setRouteCheck(null);}} style={[styles.modeButton,mode===value && styles.modeSelected]}><Text style={[styles.modeText,mode===value && styles.modeSelectedText]}>{label}</Text></Pressable>)}</View>
+        <Text style={styles.hint}>Phương tiện được gửi đến Routing API; khả dụng tùy nhà cung cấp.</Text>
         {origin && destination ? <View style={styles.confirmCard}>
           <Text style={styles.heading}>Hai địa điểm đã chọn</Text>
           <Text style={styles.body}>Từ: {origin.name}</Text>
@@ -121,6 +130,13 @@ export default function JourneyTab() {
 }
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#071C2C" },
+  swapButton:{minHeight:48,justifyContent:"center",alignItems:"center",borderRadius:12,borderWidth:1,borderColor:"#36556A"},
+  swapText:{fontSize:13,fontWeight:"700",color:"#F4C979"},
+  modes:{flexDirection:"row",gap:8},
+  modeButton:{flex:1,minHeight:44,alignItems:"center",justifyContent:"center",borderRadius:11,borderWidth:1,borderColor:"#36556A"},
+  modeSelected:{backgroundColor:"#F4C979",borderColor:"#F4C979"},
+  modeText:{fontSize:12,fontWeight:"700",color:"#F4F4F0"},
+  modeSelectedText:{color:"#071C2C"},
   content: { padding: 24, gap: 16, paddingBottom: 100 },
   eyebrow: { color: "#F4C979", fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
   confirmCard: { padding: 12, gap: 9, borderRadius: 12, backgroundColor: "#17364A" },
