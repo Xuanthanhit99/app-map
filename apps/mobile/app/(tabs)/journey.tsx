@@ -39,7 +39,6 @@ export default function JourneyTab() {
   const [editingRoute, setEditingRoute] = useState(false);
   const requestEpoch = useRef(0);
   const invalidateRoute = () => { requestEpoch.current += 1; setRouteCheck(null); setConfirming(false); };
-  const validRoute = routeCheck?.status === "route_found_unverified" && routeCheck.route?.source === "ROUTING_ENGINE" && routeCheck.route.coordinates.length >= 2;
   const [mode, setMode] = useState<"DRIVING" | "WALKING" | "CYCLING">("DRIVING");
   useEffect(() => {
     if (origin || originQuery.trim().length < 3) { setOriginResults(null); return; }
@@ -73,7 +72,7 @@ export default function JourneyTab() {
   }, []);
   const plans = state.status === "ready" ? state.items.filter(isVerified) : [];
   const active = plans.find(plan => plan.id === selected);
-  if (screenMode === "ROUTE_PREVIEW" && validRoute && !editingRoute) return (
+  if (screenMode === "ROUTE_PREVIEW" && routeCheck?.status === "route_found_unverified" && routeCheck.route?.source === "ROUTING_ENGINE" && routeCheck.route.coordinates.length >= 2 && !editingRoute) return (
     <View style={styles.previewRoot}>
       <View style={styles.previewHeader}>
         <Pressable accessibilityRole="button" onPress={() => { setScreenMode("SEARCH"); setEditingRoute(false); }} style={styles.previewAction}><Text style={styles.previewActionText}>← Tìm đường</Text></Pressable>
