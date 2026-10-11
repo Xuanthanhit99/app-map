@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { getRealityDecisionCollection, type ApiCollection } from "../../src/infrastructure/api/realityDecisionClient";
 import { theme } from "../../src/ui/theme";
@@ -23,7 +22,7 @@ function isVerified(plan: PlanItem): boolean {
 }
 
 export default function JourneyTab() {
-  const router = useRouter();
+
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const mapLocation = useForegroundLocationLifecycle(false);
@@ -111,11 +110,9 @@ export default function JourneyTab() {
       </View>
     </View>;
   }
-  return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
-      {screenMode === "ROUTE_PREVIEW" && editingRoute ? <Pressable accessibilityRole="button" onPress={() => setEditingRoute(false)} style={styles.previewAction}><Text style={styles.previewActionText}>← Quay lại bản đồ</Text></Pressable> : null}
+  const searchPanel = <ScrollView style={styles.searchPanel} contentContainerStyle={styles.searchContent} keyboardShouldPersistTaps="handled">
       <Text style={styles.eyebrow}>JOURNEY</Text>
-      <Text accessibilityRole="header" style={styles.title}>Bạn muốn đi đâu?</Text>
+      <Text accessibilityRole="header" style={styles.title}>Lên kế hoạch hành trình</Text>
       <Text style={styles.body}>Tìm địa chỉ, chọn đúng địa điểm rồi xem tuyến đường. Không cần nhập tọa độ.</Text>
       <View style={styles.card}>
         <Text style={styles.heading}>Tìm đường</Text>
@@ -163,33 +160,49 @@ export default function JourneyTab() {
             routeCheck.status === "timeout" ? "Yêu cầu hết thời gian. Vui lòng thử lại." : routeCheck.status === "loading" ? "Đang lấy tuyến từ nhà cung cấp…" : "Chưa đủ điều kiện định tuyến."}</Text>
         </View> : null}
       </View>
-      {origin || destination ? <View style={styles.routeMapCard}>
-        <Text style={styles.heading}>Bản đồ hành trình</Text>
-        <View style={styles.routeMap}>
-          <RealityMap location={mapLocation} camera={{mode:"FOLLOW_ROUTE",padding:32}} followCamera={false}
-            route={routeCheck?.status === "route_found_unverified" ? routeCheck.route : undefined}
-            markers={[...(origin ? [{id:"origin",coordinate:origin.coordinate}] : []),...(destination ? [{id:"destination",coordinate:destination.coordinate}] : [])]}
-            accessibilityLabel="Bản đồ điểm xuất phát, điểm đến và tuyến đường do nhà cung cấp trả về" />
-        </View>
-        {routeCheck?.status === "route_found_unverified" && !routeCheck.route ? <Text style={styles.hint}>Nhà cung cấp chưa trả geometry hợp lệ. Không hiển thị tuyến đường suy đoán.</Text> : null}
-      </View> : null}
       <View style={styles.card}>
-        <Text style={styles.heading}>Tình hình và phương án thông minh</Text>
-        <Text style={styles.body}>Thông tin giao thông thực tế được xác minh riêng, không ảnh hưởng đến việc tìm địa chỉ.</Text>
-        {state.status === "loading" ? <ActivityIndicator accessibilityLabel="Đang tải phương án" /> : null}
-        {state.status === "error" ? <Text style={styles.body}>Chưa tải được dữ liệu phương án.</Text> : null}
-        {state.status === "empty" || (state.status === "ready" && plans.length === 0) ? <Text style={styles.body}>Chưa có phương án được xác minh. Bạn vẫn có thể tìm đường phía trên.</Text> : null}
-        {plans.map(plan => <Pressable key={plan.id} accessibilityRole="button" onPress={() => setSelected(plan.id)} style={styles.result}><Text style={styles.heading}>{plan.title}</Text><Text style={styles.body}>{selected === plan.id ? "Đã chọn phương án" : "Xem phương án có bằng chứng"}</Text></Pressable>)}
-        <Text style={styles.hint}>Bắt đầu theo dõi hành trình chưa khả dụng cho đến khi có bằng chứng và kiểm thử an toàn đầy đủ.</Text>
+        <Text style={styles.heading}>Reality Check</Text>
+        <Text style={styles.body}>Chưa có dữ liệu giao thông thực tế được xác minh trên hành trình này. Không thể kết luận tuyến an toàn hay thông thoáng.</Text>
+        <Text style={styles.hint}>Thông tin định tuyến TomTom được xác minh riêng với tình trạng giao thông.</Text>
       </View>
-      <Pressable onPress={() => router.push("/(tabs)/map")} accessibilityRole="button" accessibilityLabel="Mở bản đồ" style={styles.button}>
-        <Text style={styles.buttonText}>Xem bản đồ</Text>
-      </Pressable>
-    </ScrollView>
-  );
+      <View style={styles.card}>
+        <Text style={styles.heading}>Journey Impact · Phương án</Text>
+        {state.status === "loading" ? <ActivityIndicator accessibilityLabel="Đang tải phương án" /> : null}
+        {state.status === "error" ? <Text style={styles.body}>Chưa tải được dữ liệu phương án có bằng chứng.</Text> : null}
+        {state.status === "empty" || (state.status === "ready" && plans.length === 0) ? <Text style={styles.body}>Chưa có tác động hoặc phương án đã xác minh liên quan đến hành trình.</Text> : null}
+        {plans.map(plan => <Pressable key={plan.id} accessibilityRole="button" onPress={() => setSelected(plan.id)} style={styles.result}><Text style={styles.heading}>{plan.title}</Text><Text style={styles.body}>{selected === plan.id ? "Đã chọn phương án" : "Xem phương án có bằng chứng"}</Text></Pressable>)}
+        <Text style={styles.hint}>Theo dõi hành trình chưa khả dụng cho đến khi đạt kiểm thử an toàn.</Text>
+      </View>
+
+    </ScrollView>;
+  const searchMap = <View style={styles.searchMap}>
+    <RealityMap location={mapLocation} camera={{mode:"OVERVIEW"}} followCamera={false}
+      markers={[...(origin ? [{id:"origin",coordinate:origin.coordinate}] : []),...(destination ? [{id:"destination",coordinate:destination.coordinate}] : [])]}
+      accessibilityLabel="Bản đồ tìm kiếm địa điểm; chưa có tuyến đường được xác minh" />
+    <View pointerEvents="none" style={styles.mapCaption}>
+      <Text style={styles.mapCaptionText}>BẢN ĐỒ KHÁM PHÁ · Chưa có tuyến được chọn</Text>
+    </View>
+  </View>;
+  return <View style={styles.previewRoot}>
+    {isDesktop ? <View style={styles.desktopPreview}>
+      <View style={styles.desktopSearchPanel}>{searchPanel}</View>
+      {searchMap}
+    </View> : <View style={styles.mobileSearch}>
+      {searchMap}
+      <View style={styles.mobileSearchPanel}>{searchPanel}</View>
+    </View>}
+  </View>;
 }
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#071C2C" },
+  searchPanel: { flex: 1, backgroundColor: "#102A3B" },
+  searchContent: { padding: 16, paddingBottom: 96, gap: 12 },
+  desktopSearchPanel: { width: 390, maxWidth: "40%", backgroundColor: "#102A3B" },
+  mobileSearch: { flex: 1 },
+  mobileSearchPanel: { flex: 1, minHeight: 260, maxHeight: "53%", backgroundColor: "#102A3B", borderTopLeftRadius: 18, borderTopRightRadius: 18, overflow: "hidden" },
+  searchMap: { flex: 1, minHeight: 220 },
+  mapCaption: { position: "absolute", top: 12, left: 12, right: 12, alignItems: "flex-start" },
+  mapCaptionText: { fontSize: 11, fontWeight: "700", color: "#071C2C", backgroundColor: "#FFFFFF", paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10 },
   previewRoot: { flex: 1, backgroundColor: "#071C2C" },
   desktopPreview: { flex: 1, flexDirection: "row" },
   mobilePreview: { flex: 1 },
