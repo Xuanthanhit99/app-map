@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { getRealityDecisionCollection, type ApiCollection } from "../../src/infrastructure/api/realityDecisionClient";
 import { theme } from "../../src/ui/theme";
 import { RealityMap } from "../../src/infrastructure/map/RealityMap";
@@ -24,6 +24,8 @@ function isVerified(plan: PlanItem): boolean {
 
 export default function JourneyTab() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 900;
   const mapLocation = useForegroundLocationLifecycle(false);
   const [state, setState] = useState<ScreenState>({ status: "loading", items: [] });
   const [selected, setSelected] = useState<string | null>(null);
@@ -72,24 +74,43 @@ export default function JourneyTab() {
   }, []);
   const plans = state.status === "ready" ? state.items.filter(isVerified) : [];
   const active = plans.find(plan => plan.id === selected);
-  if (screenMode === "ROUTE_PREVIEW" && routeCheck?.status === "route_found_unverified" && routeCheck.route?.source === "ROUTING_ENGINE" && routeCheck.route.coordinates.length >= 2 && !editingRoute) return (
-    <View style={styles.previewRoot}>
+  if (screenMode === "ROUTE_PREVIEW" && routeCheck?.status === "route_found_unverified" && routeCheck.route?.source === "ROUTING_ENGINE" && routeCheck.route.coordinates.length >= 2 && !editingRoute) {
+    const summary = <View style={styles.previewSummary}>
+      <Text style={styles.previewKicker}>HÀNH TRÌNH · TOMTOM ROUTING</Text>
+      <Text style={styles.previewEta}>{Math.round(routeCheck.durationSeconds / 60)} phút</Text>
+      <Text style={styles.body}>{(routeCheck.distanceMeters / 1000).toFixed(1)} km · {mode === "DRIVING" ? "Ô tô" : mode === "WALKING" ? "Đi bộ" : "Xe đạp"}</Text>
+      <View style={styles.realityNote}>
+        <Text style={styles.heading}>Reality Check</Text>
+        <Text style={styles.body}>Chưa có dữ liệu giao thông thực tế được xác minh cho tuyến này. ETA do TomTom Routing cung cấp, không phải trạng thái LIVE.</Text>
+      </View>
+      <Pressable accessibilityRole="button" onPress={() => setEditingRoute(true)} style={styles.previewPrimary}><Text style={styles.previewPrimaryText}>Chỉnh sửa hành trình</Text></Pressable>
+      <Text style={styles.previewFootnote}>Tuyến thay thế, cảnh báo và điểm dừng chỉ xuất hiện khi có dữ liệu xác thực.</Text>
+    </View>;
+    const mapView = <View style={styles.previewMap}>
+      <RealityMap location={mapLocation} camera={{mode:"FOLLOW_ROUTE",padding:32}} followCamera={false}
+        route={routeCheck.route} markers={[...(origin ? [{id:"origin",coordinate:origin.coordinate}] : []),...(destination ? [{id:"destination",coordinate:destination.coordinate}] : [])]}
+        accessibilityLabel="Bản đồ lớn hiển thị tuyến TomTom và hai địa điểm" />
+    </View>;
+    return <View style={styles.previewRoot}>
       <View style={styles.previewHeader}>
-        <Pressable accessibilityRole="button" onPress={() => { setScreenMode("SEARCH"); setEditingRoute(false); }} style={styles.previewAction}><Text style={styles.previewActionText}>← Tìm đường</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => { setScreenMode("SEARCH"); setEditingRoute(false); }} style={styles.previewAction}><Text style={styles.previewActionText}>← Trở lại</Text></Pressable>
         <View style={{flex:1}}>
           <Text numberOfLines={1} style={styles.heading}>{origin?.name} → {destination?.name}</Text>
-          <Text style={styles.body}>{Math.round(routeCheck.durationSeconds / 60)} phút · {(routeCheck.distanceMeters / 1000).toFixed(1)} km · {mode === "DRIVING" ? "Ô tô" : mode === "WALKING" ? "Đi bộ" : "Xe đạp"}</Text>
-          <Text style={styles.hint}>Nguồn: {routeCheck.provider}. Chưa xác minh điều kiện giao thông thực tế.</Text>
+          <Text style={styles.body}>Tuyến đường đã tìm được · chưa xác minh giao thông thực tế</Text>
         </View>
-        <Pressable accessibilityRole="button" onPress={() => setEditingRoute(true)} style={styles.previewAction}><Text style={styles.previewActionText}>Chỉnh sửa</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Đổi chiều điểm đi và điểm đến" onPress={() => {
+          setOrigin(destination); setDestination(origin);
+          setOriginQuery(destination?.name ?? ""); setDestinationQuery(origin?.name ?? "");
+          setOriginResults(null); setDestinationResults(null); invalidateRoute(); setEditingRoute(true);
+        }} style={styles.previewAction}><Text style={styles.previewActionText}>⇅</Text></Pressable>
       </View>
-      <View style={styles.previewMap}>
-        <RealityMap location={mapLocation} camera={{mode:"FOLLOW_ROUTE",padding:32}} followCamera={false}
-          route={routeCheck.route} markers={[...(origin ? [{id:"origin",coordinate:origin.coordinate}] : []),...(destination ? [{id:"destination",coordinate:destination.coordinate}] : [])]}
-          accessibilityLabel="Bản đồ lớn hiển thị tuyến TomTom và hai địa điểm" />
+      <View style={isDesktop ? styles.desktopPreview : styles.mobilePreview}>
+        {isDesktop ? <View style={{width:340}}>{summary}</View> : null}
+        {mapView}
+        {!isDesktop ? summary : null}
       </View>
-    </View>
-  );
+    </View>;
+  }
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
       {screenMode === "ROUTE_PREVIEW" && editingRoute ? <Pressable accessibilityRole="button" onPress={() => setEditingRoute(false)} style={styles.previewAction}><Text style={styles.previewActionText}>← Quay lại bản đồ</Text></Pressable> : null}
@@ -105,14 +126,14 @@ export default function JourneyTab() {
           <View key={field.label} style={styles.placeCard}>
             <Text style={styles.heading}>{field.label}</Text>
             <TextInput accessibilityLabel={field.label} placeholder="Nhập tên địa điểm hoặc địa chỉ" placeholderTextColor="#9CB3C2"
-              style={styles.input} value={field.query} onChangeText={value => { field.setQuery(value); field.setPlace(null); setRouteCheck(null); }} />
+              style={styles.input} value={field.query} onChangeText={value => { field.setQuery(value); field.setPlace(null); invalidateRoute(); }} />
             {field.selectedPlace ? <Text style={styles.hint}>Đã chọn từ TomTom: {field.selectedPlace.address}</Text> :
               field.results?.status === "unavailable" ? <Text accessibilityRole="alert" style={styles.hint}>Chưa hỗ trợ tìm địa chỉ: chưa cấu hình dịch vụ geocoding.</Text> :
               field.results?.status === "error" ? <Text accessibilityRole="alert" style={styles.hint}>Không tìm được địa điểm. Kiểm tra kết nối hoặc thử lại.</Text> :
               field.results?.status === "ready" && field.results.items.length === 0 ? <Text style={styles.body}>Không có kết quả phù hợp.</Text> :
               field.query.trim().length < 3 ? <Text style={styles.body}>Nhập ít nhất 3 ký tự để tìm địa điểm thật.</Text> : null}
             {field.results?.status === "ready" && !field.selectedPlace ? field.results.items.map(place =>
-              <Pressable key={place.id} accessibilityRole="button" onPress={() => { field.setPlace(place); field.setQuery(place.name); setRouteCheck(null); }} style={styles.result}>
+              <Pressable key={place.id} accessibilityRole="button" onPress={() => { field.setPlace(place); field.setQuery(place.name); invalidateRoute(); }} style={styles.result}>
                 <Text style={styles.heading}>{place.name}</Text>
                 <Text style={styles.body}>{place.address} · TomTom</Text>
               </Pressable>) : null}
@@ -121,10 +142,10 @@ export default function JourneyTab() {
         <Pressable accessibilityRole="button" accessibilityLabel="Đổi chiều điểm xuất phát và điểm đến" style={styles.swapButton} onPress={() => {
           setOrigin(destination); setDestination(origin);
           setOriginQuery(destination?.name ?? ""); setDestinationQuery(origin?.name ?? "");
-          setOriginResults(null); setDestinationResults(null); setRouteCheck(null);
+          setOriginResults(null); setDestinationResults(null); invalidateRoute();
         }}><Text style={styles.swapText}>⇅  Đổi chiều điểm đi / điểm đến</Text></Pressable>
         <Text style={styles.heading}>Phương tiện</Text>
-        <View style={styles.modes}>{([["DRIVING","Ô tô"],["WALKING","Đi bộ"],["CYCLING","Xe đạp"]] as const).map(([value,label]) => <Pressable key={value} accessibilityRole="button" accessibilityState={{selected:mode===value}} onPress={() => {setMode(value);setRouteCheck(null);}} style={[styles.modeButton,mode===value && styles.modeSelected]}><Text style={[styles.modeText,mode===value && styles.modeSelectedText]}>{label}</Text></Pressable>)}</View>
+        <View style={styles.modes}>{([["DRIVING","Ô tô"],["WALKING","Đi bộ"],["CYCLING","Xe đạp"]] as const).map(([value,label]) => <Pressable key={value} accessibilityRole="button" accessibilityState={{selected:mode===value}} onPress={() => {setMode(value);invalidateRoute();}} style={[styles.modeButton,mode===value && styles.modeSelected]}><Text style={[styles.modeText,mode===value && styles.modeSelectedText]}>{label}</Text></Pressable>)}</View>
         <Text style={styles.hint}>Phương tiện được gửi đến Routing API; khả dụng tùy nhà cung cấp.</Text>
         {origin && destination ? <View style={styles.confirmCard}>
           <Text style={styles.heading}>Hai địa điểm đã chọn</Text>
@@ -170,10 +191,19 @@ export default function JourneyTab() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#071C2C" },
   previewRoot: { flex: 1, backgroundColor: "#071C2C" },
+  desktopPreview: { flex: 1, flexDirection: "row" },
+  mobilePreview: { flex: 1 },
+  previewSummary: { padding: 16, gap: 10, backgroundColor: "#102A3B", maxHeight: "58%", borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  previewKicker: { fontSize: 10, fontWeight: "800", letterSpacing: 1, color: "#F4C979" },
+  previewEta: { fontSize: 28, fontWeight: "800", color: "#FFFFFF" },
+  realityNote: { gap: 5, padding: 12, borderRadius: 12, backgroundColor: "#17364A" },
+  previewPrimary: { minHeight: 48, justifyContent: "center", alignItems: "center", borderRadius: 12, backgroundColor: "#F4C979" },
+  previewPrimaryText: { fontWeight: "800", color: "#071C2C" },
+  previewFootnote: { fontSize: 11, color: "#A9BFCE" },
   previewHeader: { padding: 12, flexDirection: "row", gap: 10, alignItems: "center", backgroundColor: "#102A3B" },
   previewAction: { minHeight: 44, paddingHorizontal: 10, justifyContent: "center", borderRadius: 10, borderWidth: 1, borderColor: "#577084" },
   previewActionText: { color: "#F4C979", fontWeight: "700", fontSize: 12 },
-  previewMap: { flex: 1, minHeight: 340 },
+  previewMap: { flex: 1, minHeight: 280 },
   routeMapCard:{padding:14,gap:10,borderRadius:16,backgroundColor:"#102A3B"},
   routeMap:{height:340,overflow:"hidden",borderRadius:12},
   swapButton:{minHeight:48,justifyContent:"center",alignItems:"center",borderRadius:12,borderWidth:1,borderColor:"#36556A"},
