@@ -125,8 +125,28 @@ export function RealityMap({ location, accessibilityLabel, mode = "FULL", follow
     return () => { layer.remove(); if (overlay.current === layer) overlay.current = null; };
   }, [route, markers, selection?.selectedId, onSelectMarker, camera.mode, mapReady, lat, lon]);
 
+  const resetCamera = () => {
+    const instance = map.current;
+    const L = leaflet.current;
+    if (!instance || !L) return;
+    const points: [number, number][] = [];
+    if (route?.source === "ROUTING_ENGINE" && isRenderableRoute(route)) {
+      for (const [lng, lat] of route.coordinates) points.push([lat, lng]);
+    }
+    for (const marker of markers) {
+      const [lng, lat] = marker.coordinate;
+      if (Number.isFinite(lng) && Number.isFinite(lat) && Math.abs(lng) <= 180 && Math.abs(lat) <= 90) points.push([lat, lng]);
+    }
+    cameraInteracted.current = false;
+    instance.invalidateSize();
+    if (points.length > 1) instance.fitBounds(L.latLngBounds(points), { padding: [32, 32], maxZoom: 15 });
+    else if (points.length === 1) instance.setView(points[0], 13);
+    else instance.setView([16, 106], 6);
+  };
+
   return <View style={[styles.root, mode === "PREVIEW" && styles.preview]} accessibilityLabel={accessibilityLabel}>
     <div ref={host} style={{ width: "100%", height: "100%", minHeight: mode === "PREVIEW" ? 160 : 340, zIndex: 0 }} />
+    {(route?.source === "ROUTING_ENGINE" && isRenderableRoute(route)) || markers.length > 0 ? <Pressable accessibilityRole="button" accessibilityLabel={route ? "Xem toàn tuyến đường" : "Xem các địa điểm đã chọn"} onPress={resetCamera} style={styles.fitRoute}><Text style={styles.fitRouteText}>{route ? "Xem toàn tuyến" : "Xem địa điểm"}</Text></Pressable> : null}
     {status === "loading" ? <View style={styles.notice}><Text style={styles.noticeText}>Đang tải bản đồ…</Text></View> : null}
     {status === "error" ? <View style={styles.error}>
       <Text style={styles.noticeText}>Không tải được lớp bản đồ. Kiểm tra mạng rồi thử lại.</Text>
@@ -146,6 +166,8 @@ const styles = StyleSheet.create({
   overview: { position: "absolute", top: 10, left: 10, padding: 8, borderRadius: 10, backgroundColor: "#102A3B" },
   noticeText: { color: "#FFFFFF", fontSize: 12 },
   error: { position: "absolute", top: 10, left: 10, right: 10, padding: 14, gap: 10, borderRadius: 12, backgroundColor: "#102A3B" },
+  fitRoute: { position: "absolute", right: 12, bottom: 32, paddingHorizontal: 14, minHeight: 44, justifyContent: "center", borderRadius: 12, backgroundColor: "#102A3B" },
+  fitRouteText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
   retry: { alignSelf: "flex-start", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: "#F4C979" },
   retryText: { color: "#071C2C", fontWeight: "700" },
 });
