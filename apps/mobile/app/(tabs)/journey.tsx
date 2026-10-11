@@ -38,6 +38,7 @@ export default function JourneyTab() {
   const [confirming, setConfirming] = useState(false);
   const [screenMode, setScreenMode] = useState<"SEARCH" | "ROUTE_PREVIEW">("SEARCH");
   const [editingRoute, setEditingRoute] = useState(false);
+  const [sheetExpanded, setSheetExpanded] = useState(false);
   const requestEpoch = useRef(0);
   const invalidateRoute = () => { requestEpoch.current += 1; setRouteCheck(null); setConfirming(false); };
   const [mode, setMode] = useState<"DRIVING" | "WALKING" | "CYCLING">("DRIVING");
@@ -74,9 +75,9 @@ export default function JourneyTab() {
   const plans = state.status === "ready" ? state.items.filter(isVerified) : [];
   const active = plans.find(plan => plan.id === selected);
   if (screenMode === "ROUTE_PREVIEW" && routeCheck?.status === "route_found_unverified" && routeCheck.route?.source === "ROUTING_ENGINE" && routeCheck.route.coordinates.length >= 2 && !editingRoute) {
-    const summary = <View style={styles.previewSummary}>
+    const summary = <View style={[styles.previewSummary, !isDesktop && styles.mobilePreviewSummary]}>
       <Text style={styles.previewKicker}>HÀNH TRÌNH · TOMTOM ROUTING</Text>
-      <Text style={styles.previewEta}>{Math.round(routeCheck.durationSeconds / 60)} phút</Text>
+      <Text style={styles.previewEta}>{Math.floor(routeCheck.durationSeconds / 3600) > 0 ? `${Math.floor(routeCheck.durationSeconds / 3600)} giờ ${Math.round((routeCheck.durationSeconds % 3600) / 60)} phút` : `${Math.round(routeCheck.durationSeconds / 60)} phút`}</Text>
       <Text style={styles.body}>{(routeCheck.distanceMeters / 1000).toFixed(1)} km · {mode === "DRIVING" ? "Ô tô" : mode === "WALKING" ? "Đi bộ" : "Xe đạp"}</Text>
       <View style={styles.realityNote}>
         <Text style={styles.heading}>Reality Check</Text>
@@ -104,18 +105,16 @@ export default function JourneyTab() {
         }} style={styles.previewAction}><Text style={styles.previewActionText}>⇅</Text></Pressable>
       </View>
       <View style={isDesktop ? styles.desktopPreview : styles.mobilePreview}>
-        {isDesktop ? <View style={{width:340}}>{summary}</View> : null}
+        {isDesktop ? <View style={{width:340}}>{summary}</View> : <View style={styles.mobileRouteSummary}>{summary}</View>}
         {mapView}
-        {!isDesktop ? summary : null}
       </View>
     </View>;
   }
   const searchPanel = <ScrollView style={styles.searchPanel} contentContainerStyle={styles.searchContent} keyboardShouldPersistTaps="handled">
-      <Text style={styles.eyebrow}>JOURNEY</Text>
-      <Text accessibilityRole="header" style={styles.title}>Lên kế hoạch hành trình</Text>
-      <Text style={styles.body}>Tìm địa chỉ, chọn đúng địa điểm rồi xem tuyến đường. Không cần nhập tọa độ.</Text>
+      {isDesktop ? <><Text style={styles.eyebrow}>JOURNEY</Text><Text accessibilityRole="header" style={styles.title}>Lên kế hoạch hành trình</Text><Text style={styles.body}>Tìm địa chỉ, chọn đúng địa điểm rồi xem tuyến đường. Không cần nhập tọa độ.</Text></> : null}
+      <View style={styles.realityCompact}><Text style={styles.realityCompactText}>Reality Check · Chưa có dữ liệu giao thông được xác minh</Text></View>
       <View style={styles.card}>
-        <Text style={styles.heading}>Tìm đường</Text>
+        {isDesktop ? <Text style={styles.heading}>Tìm đường</Text> : null}
         {([
           { label: "Điểm xuất phát", query: originQuery, setQuery: setOriginQuery, selectedPlace: origin, setPlace: setOrigin, results: originResults },
           { label: "Điểm đến", query: destinationQuery, setQuery: setDestinationQuery, selectedPlace: destination, setPlace: setDestination, results: destinationResults },
@@ -189,17 +188,31 @@ export default function JourneyTab() {
       {searchMap}
     </View> : <View style={styles.mobileSearch}>
       {searchMap}
-      <View style={styles.mobileSearchPanel}>{searchPanel}</View>
+      <View style={[styles.mobileSearchPanel, sheetExpanded ? styles.mobileSheetExpanded : styles.mobileSheetCollapsed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={sheetExpanded ? "Thu gọn bảng tìm đường" : "Mở rộng bảng tìm đường"} onPress={() => setSheetExpanded(value => !value)} style={styles.sheetHandle}>
+          <View style={styles.sheetGrip}/><Text style={styles.sheetHandleText}>{sheetExpanded ? "Thu gọn" : "Tìm đường · Mở rộng"}</Text>
+        </Pressable>
+        {searchPanel}
+      </View>
     </View>}
   </View>;
 }
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#071C2C" },
   searchPanel: { flex: 1, backgroundColor: "#102A3B" },
-  searchContent: { padding: 16, paddingBottom: 96, gap: 12 },
+  searchContent: { padding: 12, paddingBottom: 96, gap: 8 },
   desktopSearchPanel: { width: 390, maxWidth: "40%", backgroundColor: "#102A3B" },
   mobileSearch: { flex: 1 },
-  mobileSearchPanel: { flex: 1, minHeight: 260, maxHeight: "53%", backgroundColor: "#102A3B", borderTopLeftRadius: 18, borderTopRightRadius: 18, overflow: "hidden" },
+  mobileSearchPanel: { backgroundColor: "#102A3B", borderTopLeftRadius: 18, borderTopRightRadius: 18, overflow: "hidden" },
+  mobileSheetCollapsed: { height: "43%" },
+  mobileSheetExpanded: { height: "78%" },
+  sheetHandle: { minHeight: 44, alignItems: "center", justifyContent: "center", gap: 3, borderBottomWidth: 1, borderBottomColor: "#36556A" },
+  sheetGrip: { width: 36, height: 4, borderRadius: 3, backgroundColor: "#9CB3C2" },
+  sheetHandleText: { color: "#F4C979", fontSize: 12, fontWeight: "700" },
+  realityCompact: { padding: 10, backgroundColor: "#17364A", borderRadius: 10 },
+  realityCompactText: { color: "#F4C979", fontSize: 12, fontWeight: "700" },
+  mobileRouteSummary: { backgroundColor: "#102A3B" },
+  mobilePreviewSummary: { maxHeight: undefined, padding: 10 },
   searchMap: { flex: 1, minHeight: 220 },
   mapCaption: { position: "absolute", top: 12, left: 12, right: 12, alignItems: "flex-start" },
   mapCaptionText: { fontSize: 11, fontWeight: "700", color: "#071C2C", backgroundColor: "#FFFFFF", paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10 },
@@ -232,8 +245,8 @@ const styles = StyleSheet.create({
   title: { ...theme.typography.display, color: "#F4F4F0" },
   heading: { ...theme.typography.headline, color: "#F4F4F0" },
   body: { ...theme.typography.body, color: "#A9BFCE" },
-  card: { padding: 18, borderRadius: theme.radius.control, backgroundColor: "#102A3B", gap: 10 },
-  placeCard: { padding: 14, gap: 7, borderRadius: 12, backgroundColor: "#102A3B", borderWidth: 1, borderColor: "#36556A" },
+  card: { padding: 10, borderRadius: theme.radius.control, backgroundColor: "#102A3B", gap: 10 },
+  placeCard: { padding: 10, gap: 7, borderRadius: 12, backgroundColor: "#102A3B", borderWidth: 1, borderColor: "#36556A" },
   input: { minHeight: 48, borderRadius: 10, borderWidth: 1, borderColor: "#577084", paddingHorizontal: 12, color: "#F4F4F0", backgroundColor: "#071C2C" },
   result: { padding: 12, borderRadius: 10, backgroundColor: "#17364A", gap: 5 },
   hint: { fontSize: 12, lineHeight: 18, color: "#F4C979" },
