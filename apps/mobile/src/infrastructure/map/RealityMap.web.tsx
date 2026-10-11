@@ -24,6 +24,8 @@ export function RealityMap({ location, accessibilityLabel, mode = "FULL", follow
   const [status, setStatus] = useState<MapStatus>("loading");
   const [retry, setRetry] = useState(0);
   const [mapReady, setMapReady] = useState(0);
+  const cameraInteracted = useRef(false);
+  const cameraContext = useRef("");
   const userGesture = useRef(onUserGesture);
   userGesture.current = onUserGesture;
 
@@ -41,16 +43,16 @@ export function RealityMap({ location, accessibilityLabel, mode = "FULL", follow
       localMap = L.map(node, { zoomControl: mode === "FULL", attributionControl: true });
       map.current = localMap;
       // Neutral Vietnam overview, NOT a device position.
-      localMap.setView([16, 106], 5);
+      localMap.setView([16, 106], 6);
       const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors", maxZoom: 19, minZoom: 2,
       });
       tiles.on("load", () => { if (!cancelled) setStatus("ready"); });
       tiles.on("tileerror", () => { if (!cancelled && ++tileErrors >= 3) setStatus("error"); });
       tiles.addTo(localMap);
-      localMap.on("dragstart", () => userGesture.current?.());
+      localMap.on("dragstart", () => { cameraInteracted.current = true; userGesture.current?.(); });
       // Programmatic camera changes must not disable follow mode.
-      localMap.on("wheel", () => userGesture.current?.());
+      localMap.on("wheel", () => { cameraInteracted.current = true; userGesture.current?.(); });
       if (typeof ResizeObserver !== "undefined") {
         observer = new ResizeObserver(() => localMap?.invalidateSize());
         observer.observe(node);
@@ -83,8 +85,8 @@ export function RealityMap({ location, accessibilityLabel, mode = "FULL", follow
     userMarker.current = L.circleMarker([lat, lon], {
       radius: 8, color: "#071C2C", weight: 2, fillColor: "#F4C979", fillOpacity: 1,
     }).addTo(instance).bindPopup("Vị trí thiết bị");
-    if (followCamera) instance.setView([lat, lon], 14);
-  }, [lat, lon, followCamera, mapReady]);
+    if (followCamera && !cameraInteracted.current && !markers.length && !route) instance.setView([lat, lon], 14);
+  }, [lat, lon, followCamera, mapReady, markers.length, route]);
 
   useEffect(() => {
     const instance = map.current;
@@ -108,9 +110,20 @@ export function RealityMap({ location, accessibilityLabel, mode = "FULL", follow
         color: "#071C2C", weight: 2, fillColor: "#F4C979", fillOpacity: 1 })
         .addTo(layer).on("click", () => onSelectMarker?.(marker.id));
     }
-    if (bounds.length > 1 && (camera.mode === "FOLLOW_ROUTE" || route)) instance.fitBounds(L.latLngBounds(bounds), { padding: [32, 32], maxZoom: 15 });
+    const routeKey = route && route.source === "ROUTING_ENGINE" && isRenderableRoute(route)
+      ? `route:${route.id}:${route.generatedAt}` : "";
+    const placeKey = markers.map(marker => `${marker.id}:${marker.coordinate.join(",")}`).join("|");
+    const nextContext = routeKey || (placeKey ? `places:${placeKey}` : "overview");
+    if (cameraContext.current !== nextContext) {
+      cameraContext.current = nextContext;
+      cameraInteracted.current = false;
+      if (bounds.length > 1) instance.fitBounds(L.latLngBounds(bounds), { padding: [32, 32], maxZoom: 15 });
+      else if (bounds.length === 1) instance.setView(bounds[0], 13);
+      else if (typeof lat === "number" && typeof lon === "number" && Number.isFinite(lat) && Number.isFinite(lon)) instance.setView([lat, lon], 13);
+      else instance.setView([16, 106], 6);
+    }
     return () => { layer.remove(); if (overlay.current === layer) overlay.current = null; };
-  }, [route, markers, selection?.selectedId, onSelectMarker, camera.mode, mapReady]);
+  }, [route, markers, selection?.selectedId, onSelectMarker, camera.mode, mapReady, lat, lon]);
 
   return <View style={[styles.root, mode === "PREVIEW" && styles.preview]} accessibilityLabel={accessibilityLabel}>
     <div ref={host} style={{ width: "100%", height: "100%", minHeight: mode === "PREVIEW" ? 160 : 340, zIndex: 0 }} />
