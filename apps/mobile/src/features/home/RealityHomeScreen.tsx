@@ -61,7 +61,7 @@ export function RealityHomeScreen() {
         <View style={styles.mapPreview}>
           <RealityMap mode="PREVIEW" location={location} camera={{ mode: "FOLLOW_USER", zoom: 14 }} accessibilityLabel="Bản đồ bằng chứng không gian quanh vị trí hiện tại." />
           {location.status !== "READY" ? <View style={styles.locationPill}><Text style={styles.locationText}>{!hydrated ? "Đang tải tùy chọn định vị" : locationChoice !== "ENABLE" ? "Định vị chưa bật" : location.status === "DENIED" ? "Chưa có quyền vị trí" : location.status === "IDLE" ? "Định vị chưa hoạt động" : location.status === "DEGRADED" ? "Vị trí có thể đã cũ" : location.status === "UNAVAILABLE" ? "Chưa lấy được vị trí" : "Đang xác định vị trí"}</Text></View> : null}
-          <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/map")} style={styles.mapAction}><Text style={styles.mapActionText}>Mở Bản đồ</Text></Pressable>
+          <Pressable accessibilityRole="button" onPress={() => router.push("/map")} style={styles.mapAction}><Text style={styles.mapActionText}>Mở Bản đồ</Text></Pressable>
         </View>
 
         <View style={styles.decideCard}>
