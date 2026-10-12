@@ -11,11 +11,18 @@ const sample: GPSQualityInput = {
 const check = (overrides: Partial<GPSQualityInput> = {}, p: GPSQualityPolicy | undefined = policy) =>
   evaluateGPSQuality({ ...sample, ...overrides }, p);
 
-describe("E-04B GPS quality evaluator Ã¢â‚¬â€ fail closed", () => {
+// Remove the property from the actual evaluator input, not from an override merged with sample.
+const checkMissing = (key: keyof GPSQualityInput) => {
+  const input: Partial<GPSQualityInput> = { ...sample };
+  delete input[key];
+  return evaluateGPSQuality(input as GPSQualityInput, policy);
+};
+
+describe("E-04B GPS quality evaluator - fail closed", () => {
   it("rejects invalid latitude", () => expect(check({ latitude: 91 }).classification).toBe("INVALID"));
   it("rejects invalid longitude", () => expect(check({ longitude: -181 }).classification).toBe("INVALID"));
   it("rejects NaN coordinate", () => expect(check({ latitude: NaN }).classification).toBe("INVALID"));
-  it("rejects missing coordinate", () => expect(check(Object.fromEntries(Object.entries(sample).filter(([key]) => key !== 'longitude')) as Partial<GPSQualityInput>).classification).toBe("INVALID"));
+  it("rejects missing coordinate", () => expect(checkMissing("longitude").classification).toBe("INVALID"));
   it("rejects negative accuracy", () => expect(check({ accuracyMeters: -1 }).classification).toBe("INVALID"));
   it("rejects nonfinite accuracy", () => expect(check({ accuracyMeters: Infinity }).classification).toBe("INVALID"));
   it("rejects invalid timestamp", () => expect(check({ observedAt: -1 }).classification).toBe("INVALID"));
@@ -28,8 +35,8 @@ describe("E-04B GPS quality evaluator Ã¢â‚¬â€ fail closed", () => {
   it("blocks unknown app state", () => expect(check({ appState: "UNKNOWN" }).classification).toBe("UNAVAILABLE"));
   it("blocks cached fix", () => expect(check({ source: "LAST_KNOWN" })).toMatchObject({ classification: "UNVERIFIED", reasons: ["CACHED_FIX"] }));
   it("blocks unknown source", () => expect(check({ source: "UNKNOWN" }).classification).toBe("UNVERIFIED"));
-  it("blocks missing accuracy", () => expect(check(Object.fromEntries(Object.entries(sample).filter(([key]) => key !== 'accuracyMeters')) as Partial<GPSQualityInput>).classification).toBe("UNVERIFIED"));
-  it("blocks missing timestamp", () => expect(check(Object.fromEntries(Object.entries(sample).filter(([key]) => key !== 'observedAt')) as Partial<GPSQualityInput>).classification).toBe("UNVERIFIED"));
+  it("blocks missing accuracy", () => expect(checkMissing("accuracyMeters").classification).toBe("UNVERIFIED"));
+  it("blocks missing timestamp", () => expect(checkMissing("observedAt").classification).toBe("UNVERIFIED"));
   it("requires approved policy", () => expect(evaluateGPSQuality(sample)).toMatchObject({ classification: "UNVERIFIED", reasons: ["POLICY_NOT_APPROVED"] }));
   it("rejects invalid policy", () => expect(check({}, { ...policy, maxAgeMs: 0 }).classification).toBe("UNVERIFIED"));
   it("rejects future timestamp", () => expect(check({ observedAt: 103_000 }).classification).toBe("INVALID"));
