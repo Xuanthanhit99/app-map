@@ -143,14 +143,16 @@ export default function JourneyTab() {
         <Text style={styles.heading}>Phương tiện</Text>
         <View style={styles.modes}>{([["DRIVING","Ô tô"],["WALKING","Đi bộ"],["CYCLING","Xe đạp"]] as const).map(([value,label]) => <Pressable key={value} accessibilityRole="button" accessibilityState={{selected:mode===value}} onPress={() => {setMode(value);invalidateRoute();}} style={[styles.modeButton,mode===value && styles.modeSelected]}><Text style={[styles.modeText,mode===value && styles.modeSelectedText]}>{label}</Text></Pressable>)}</View>
         <Text style={styles.hint}>Phương tiện được gửi đến Routing API; khả dụng tùy nhà cung cấp.</Text>
-        {origin && destination ? <View style={styles.confirmCard}>
-          <Text style={styles.heading}>Hai địa điểm đã chọn</Text>
-          <Text style={styles.body}>Từ: {origin.name}</Text>
-          <Text style={styles.body}>Đến: {destination.name}</Text>
-          <Pressable accessibilityRole="button" style={styles.button} disabled={confirming} onPress={() => { void verifyRoute(); }}>
-            <Text style={styles.buttonText}>{confirming ? "Đang tìm tuyến…" : "Xác nhận & tìm tuyến đường"}</Text>
+        <View style={styles.confirmCard}>
+          {origin && destination ? <>
+            <Text style={styles.heading}>Hai địa điểm đã chọn</Text>
+            <Text style={styles.body}>Từ: {origin.name}</Text>
+            <Text style={styles.body}>Đến: {destination.name}</Text>
+          </> : <Text style={styles.hint}>Chọn kết quả địa điểm thật cho cả điểm đi và điểm đến để tìm tuyến.</Text>}
+          <Pressable accessibilityRole="button" accessibilityState={{ disabled: confirming || !origin || !destination }} style={[styles.button, (!origin || !destination) && styles.disabled]} disabled={confirming || !origin || !destination} onPress={() => { void verifyRoute(); }}>
+            <Text style={[styles.buttonText, (!origin || !destination) && styles.disabledText]}>{confirming ? "Đang tìm tuyến…" : "Xác nhận & tìm tuyến đường"}</Text>
           </Pressable>
-        </View> : <Text style={styles.hint}>Chọn một kết quả thực cho mỗi địa điểm để tiếp tục.</Text>}
+        </View>
         {routeCheck ? <View style={styles.result}>
           <Text accessibilityRole="alert" style={styles.heading}>{routeCheck.status === "loading" ? "Đang tìm tuyến đường" : routeCheck.status === "route_found_unverified" ? "Đã tìm thấy tuyến đường" : "Chưa tìm được tuyến đường"}</Text>
           <Text style={styles.body}>{routeCheck.status === "route_found_unverified" ?
