@@ -112,7 +112,7 @@ export default function JourneyTab() {
   }
   const searchPanel = <ScrollView style={styles.searchPanel} contentContainerStyle={styles.searchContent} keyboardShouldPersistTaps="handled">
       {isDesktop ? <><Text style={styles.eyebrow}>JOURNEY</Text><Text accessibilityRole="header" style={styles.title}>Lên kế hoạch hành trình</Text><Text style={styles.body}>Tìm địa chỉ, chọn đúng địa điểm rồi xem tuyến đường. Không cần nhập tọa độ.</Text></> : null}
-      <View style={styles.realityCompact}><Text style={styles.realityCompactText}>Reality Check · Chưa có dữ liệu giao thông được xác minh</Text></View>
+      {isDesktop ? <View style={styles.realityCompact}><Text style={styles.realityCompactText}>Reality Check · Chưa có dữ liệu giao thông được xác minh</Text></View> : null}
       <View style={styles.card}>
         {isDesktop ? <Text style={styles.heading}>Tìm đường</Text> : null}
         {([
@@ -159,19 +159,20 @@ export default function JourneyTab() {
             routeCheck.status === "timeout" ? "Yêu cầu hết thời gian. Vui lòng thử lại." : routeCheck.status === "loading" ? "Đang lấy tuyến từ nhà cung cấp…" : "Chưa đủ điều kiện định tuyến."}</Text>
         </View> : null}
       </View>
-      <View style={styles.card}>
+      {!isDesktop ? <View style={styles.realityCompact}><Text style={styles.realityCompactText}>Reality Check · Chưa có dữ liệu giao thông được xác minh. Không thể kết luận tuyến an toàn hay thông thoáng.</Text></View> : null}
+      {isDesktop ? <View style={styles.card}>
         <Text style={styles.heading}>Reality Check</Text>
         <Text style={styles.body}>Chưa có dữ liệu giao thông thực tế được xác minh trên hành trình này. Không thể kết luận tuyến an toàn hay thông thoáng.</Text>
         <Text style={styles.hint}>Thông tin định tuyến TomTom được xác minh riêng với tình trạng giao thông.</Text>
-      </View>
-      <View style={styles.card}>
+      </View> : null}
+      {(isDesktop || plans.length > 0 || state.status === "error") ? <View style={styles.card}>
         <Text style={styles.heading}>Journey Impact · Phương án</Text>
         {state.status === "loading" ? <ActivityIndicator accessibilityLabel="Đang tải phương án" /> : null}
         {state.status === "error" ? <Text style={styles.body}>Chưa tải được dữ liệu phương án có bằng chứng.</Text> : null}
         {state.status === "empty" || (state.status === "ready" && plans.length === 0) ? <Text style={styles.body}>Chưa có tác động hoặc phương án đã xác minh liên quan đến hành trình.</Text> : null}
         {plans.map(plan => <Pressable key={plan.id} accessibilityRole="button" onPress={() => setSelected(plan.id)} style={styles.result}><Text style={styles.heading}>{plan.title}</Text><Text style={styles.body}>{selected === plan.id ? "Đã chọn phương án" : "Xem phương án có bằng chứng"}</Text></Pressable>)}
         <Text style={styles.hint}>Theo dõi hành trình chưa khả dụng cho đến khi đạt kiểm thử an toàn.</Text>
-      </View>
+      </View> : null}
 
     </ScrollView>;
   const searchMap = <View style={styles.searchMap}>
