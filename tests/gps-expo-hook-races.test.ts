@@ -1,5 +1,8 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
+// Expo defines __DEV__ at runtime; Vitest must provide the same global.
+vi.stubGlobal("__DEV__", false);
+
 const native = vi.hoisted(() => {
   const listeners: Array<(value: string) => void> = [];
   const watchers: Array<{ callback: (position: any) => void; remove: ReturnType<typeof vi.fn> }> = [];
@@ -77,7 +80,7 @@ describe("E-04D mocked Expo hook lifecycle behavior", () => {
 
   it("ignores a WATCH callback delivered after background", async () => {
     await mount();
-    const old = native.watchers[0];
+    const old = native.watchers[0]!;
     old.callback(position());
     expect(native.state.value.status).toBe("READY");
     await transition("background");
@@ -122,7 +125,7 @@ describe("E-04D mocked Expo hook lifecycle behavior", () => {
     native.location.getLastKnownPositionAsync.mockResolvedValueOnce(position());
     await mount();
     expect(native.state.value.status).toBe("REQUESTING");
-    native.watchers[0].callback(position());
+    native.watchers[0]!.callback(position());
     expect(native.state.value.status).toBe("READY");
   });
 
@@ -139,11 +142,11 @@ describe("E-04D mocked Expo hook lifecycle behavior", () => {
 
   it("rejects invalid or incomplete fixes and reports disabled services", async () => {
     await mount();
-    native.watchers[0].callback(position(Date.now() - 60_000));
+    native.watchers[0]!.callback(position(Date.now() - 60_000));
     expect(native.state.value.status).toBe("REQUESTING");
-    native.watchers[0].callback(position(Date.now(), null));
+    native.watchers[0]!.callback(position(Date.now(), null));
     expect(native.state.value.status).toBe("REQUESTING");
-    native.watchers[0].callback(position());
+    native.watchers[0]!.callback(position());
     expect(native.state.value.status).toBe("READY");
     native.state.cleanup?.();
 
