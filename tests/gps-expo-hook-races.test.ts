@@ -108,7 +108,7 @@ describe("E-04D mocked Expo hook lifecycle behavior", () => {
       return pending.promise.then(() => subscription);
     });
     await mount();
-    const old = native.watchers[0];
+    const old = native.watchers[0]!;
     await transition("background");
     await transition("active");
     pending.resolve(undefined);
