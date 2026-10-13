@@ -58,9 +58,11 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
       setState(next);
     };
     const dispatch = (event: Parameters<typeof reduceLocation>[1]) => commit(reduceLocation(stateRef.current, event));
-    const armStale = () => {
+    const armStale = (token: number) => {
       if (staleTimer) clearTimeout(staleTimer);
-      staleTimer = setTimeout(() => dispatch({ type: "DEGRADE", reason: "STALE" }), STALE_AFTER_MS);
+      staleTimer = setTimeout(() => {
+        if (validSession(token)) dispatch({ type: "DEGRADE", reason: "STALE" });
+      }, STALE_AFTER_MS);
     };
     const acceptPosition = (position: Location.LocationObject, source: GPSFixSource, token: number) => {
       if (!validSession(token)) return;
@@ -74,7 +76,9 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
       // E-04B quality stays fail-closed (no approved navigation policy).
       if (source !== "WATCH" || snapshot.quality.classification === "INVALID" ||
           snapshot.quality.classification === "UNAVAILABLE" ||
-          snapshot.quality.classification === "STALE") return;
+          snapshot.quality.classification === "STALE" ||
+          snapshot.quality.reasons.includes("MISSING_ACCURACY") ||
+          snapshot.quality.reasons.includes("MISSING_TIMESTAMP")) return;
       if (snapshot.input.latitude === undefined || snapshot.input.longitude === undefined ||
           snapshot.input.observedAt === undefined) return;
       if (POSITION_LOGS_ENABLED) debugLocation("position", {
@@ -84,7 +88,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
         timestamp: position.timestamp,
       });
       dispatch(fix(position));
-      armStale();
+      armStale(token);
     };
 
     const start = async () => {
@@ -93,6 +97,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
       const token = gps.start();
       if (token === null) return;
       activeToken = token;
+      if (staleTimer) clearTimeout(staleTimer);
       permissionGranted = false;
       servicesAvailable = null;
       dispatch({ type: "REQUEST" });
@@ -164,7 +169,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
           dispatch({ type: "UNAVAILABLE", reason: "NO_FIX" });
         }
       } finally {
-        if (restartGate.finish(Boolean(subscription))) void start();
+        if (restartGate.finish(Boolean(subscription)) && mounted && foreground) void start();
       }
     };
 
@@ -172,6 +177,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
     const appState = AppState.addEventListener("change", (next) => {
       foreground = next === "active";
       if (foreground) {
+        if (staleTimer) clearTimeout(staleTimer);
         gps.background();
         activeToken = null;
         resetLocation();
