@@ -81,6 +81,9 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
           snapshot.quality.reasons.includes("MISSING_TIMESTAMP")) return;
       if (snapshot.input.latitude === undefined || snapshot.input.longitude === undefined ||
           snapshot.input.observedAt === undefined) return;
+      // Existing 30s display freshness boundary; not an approved navigation policy.
+      if (snapshot.input.observedAt > snapshot.input.evaluatedAt ||
+          snapshot.input.evaluatedAt - snapshot.input.observedAt > STALE_AFTER_MS) return;
       if (POSITION_LOGS_ENABLED) debugLocation("position", {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
