@@ -25,6 +25,12 @@ describe("E-04C Expo runtime integration boundary", () => {
     expect(source).toContain("resetLocation()");
     expect(source).toContain('setState({ status: "IDLE" })');
   });
+  it("keeps development GPS logs free of raw coordinates", () => {
+    expect(source).toContain('debugLocation("lastKnown:position", positionMeta(lastKnown));');
+    expect(source).not.toContain("POSITION_LOGS_ENABLED");
+    expect(source).not.toContain('debugLocation("position", {');
+    expect(source).not.toMatch(/debugLocation\("lastKnown:position",\s*\{\s*latitude:/);
+  });
   it("does not introduce a navigation start or policy bypass", () => {
     expect(source).not.toContain("canStart: true");
     expect(source).not.toContain("navigationEligible: true");

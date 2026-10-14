@@ -7,7 +7,6 @@ import { createGPSLifecycleContract, type GPSFixSource } from "@core/location/gp
 
 const STALE_AFTER_MS = 30_000;
 const LOCATION_DEBUG_PREFIX = "[RealityLocation]";
-const POSITION_LOGS_ENABLED = false;
 
 function debugLocation(event: string, detail?: unknown) {
   if (!__DEV__) return;
@@ -107,12 +106,6 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
         trace("WATCH_REJECT", token, { source, reason: "TIMESTAMP_OUT_OF_RANGE", ...positionMeta(position) });
         return;
       }
-      if (POSITION_LOGS_ENABLED) debugLocation("position", {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-        timestamp: position.timestamp,
-      });
       trace("WATCH_FIX", token, { source, classification: snapshot.quality.classification, ...positionMeta(position) });
       dispatch(fix(position));
       armStale(token);
@@ -159,11 +152,7 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
         });
         if (!validSession(token)) return;
         if (lastKnown) {
-          debugLocation("lastKnown:position", {
-            latitude: lastKnown.coords.latitude,
-            longitude: lastKnown.coords.longitude,
-            accuracy: lastKnown.coords.accuracy,
-          });
+          debugLocation("lastKnown:position", positionMeta(lastKnown));
           acceptPosition(lastKnown, "LAST_KNOWN", token);
         } else {
           debugLocation("lastKnown:none");
