@@ -3,12 +3,12 @@ import { TomTomRoutingProvider } from "./tomtom-routing-provider";
 import { handleRoutingRequest } from "./routing-http-handler";
 import { handleRealityDecisionRead } from "./reality-decision-read";
 import { handleVerifiedDecisionRead } from "./verified-decision-http";
-import { UnconfiguredEvidenceRepository } from "./verified-evidence-repository";
+import { evidenceRepositoryFromEnv } from "./verified-evidence-repository";
 
 const port = Number(process.env.PORT ?? 3001);
 const key = process.env.TOMTOM_API_KEY;
 const primary = key ? new TomTomRoutingProvider(key) : null;
-const evidenceRepository = new UnconfiguredEvidenceRepository();
+const evidenceRepository = evidenceRepositoryFromEnv();
 
 createServer(async (request, response) => {
   const origin = request.headers.origin;
@@ -69,6 +69,7 @@ createServer(async (request, response) => {
     }
     return;
   }
+  if (request.method === "GET" && request.url === "/health/live") { response.writeHead(200, { "content-type": "application/json" }); response.end(JSON.stringify({ status: "ok" })); return; }
   if (await handleVerifiedDecisionRead(request, response, evidenceRepository)) return;
   if (handleRealityDecisionRead(request, response)) return;
   if (request.method !== "POST" || request.url !== "/v1/routing/route") {
