@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { getRealityDecisionCollection, type ApiCollection } from "../../src/infrastructure/api/realityDecisionClient";
+import { getRealityDecisionCollection, queryDecisionPlans, type ApiCollection } from "../../src/infrastructure/api/realityDecisionClient";
 import { theme } from "../../src/ui/theme";
 import { RealityMap } from "../../src/infrastructure/map/RealityMap";
 import { useForegroundLocationLifecycle } from "../../src/infrastructure/location/useForegroundLocationLifecycle";
@@ -28,6 +28,18 @@ export default function JourneyTab() {
   const mapLocation = useForegroundLocationLifecycle(false);
   const [state, setState] = useState<ScreenState>({ status: "loading", items: [] });
   const [selected, setSelected] = useState<string | null>(null);
+  const [decisionIntent, setDecisionIntent] = useState("");
+  const [decisionConsent, setDecisionConsent] = useState(false);
+  const [decisionSearching, setDecisionSearching] = useState(false);
+  const decisionEpoch = useRef(0);
+  async function requestDecisionPlans() {
+    if (!decisionConsent || decisionIntent.trim().length < 2 || decisionSearching) return;
+    const epoch = ++decisionEpoch.current;
+    setDecisionSearching(true);
+    setState({ status: "loading", items: [] });
+    const result = await queryDecisionPlans(process.env.EXPO_PUBLIC_API_BASE_URL, { intent: decisionIntent, consentToUseContext: true });
+    if (epoch === decisionEpoch.current) { setState(result); setSelected(null); setDecisionSearching(false); }
+  }
   const [originQuery, setOriginQuery] = useState("");
   const [destinationQuery, setDestinationQuery] = useState("");
   const [origin, setOrigin] = useState<PlaceResult | null>(null);
@@ -169,6 +181,14 @@ export default function JourneyTab() {
       </View> : null}
       {(isDesktop || plans.length > 0 || state.status === "error") ? <View style={styles.card}>
         <Text style={styles.heading}>Journey Impact · Phương án</Text>
+        <Text style={styles.body}>Bạn muốn khám phá điều gì? Chỉ gửi yêu cầu khi bạn chủ động đồng ý.</Text>
+        <TextInput accessibilityLabel="Mục đích khám phá" placeholder="Ví dụ: khám phá địa điểm văn hóa" placeholderTextColor="#A9BFCE" value={decisionIntent} onChangeText={setDecisionIntent} maxLength={160} style={{ minHeight: 44, borderColor: "#36556A", borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, color: "#F4F4F0" }} />
+        <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: decisionConsent }} onPress={() => setDecisionConsent(value => !value)} style={{ minHeight: 44, justifyContent: "center" }}>
+          <Text style={styles.body}>{decisionConsent ? "☑" : "☐"} Tôi đồng ý gửi mục đích khám phá để tìm phương án. Không gửi vị trí thiết bị.</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" disabled={!decisionConsent || decisionIntent.trim().length < 2 || decisionSearching} onPress={() => { void requestDecisionPlans(); }} style={[styles.button, (!decisionConsent || decisionIntent.trim().length < 2 || decisionSearching) && styles.disabled]}>
+          <Text style={styles.buttonText}>{decisionSearching ? "Đang kiểm tra…" : "Tìm phương án có bằng chứng"}</Text>
+        </Pressable>
         {state.status === "loading" ? <ActivityIndicator accessibilityLabel="Đang tải phương án" /> : null}
         {state.status === "error" ? <Text style={styles.body}>Chưa tải được dữ liệu phương án có bằng chứng.</Text> : null}
         {state.status === "empty" || (state.status === "ready" && plans.length === 0) ? <Text style={styles.body}>Chưa có tác động hoặc phương án đã xác minh liên quan đến hành trình.</Text> : null}

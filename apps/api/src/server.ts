@@ -28,6 +28,9 @@ createServer(async (request, response) => {
       response.writeHead(404); response.end(); return;
     }
     const q = (url.searchParams.get("q") ?? "").trim();
+    if ([...url.searchParams.keys()].some(param => param !== "q") || url.searchParams.getAll("q").length !== 1) {
+      response.writeHead(400, { "content-type": "application/json" }); response.end(JSON.stringify({ error: "INVALID_QUERY" })); return;
+    }
     response.setHeader("Cache-Control", "no-store");
     response.setHeader("Content-Type", "application/json; charset=utf-8");
     if (q.length < 3 || q.length > 160) {
@@ -46,7 +49,7 @@ createServer(async (request, response) => {
         searchUrl.searchParams.set("key", searchKey);
         searchUrl.searchParams.set("limit", "5");
         searchUrl.searchParams.set("typeahead", "true");
-        upstream = await fetch(searchUrl, { signal: controller.signal });
+        upstream = await fetch(searchUrl, { signal: controller.signal, redirect: "error" });
       } finally { clearTimeout(timer); }
       if (!upstream.ok) throw Error("GEOCODING_UPSTREAM_ERROR");
       const data: unknown = await upstream.json();
@@ -100,6 +103,9 @@ createServer(async (request, response) => {
       chunks.push(buffer);
     }
 
+    if (!String(request.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) {
+      response.writeHead(415, { "content-type": "application/json" }); response.end(JSON.stringify({ error: "UNSUPPORTED_MEDIA_TYPE" })); return;
+    }
     const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
     const result = await handleRoutingRequest(body, { primary, timeoutMs: 8_000 });
     response.writeHead(result.status, { "content-type": "application/json", "cache-control": "no-store" });
