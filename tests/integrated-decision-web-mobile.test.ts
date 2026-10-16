@@ -41,8 +41,11 @@ describe("Backend to Web and Mobile decision integration gate", () => {
     expect(result.status).toBe("ready");
     expect(result.items).toHaveLength(1);
     const calls = vi.mocked(fetcher).mock.calls;
-    expect(new URL(String(calls[0][0])).pathname).toBe("/v1/decision/plans/query");
-    expect(JSON.parse(String(calls[0][1]?.body))).toEqual(intent);
+    const firstCall = calls[0];
+    expect(firstCall).toBeDefined();
+    if (!firstCall) throw new Error("Expected a Decision Query request");
+    expect(new URL(String(firstCall[0])).pathname).toBe("/v1/decision/plans/query");
+    expect(JSON.parse(String(firstCall[1]?.body))).toEqual(intent);
   });
   it.each([["web", web], ["mobile", mobile]])("%s fails closed for empty, stale, conflict and outage", async (_name, client) => {
     expect((await client(base, intent, bridge([]))).status).toBe("empty");
