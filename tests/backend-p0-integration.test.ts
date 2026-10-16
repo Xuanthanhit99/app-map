@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Readable } from "node:stream";
+import type { IncomingMessage } from "node:http";
 import { HttpVerifiedEvidenceRepository, evidenceRepositoryFromEnv, parseEvidencePlaces, readVerifiedPlaces } from "../apps/api/src/verified-evidence-repository";
 import { handleVerifiedDecisionRead } from "../apps/api/src/verified-decision-http";
 
@@ -17,7 +18,7 @@ function request(method: string, url: string, body?: unknown, contentType = "app
   const bytes = body === undefined ? "" : JSON.stringify(body);
   return Object.assign(Readable.from(bytes ? [Buffer.from(bytes)] : []), {
     method, url, headers: { "content-type": contentType, "content-length": String(Buffer.byteLength(bytes)) },
-  });
+  }) as unknown as IncomingMessage;
 }
 
 describe("P0 evidence feed and explicit decision contract", () => {
@@ -27,7 +28,7 @@ describe("P0 evidence feed and explicit decision contract", () => {
     expect(() => parseEvidencePlaces({ places: [{ ...record, evidence: { ...record.evidence, truth: "FAKE" } }] })).toThrow();
   });
   it("requires complete feed configuration", () => {
-    expect(() => evidenceRepositoryFromEnv({ EVIDENCE_FEED_URL: "https://example.com/feed" })).toThrow();
+    expect(() => evidenceRepositoryFromEnv({ NODE_ENV: "test", EVIDENCE_FEED_URL: "https://example.com/feed" })).toThrow();
     expect(() => new HttpVerifiedEvidenceRepository(new URL("http://example.com/feed"), "token")).toThrow();
   });
   it("filters stale and conflicted feed observations", async () => {
