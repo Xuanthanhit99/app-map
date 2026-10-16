@@ -6,7 +6,7 @@ import { handleVerifiedDecisionRead } from "../apps/api/src/verified-decision-ht
 
 const now = new Date("2026-10-09T04:00:00Z");
 const record = { id: "p1", title: "Verified destination", latitude: 21.03, longitude: 105.85,
-  evidence: { truth: "KNOWN", source: "licensed-feed", provenanceId: "record-1", observedAt: "2026-10-09T03:59:00Z" } };
+  evidence: { truth: "KNOWN" as const, source: "licensed-feed", provenanceId: "record-1", observedAt: "2026-10-09T03:59:00Z" } };
 
 function response() {
   const state = { status: 0, body: "" };
