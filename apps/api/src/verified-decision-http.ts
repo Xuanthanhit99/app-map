@@ -66,7 +66,7 @@ export async function handleVerifiedDecisionRead(
     json(response, 200, {
       status: result.status, items: result.items,
       reason: result.status === "empty" ? result.reason : undefined,
-      provenance: [],
+      provenance: result.status === "ready" ? result.items.map(item => ({ placeId: item.id, provenanceId: item.evidence.provenanceId, source: item.evidence.source })) : [],
       evidence: { truth: "UNKNOWN", freshness: null, source: null, observedAt: null },
       generatedAt: now.toISOString(),
     });
