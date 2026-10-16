@@ -11,7 +11,13 @@
       "node",
       "vitest/globals"
     ],
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": [
+        "src/*"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",
