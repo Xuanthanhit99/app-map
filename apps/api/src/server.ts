@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { applyApiGuards, logApiEvent } from "./api-guard";
 import { TomTomRoutingProvider } from "./tomtom-routing-provider";
 import { handleRoutingRequest } from "./routing-http-handler";
 import { handleRealityDecisionRead } from "./reality-decision-read";
@@ -11,15 +12,16 @@ const primary = key ? new TomTomRoutingProvider(key) : null;
 const evidenceRepository = evidenceRepositoryFromEnv();
 
 createServer(async (request, response) => {
-  const origin = request.headers.origin;
-  const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:4173,http://localhost:4173,http://localhost:8081,http://127.0.0.1:8081").split(",").map(value => value.trim());
-  if (origin && allowedOrigins.includes(origin)) {
-    response.setHeader("Access-Control-Allow-Origin", origin);
-    response.setHeader("Vary", "Origin");
-    response.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:4173,http://localhost:4173,http://localhost:8081,http://127.0.0.1:8081").split(",").map(value => value.trim()).filter(Boolean);
+  const started = Date.now();
+  response.once("finish", () => logApiEvent("http_request", { requestId: String(response.getHeader("X-Request-Id") ?? ""), status: response.statusCode, durationMs: Date.now() - started }));
+  if (!applyApiGuards(request, response, allowedOrigins)) return;
+  if (request.method === "GET" && request.url === "/health/ready") {
+    const ready = Boolean(primary);
+    response.writeHead(ready ? 200 : 503, { "content-type": "application/json" });
+    response.end(JSON.stringify({ status: ready ? "ready" : "degraded", routingConfigured: ready, evidenceConfigured: Boolean(process.env.EVIDENCE_FEED_URL && process.env.EVIDENCE_FEED_TOKEN) }));
+    return;
   }
-  if (request.method === "OPTIONS" && origin && allowedOrigins.includes(origin)) { response.writeHead(204); response.end(); return; }
   if (request.method === "GET" && request.url?.startsWith("/v1/places/search")) {
     const url = new URL(request.url, "http://localhost");
     if (url.pathname !== "/v1/places/search") {

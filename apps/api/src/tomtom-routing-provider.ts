@@ -17,7 +17,7 @@ function mode(mode: RoutingRequest["mode"]): string {
 function coordinates(payload: TomTomResponse): Coordinate[] {
   const points = payload.routes?.[0]?.legs?.flatMap((leg) => leg.points ?? []) ?? [];
   return points.flatMap((point) =>
-    typeof point.latitude === "number" && typeof point.longitude === "number"
+    typeof point.latitude === "number" && Number.isFinite(point.latitude) && Math.abs(point.latitude) <= 90 && typeof point.longitude === "number" && Number.isFinite(point.longitude) && Math.abs(point.longitude) <= 180
       ? [[point.longitude, point.latitude] as Coordinate]
       : []
   );
@@ -31,7 +31,7 @@ export class TomTomRoutingProvider implements RoutingProvider {
     private readonly transport: FetchLike = fetch,
   ) {}
 
-  async route(request: RoutingRequest): Promise<RoutingResult> {
+  async route(request: RoutingRequest, signal?: AbortSignal): Promise<RoutingResult> {
     const [originLng, originLat] = request.origin;
     const [destinationLng, destinationLat] = request.destination;
     const path = `${originLat},${originLng}:${destinationLat},${destinationLng}`;
@@ -43,7 +43,7 @@ export class TomTomRoutingProvider implements RoutingProvider {
 
     let response: Response;
     try {
-      response = await this.transport(url);
+      response = await this.transport(url, signal ? { signal, redirect: "error" } : { redirect: "error" });
     } catch {
       return { status: "FAILURE", reason: "UNAVAILABLE", retryable: true, provider: this.id };
     }
@@ -55,10 +55,12 @@ export class TomTomRoutingProvider implements RoutingProvider {
       return { status: "FAILURE", reason: "UNAVAILABLE", retryable: response.status >= 500 || response.status === 429, provider: this.id };
     }
 
-    const payload = await response.json() as TomTomResponse;
+    let payload: TomTomResponse;
+    try { payload = await response.json() as TomTomResponse; }
+    catch { return { status: "FAILURE", reason: "INVALID_RESPONSE", retryable: false, provider: this.id }; }
     const summary = payload.routes?.[0]?.summary;
     const routeCoordinates = coordinates(payload);
-    if (!summary || typeof summary.lengthInMeters !== "number" || typeof summary.travelTimeInSeconds !== "number" || routeCoordinates.length < 2) {
+    if (!summary || typeof summary.lengthInMeters !== "number" || typeof summary.travelTimeInSeconds !== "number" || !Number.isFinite(summary.lengthInMeters) || summary.lengthInMeters <= 0 || !Number.isFinite(summary.travelTimeInSeconds) || summary.travelTimeInSeconds <= 0 || routeCoordinates.length < 2) {
       return { status: "FAILURE", reason: "INVALID_RESPONSE", retryable: false, provider: this.id };
     }
 

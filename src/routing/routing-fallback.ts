@@ -2,7 +2,7 @@ import { isRenderableRoute } from "../map/map-contract";
 import type { RoutingFailure, RoutingProvider, RoutingRequest, RoutingResult, RoutingSuccess } from "./routing-contract";
 
 function validSuccess(result: RoutingResult): result is RoutingSuccess {
-  return result.status === "SUCCESS" && isRenderableRoute(result.route) && result.distanceMeters >= 0 && result.durationSeconds >= 0;
+  return result.status === "SUCCESS" && isRenderableRoute(result.route) && Number.isFinite(result.distanceMeters) && result.distanceMeters > 0 && Number.isFinite(result.durationSeconds) && result.durationSeconds > 0;
 }
 
 function normalizeResult(result: RoutingResult, providerId: string): RoutingSuccess | RoutingFailure {

@@ -29,5 +29,5 @@ export type RoutingResult = RoutingSuccess | RoutingFailure;
 
 export interface RoutingProvider {
   readonly id: string;
-  route(request: RoutingRequest): Promise<RoutingResult>;
+  route(request: RoutingRequest, signal?: AbortSignal): Promise<RoutingResult>;
 }
