@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { applyApiGuards, logApiEvent } from "./api-guard";
+import { clientIdentityResolverFromEnv } from "./client-identity";
 import { TomTomRoutingProvider } from "./tomtom-routing-provider";
 import { handleRoutingRequest } from "./routing-http-handler";
 import { handleRealityDecisionRead } from "./reality-decision-read";
@@ -10,12 +11,14 @@ const port = Number(process.env.PORT ?? 3001);
 const key = process.env.TOMTOM_API_KEY;
 const primary = key ? new TomTomRoutingProvider(key) : null;
 const evidenceRepository = evidenceRepositoryFromEnv();
+// Fails closed at startup on an invalid TRUST_PROXY / TRUSTED_PROXY_HOPS / TRUSTED_PROXY_CIDRS value.
+const identifyClient = clientIdentityResolverFromEnv();
 
 createServer(async (request, response) => {
   const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:4173,http://localhost:4173,http://localhost:8081,http://127.0.0.1:8081").split(",").map(value => value.trim()).filter(Boolean);
   const started = Date.now();
   response.once("finish", () => logApiEvent("http_request", { requestId: String(response.getHeader("X-Request-Id") ?? ""), status: response.statusCode, durationMs: Date.now() - started }));
-  if (!applyApiGuards(request, response, allowedOrigins)) return;
+  if (!applyApiGuards(request, response, allowedOrigins, identifyClient)) return;
   if (request.method === "GET" && request.url === "/health/ready") {
     const ready = Boolean(primary);
     response.writeHead(ready ? 200 : 503, { "content-type": "application/json" });

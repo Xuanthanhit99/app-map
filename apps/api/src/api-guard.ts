@@ -1,5 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { randomUUID } from "node:crypto";
+import { createClientIdentityResolver, type ClientIdentityResolver } from "./client-identity";
+
+// Default: forwarded headers are never trusted. A proxy mode must be configured explicitly (see client-identity.ts).
+const socketPeerIdentity = createClientIdentityResolver({ mode: "none" });
 
 const windows = new Map<string, { count: number; reset: number }>();
 const MAX_KEYS = 20_000;
@@ -14,7 +18,11 @@ export function checkRateLimit(key: string, now = Date.now(), limit = 90, interv
   return entry.count <= limit;
 }
 
-export function applyApiGuards(request: IncomingMessage, response: ServerResponse, origins: readonly string[]): boolean {
+/** In-memory, per-process window: with N replicas the effective limit per client is up to N x limit. */
+export function applyApiGuards(
+  request: IncomingMessage, response: ServerResponse, origins: readonly string[],
+  identify: ClientIdentityResolver = socketPeerIdentity,
+): boolean {
   const requestId = randomUUID();
   response.setHeader("X-Request-Id", requestId);
   response.setHeader("X-Content-Type-Options", "nosniff");
@@ -35,9 +43,8 @@ export function applyApiGuards(request: IncomingMessage, response: ServerRespons
   if (request.method === "OPTIONS") {
     response.writeHead(origin ? 204 : 405); response.end(); return false;
   }
-  // Only trust the socket peer; never trust X-Forwarded-For without an explicit trusted-proxy contract.
-  const peer = request.socket?.remoteAddress ?? "unknown";
-  if (!checkRateLimit(peer)) {
+  // The identity key may contain an IP prefix: it is used only as an in-memory map key and never logged.
+  if (!checkRateLimit(identify(request).key)) {
     response.writeHead(429, { "Content-Type": "application/json", "Retry-After": "60" });
     response.end(JSON.stringify({ error: "RATE_LIMITED", requestId }));
     return false;
