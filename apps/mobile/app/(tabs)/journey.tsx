@@ -6,6 +6,8 @@ import { RealityMap } from "../../src/infrastructure/map/RealityMap";
 import { useForegroundLocationLifecycle } from "../../src/infrastructure/location/useForegroundLocationLifecycle";
 import { searchPlaces, type PlaceResult, type PlaceSearch } from "../../src/infrastructure/api/placeSearchClient";
 import { checkPlanRoute, type RouteCheck } from "../../src/infrastructure/api/routeVerificationClient";
+import { formatDurationVi } from "../../src/features/journey/formatDuration";
+import { createLatestRequestGate } from "../../src/features/journey/latestRequestGate";
 
 
 type PlanItem = { id: string; title?: string; stops?: { placeId: string }[]; evidence?: { truth?: string; source?: string; observedAt?: string; provenanceId?: string } };
@@ -31,14 +33,14 @@ export default function JourneyTab() {
   const [decisionIntent, setDecisionIntent] = useState("");
   const [decisionConsent, setDecisionConsent] = useState(false);
   const [decisionSearching, setDecisionSearching] = useState(false);
-  const decisionEpoch = useRef(0);
+  const decisionGate = useRef(createLatestRequestGate()).current;
   async function requestDecisionPlans() {
     if (!decisionConsent || decisionIntent.trim().length < 2 || decisionSearching) return;
-    const epoch = ++decisionEpoch.current;
+    const token = decisionGate.begin();
     setDecisionSearching(true);
     setState({ status: "loading", items: [] });
     const result = await queryDecisionPlans(process.env.EXPO_PUBLIC_API_BASE_URL, { intent: decisionIntent, consentToUseContext: true });
-    if (epoch === decisionEpoch.current) { setState(result); setSelected(null); setDecisionSearching(false); }
+    if (decisionGate.isCurrent(token)) { setState(result); setSelected(null); setDecisionSearching(false); }
   }
   const [originQuery, setOriginQuery] = useState("");
   const [destinationQuery, setDestinationQuery] = useState("");
@@ -78,18 +80,19 @@ export default function JourneyTab() {
     if (result.status === "route_found_unverified" && result.route?.source === "ROUTING_ENGINE" && result.route.coordinates.length >= 2) { setScreenMode("ROUTE_PREVIEW"); setEditingRoute(false); }
   }
   useEffect(() => {
-    let mounted = true;
-    getRealityDecisionCollection(process.env.EXPO_PUBLIC_API_BASE_URL, "decision").then(result => {
-      if (mounted) setState(result);
+    // Latest-wins: a slow initial context-free read must not overwrite a consented query result.
+    const token = decisionGate.begin();
+    void getRealityDecisionCollection(process.env.EXPO_PUBLIC_API_BASE_URL, "decision").then(result => {
+      if (decisionGate.isCurrent(token)) setState(result);
     });
-    return () => { mounted = false; };
+    return () => { decisionGate.invalidate(); };
   }, []);
   const plans = state.status === "ready" ? state.items.filter(isVerified) : [];
   const active = plans.find(plan => plan.id === selected);
   if (screenMode === "ROUTE_PREVIEW" && routeCheck?.status === "route_found_unverified" && routeCheck.route?.source === "ROUTING_ENGINE" && routeCheck.route.coordinates.length >= 2 && !editingRoute) {
     const summary = <View style={[styles.previewSummary, !isDesktop && styles.mobilePreviewSummary]}>
       <Text style={styles.previewKicker}>HÀNH TRÌNH · TOMTOM ROUTING</Text>
-      <Text style={styles.previewEta}>{Math.floor(routeCheck.durationSeconds / 3600) > 0 ? `${Math.floor(routeCheck.durationSeconds / 3600)} giờ ${Math.round((routeCheck.durationSeconds % 3600) / 60)} phút` : `${Math.round(routeCheck.durationSeconds / 60)} phút`}</Text>
+      <Text style={styles.previewEta}>{formatDurationVi(routeCheck.durationSeconds) ?? "Chưa rõ thời gian"}</Text>
       <Text style={styles.body}>{(routeCheck.distanceMeters / 1000).toFixed(1)} km · {mode === "DRIVING" ? "Ô tô" : mode === "WALKING" ? "Đi bộ" : "Xe đạp"}</Text>
       <View style={styles.realityNote}>
         <Text style={styles.heading}>Reality Check</Text>
@@ -168,7 +171,7 @@ export default function JourneyTab() {
         {routeCheck ? <View style={styles.result}>
           <Text accessibilityRole="alert" style={styles.heading}>{routeCheck.status === "loading" ? "Đang tìm tuyến đường" : routeCheck.status === "route_found_unverified" ? "Đã tìm thấy tuyến đường" : "Chưa tìm được tuyến đường"}</Text>
           <Text style={styles.body}>{routeCheck.status === "route_found_unverified" ?
-            `${(routeCheck.distanceMeters / 1000).toFixed(1)} km · ${Math.round(routeCheck.durationSeconds / 60)} phút · Nguồn: ${routeCheck.provider}. Chưa xác minh điều kiện giao thông thực tế.` :
+            `${(routeCheck.distanceMeters / 1000).toFixed(1)} km · ${formatDurationVi(routeCheck.durationSeconds) ?? "Chưa rõ thời gian"} · Nguồn: ${routeCheck.provider}. Chưa xác minh điều kiện giao thông thực tế.` :
             routeCheck.status === "error" ? routeCheck.reason === "HTTP_503" ? "Dịch vụ định tuyến chưa được cấu hình. Bạn vẫn có thể tìm và chọn địa chỉ." : "Không thể tìm tuyến: " + routeCheck.reason :
             routeCheck.status === "timeout" ? "Yêu cầu hết thời gian. Vui lòng thử lại." : routeCheck.status === "loading" ? "Đang lấy tuyến từ nhà cung cấp…" : "Chưa đủ điều kiện định tuyến."}</Text>
         </View> : null}
