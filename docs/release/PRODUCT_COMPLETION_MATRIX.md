@@ -1,41 +1,43 @@
 # Product Completion Matrix
 
-Verified at commit `bdb769b` (branch `feat/reality-v2-completion`), 2026-10-22, in the local sandbox. Status values:
+Verified at commit `4678f78` (branch `feat/reality-v2-completion`, Draft PR #5) on 2026-10-22, in the local sandbox.
+
+Status values:
 - **DONE**: implemented and verified by a recorded test.
 - **DONE-LOCAL**: verified only with local doubles or fixtures.
-- **PARTIAL**
+- **PARTIAL**: partly done; the row says what is missing.
 - **BLOCKED**: an external input is missing.
 - **NOT STARTED**
 
-Visual conformance is **BLOCKED** for every row: the approved masters are missing, and all UI is a PROPOSED RECONSTRUCTION.
+Visual conformance is BLOCKED for every row: the approved masters are missing. The UI is the owner-directed navy + amber **proposed reconstruction**.
 
 | Area | Feature | API | Web | Mobile | Evidence | Status / blocker |
 |---|---|---|---|---|---|---|
-| Identity | Register, login, logout, refresh rotation, reuse revocation | ✅ | ✅ | ✅ | `tests/api-identity-account.int.test.ts`; E2E G9 renewal | DONE |
-| Identity | Email verification, password reset | — | — | — | — | BLOCKED: email provider |
-| Identity | Google / Apple sign-in | ✅ verifier, flag off | — | — | unit tests | BLOCKED: client IDs |
-| Privacy | Consent, contribution opt-in, data export, account deletion | ✅ | ✅ | ✅ (opt-in, logout) | int tests; E2E G9 export | DONE |
-| Reality | State engine (truth / freshness / nature / safety, 9 domains) | ✅ | ✅ | ✅ | `tests/state-engine.test.ts`, `api-reality-trust.int.test.ts` | DONE |
-| Reality | Place / area / category pages, map explorer, pulse | ✅ | ✅ | ✅ (home, place) | E2E desktop / mobile steps 1–3 | DONE |
-| Data | OSM places + published hours ingestion | ✅ | n/a | n/a | `api-ingestion.int.test.ts` (recorded payloads) | DONE-LOCAL. Live fetch BLOCKED: sandbox network, QA env |
-| Data | Open-Meteo forecast ingestion | ✅ | n/a | n/a | same | DONE-LOCAL. Licence: commercial use RESTRICTED |
+| Identity | Register, login, logout, refresh rotation, reuse revocation | ✅ | ✅ | ✅ | `api-identity-account.int`, E2E G9 renewal | DONE |
+| Identity | Email verification (24 h single-use link) | ✅ | ✅ page, banner, resend | ✅ resend, deep-link screen | `api-account-recovery.int`, E2E G9 | DONE-LOCAL. Real delivery needs an SMTP relay (QA uses Mailpit) |
+| Identity | Password reset / account recovery (30 min, revokes sessions, change notice) | ✅ | ✅ | ✅ request + deep-link reset screen | `api-account-recovery.int`, E2E G9 forgot → reset | DONE-LOCAL. Same note as above |
+| Identity | Change password (notifies owner) | ✅ | ✅ (new) | ✅ (new) | int test | DONE |
+| Identity | Google / Apple sign-in (native, nonce-bound) | ✅ verifier + nonce | — | ✅ shown only when configured | `api-federated.int` | BLOCKED: client IDs, Apple team, native build |
+| Privacy | Consent, export, account deletion | ✅ | ✅ | ✅ native JSON export via share sheet (new) | int + E2E G9 export | DONE (mobile export not device-tested) |
+| Privacy | Location consent / revocation | n/a | browser-managed | ✅ OS permission status, "no background location", link to OS settings | code; `app.json` disables background location | DONE (device test pending) |
+| Reality | State engine, place / area / map / pulse | ✅ | ✅ | ✅ | unit + int + E2E | DONE |
+| Data | OSM places + Open-Meteo ingestion, breaker, retention | ✅ | admin views | n/a | int tests (recorded payloads) | DONE-LOCAL. Live: BLOCKED (QA not created) |
 | Data | Live traffic, flood, parking occupancy, transit, events | — | — | — | — | BLOCKED: no licensed feed; shown as UNKNOWN |
-| Data | Circuit breaker, retry, idempotent runs, retention | ✅ | admin view | — | `api-ingestion`, `api-retention` int tests | DONE |
-| Contribution | Reports, dedupe, corroboration, votes, holds | ✅ | ✅ | ✅ | int tests; E2E G10 two-contributor flow | DONE |
+| Contribution | Reports, corroboration, votes, holds, moderation | ✅ | ✅ | ✅ | int + E2E G10 | DONE |
 | Contribution | Report photos | — | — | — | — | BLOCKED: object storage |
-| Moderation | Queue, conflicts, user actions, audit log, RBAC | ✅ | ✅ | — | E2E Admin step; int tests | DONE (web only by design) |
-| Decide | Intent → ranked options with reasons and unknowns | ✅ | ✅ | ✅ | `api-intelligence.int.test.ts`; E2E decide | DONE-LOCAL. Flow 06 contract MISSING |
-| Journey | Plan, route, start, impact, arrive, share | ✅ | ✅ | ✅ | int tests; E2E G10 journey + landscape | DONE-LOCAL (dev straight-line routing). Real routing BLOCKED: TomTom key |
-| Journey | Turn-by-turn guidance | — | — | — | — | NOT STARTED |
-| Watch | Saved places, watch areas, severity thresholds, cooldown, in-app notifications | ✅ | ✅ | ✅ | int tests; E2E watcher notified | DONE |
-| Watch | Push notifications | tokens table | — | — | — | BLOCKED: FCM / APNs |
-| Stories | Create, moderate, publish, public pages | ✅ | ✅ | — | int tests | PARTIAL: Stories contract MISSING; not on mobile |
+| Decide | Ranked options with reasons and unknowns | ✅ | ✅ | ✅ | int + E2E | DONE-LOCAL. Flow 06 contract MISSING |
+| Journey | Plan, route, start, impact, arrive, share, reroute | ✅ | ✅ | ✅ | int + E2E | DONE-LOCAL. Real routing needs the TomTom key |
+| Journey | Turn-by-turn guidance (provider instructions, vi-VN, off-route suspension) | ✅ stored per route revision | ✅ next step | ✅ next step + reroute | `route-guidance.test` | PARTIAL: not exercised with real TomTom; voice guidance not implemented |
+| Journey | Stale-impact disclosure | n/a | ✅ | ✅ | code review | DONE |
+| Watch | Saved places, watch areas, thresholds, in-app notifications | ✅ | ✅ | ✅ | int + E2E | DONE |
+| Watch | Push delivery (Expo; consent, quiet hours, priority, token hygiene) | ✅ worker dispatcher | n/a | ✅ registration + tap routing | `api-account-recovery.int` push case | BLOCKED: EAS projectId + FCM/APNs credentials, device |
+| Links | Deep links (`reality://`), universal / App Links | n/a | ✅ `/.well-known/*` from env (404 until configured) | ✅ routes + `app.config.ts` | export + config check | BLOCKED: signing fingerprints / Apple team ID |
+| Stories | Create, moderate, publish | ✅ | ✅ | — | int tests | PARTIAL: contract missing; not on mobile |
 | AI | Assistant | flag only | — | — | — | NOT STARTED: no LLM provider |
-| SEO | Sitemap, robots gate, JSON-LD, canonical, manifest | ✅ | ✅ | n/a | E2E SEO step | DONE |
-| A11y | axe on key pages (desktop, mobile) | n/a | ✅ | — | E2E: 0 violations | DONE (web, automated only). Manual screen-reader pass NOT RUN |
-| Security | CSP and headers, rate limits, trusted proxy, prod config refusals, fixture leak guard | ✅ | ✅ | n/a | E2E headers; `no-fake-data-leak.test.ts`; config tests | DONE |
-| Security | Dependency audit | — | 0 critical | 23 high (Expo / Metro tooling) | `npm audit --omit=dev` | PARTIAL |
-| Mobile | Production JS bundles (Android, iOS) | n/a | n/a | ✅ | `expo export` 2.95 MB each | DONE |
-| Mobile | Native build, signing, device / emulator tests, store submission | n/a | n/a | — | — | BLOCKED: EAS / SDK / Xcode / devices, owner approval |
-| Visual | Conformance to approved masters | n/a | — | — | — | BLOCKED: masters missing |
-| Ops | QA environment (Railway), production deploy | — | — | — | — | BLOCKED: QA not provisioned; production needs owner approval |
+| SEO | Sitemap, robots, canonical, JSON-LD, indexing boundary | ✅ | ✅ | n/a | `seo-crawl.json` (0 issues) | DONE-LOCAL. Deployed crawl NOT RUN |
+| Performance | Lab budgets | n/a | measured | — | `lighthouse.json` | PARTIAL: text pages perf 0.87–0.90 mobile, LCP over budget; map page heavy (software WebGL in sandbox) |
+| A11y | axe on key pages; Lighthouse a11y | n/a | ✅ 1.0 | contrast via shared tokens | E2E axe, `theme-parity.test` | DONE (automated). Manual screen reader NOT RUN |
+| Security | Enforced dependency gate, headers, rate limits, internal-hop identity | ✅ | ✅ | bundle-verified | `audit-gate.json`, `security-gate.test` | DONE |
+| Ops | QA environment | config ✅ | config ✅ | — | `QA_DEPLOYMENT.md` | BLOCKED: Railway platform incident ("deploys paused") |
+| Ops | Installable Android test build | n/a | n/a | workflow ✅ | `native-qa-build.yml` | BLOCKED: needs QA URL; not run |
+| Ops | iOS test build, store submission | n/a | n/a | — | — | BLOCKED: Apple credentials; submission requires owner approval |

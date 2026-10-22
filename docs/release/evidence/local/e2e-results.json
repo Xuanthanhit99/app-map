@@ -1,138 +1,138 @@
 {
   "webUrl": "http://127.0.0.1:3000",
-  "runAt": "2026-10-22T08:07:39.299Z",
+  "runAt": "2026-10-22T08:15:50.496Z",
   "passed": 26,
   "failed": 0,
   "results": [
     {
       "name": "desktop: home renders with honest pulse ledger",
       "status": "PASS",
-      "ms": 3545
+      "ms": 3440
     },
     {
       "name": "desktop: map loads places and opens inspector",
       "status": "PASS",
-      "ms": 14131
+      "ms": 13429
     },
     {
       "name": "desktop: place page is SSR with JSON-LD, canonical and unknown state",
       "status": "PASS",
-      "ms": 7969
+      "ms": 8139
     },
     {
       "name": "desktop: decide page form",
       "status": "PASS",
-      "ms": 2142
+      "ms": 2357
     },
     {
       "name": "tablet: home renders with honest pulse ledger",
       "status": "PASS",
-      "ms": 2791
+      "ms": 3161
     },
     {
       "name": "tablet: map loads places and opens inspector",
       "status": "PASS",
-      "ms": 9975
+      "ms": 11685
     },
     {
       "name": "tablet: place page is SSR with JSON-LD, canonical and unknown state",
       "status": "PASS",
-      "ms": 5359
+      "ms": 6504
     },
     {
       "name": "tablet: decide page form",
       "status": "PASS",
-      "ms": 2103
+      "ms": 2098
     },
     {
       "name": "mobile: home renders with honest pulse ledger",
       "status": "PASS",
-      "ms": 2199
+      "ms": 2351
     },
     {
       "name": "mobile: map loads places and opens inspector",
       "status": "PASS",
-      "ms": 7195
+      "ms": 7231
     },
     {
       "name": "mobile: place page is SSR with JSON-LD, canonical and unknown state",
       "status": "PASS",
-      "ms": 4010
+      "ms": 3233
     },
     {
       "name": "mobile: decide page form",
       "status": "PASS",
-      "ms": 1973
+      "ms": 1870
     },
     {
       "name": "G10: user A registers and opts in to contribution",
       "status": "PASS",
-      "ms": 3966
+      "ms": 3813
     },
     {
       "name": "G10: user A saves and watches a place",
       "status": "PASS",
-      "ms": 5189
+      "ms": 4488
     },
     {
       "name": "G10: user A reports 'Bãi xe đầy' — single report stays unverified",
       "status": "PASS",
-      "ms": 14441
+      "ms": 16589
     },
     {
       "name": "G10: user B (mobile) registers, opts in and corroborates",
       "status": "PASS",
-      "ms": 9210
+      "ms": 9598
     },
     {
       "name": "G10: place now shows KNOWN 'Bãi đầy' with source and freshness; watcher notified",
       "status": "PASS",
-      "ms": 8521
+      "ms": 10116
     },
     {
       "name": "G10: decide → start journey → impact → arrive",
       "status": "PASS",
-      "ms": 9978
+      "ms": 10208
     },
     {
       "name": "G10: journey on landscape phone keeps the glance rail",
       "status": "PASS",
-      "ms": 4273
+      "ms": 5809
     },
     {
       "name": "G9: data export downloads a JSON copy",
       "status": "PASS",
-      "ms": 37
+      "ms": 39
     },
     {
       "name": "G9: expired access cookie is silently renewed from the refresh cookie (single-use rotation)",
       "status": "PASS",
-      "ms": 857
+      "ms": 511
     },
     {
       "name": "Admin: moderator console works with server-side RBAC",
       "status": "PASS",
-      "ms": 6751
+      "ms": 7661
     },
     {
       "name": "G9: registration sends a verification email; the link verifies the address",
       "status": "PASS",
-      "ms": 3842
+      "ms": 3960
     },
     {
       "name": "G9: forgot password → reset link → new password works, old one rejected, sessions revoked",
       "status": "PASS",
-      "ms": 4428
+      "ms": 3752
     },
     {
       "name": "SEO: robots disallows non-production; sitemap and manifest served",
       "status": "PASS",
-      "ms": 69
+      "ms": 55
     },
     {
       "name": "Security headers on web responses",
       "status": "PASS",
-      "ms": 24
+      "ms": 38
     }
   ],
   "consoleErrors": [],

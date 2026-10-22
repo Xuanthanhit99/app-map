@@ -20,6 +20,19 @@ const axeFindings = [];
 const VIEWPORTS = { desktop: { viewport: { width: 1536, height: 960 } }, tablet: { viewport: { width: 820, height: 1180 }, isMobile: true, hasTouch: true }, mobile: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } };
 const HOAN_KIEM = { latitude: 21.0289, longitude: 105.8525, accuracy: 15 };
 
+// Places under test. Locally these are the dev fixtures; on QA (fixtures refused) real ingested
+// places are discovered near Hoàn Kiếm through the public API, so no data is invented for tests.
+async function discover(category, fallback) {
+  if (process.env.E2E_FIXTURES !== "false") return fallback;
+  const r = await fetch(`${WEB}/api/proxy/v1/places?category=${category}&near=${HOAN_KIEM.latitude},${HOAN_KIEM.longitude}&radius=900&limit=5`);
+  const items = (await r.json().catch(() => ({}))).items ?? [];
+  if (!items.length) throw new Error(`no real ${category} place near Hoàn Kiếm on ${WEB}`);
+  return { slug: items[0].slug, name: items[0].name };
+}
+const CAFE = await discover("cafe", { slug: "ca-phe-giang-dev", name: "Cà phê Giảng" });
+const PARKING = await discover("parking", { slug: "bai-xe-bo-ho-dev", name: "Bãi xe Bờ Hồ" });
+const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // ── Mail capture: local SMTP sink (SMTP_SINK_PORT) or the QA Mailpit HTTP API (MAILPIT_URL). ──
 const mails = [];
 let sink = null;
@@ -110,22 +123,22 @@ for (const kind of ["desktop", "tablet", "mobile"]) {
     await axe(page, `${kind} home`);
   });
   await step(`${kind}: map loads places and opens inspector`, async () => {
-    await page.goto(`${WEB}/ban-do?q=Cà phê`);
+    await page.goto(`${WEB}/ban-do?q=${encodeURIComponent(CAFE.name)}`);
     await page.locator(".maplibregl-canvas").waitFor({ timeout: 20_000 });
     if (kind === "mobile") await page.locator(".map-side").evaluate((el) => el.setAttribute("data-collapsed", "false"));
-    const row = page.locator(".place-row", { hasText: "Cà phê Giảng" });
+    const row = page.locator(".place-row", { hasText: CAFE.name });
     await row.waitFor({ timeout: 15_000 });
     await shot(page, `${kind}-02-map-search`);
     await row.click();
-    await page.getByRole("heading", { name: "Cà phê Giảng" }).waitFor();
+    await page.getByRole("heading", { name: CAFE.name }).waitFor();
     await shot(page, `${kind}-03-map-inspector`);
   });
   await step(`${kind}: place page is SSR with JSON-LD, canonical and unknown state`, async () => {
-    await page.goto(`${WEB}/dia-diem/ca-phe-giang-dev`);
+    await page.goto(`${WEB}/dia-diem/${CAFE.slug}`);
     const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
     if (!ld?.includes("CafeOrCoffeeShop")) throw new Error("JSON-LD missing");
     const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
-    if (!canonical?.endsWith("/dia-diem/ca-phe-giang-dev")) throw new Error(`canonical ${canonical}`);
+    if (!canonical?.endsWith(`/dia-diem/${CAFE.slug}`)) throw new Error(`canonical ${canonical}`);
     await page.getByText("Chưa rõ:").first().waitFor();
     await shot(page, `${kind}-04-place`);
     await axe(page, `${kind} place`);
@@ -153,13 +166,13 @@ let journeyUrl = null;
 
 await step("G10: user A registers and opts in to contribution", async () => { await register(pageA, userA); await enableContribution(pageA); await shot(pageA, "desktop-06-privacy"); });
 await step("G10: user A saves and watches a place", async () => {
-  await pageA.goto(`${WEB}/dia-diem/bai-xe-bo-ho-dev`);
+  await pageA.goto(`${WEB}/dia-diem/${PARKING.slug}`);
   await pageA.getByRole("button", { name: "Lưu" }).click(); await pageA.getByText("Đã lưu địa điểm.").waitFor();
   await pageA.getByRole("button", { name: "Theo dõi thay đổi" }).click(); await pageA.getByText("Bạn sẽ nhận thông báo").waitFor();
 });
 await step("G10: user A reports 'Bãi xe đầy' — single report stays unverified", async () => {
-  await pageA.goto(`${WEB}/ban-do?place=bai-xe-bo-ho-dev&report=1`);
-  await pageA.getByRole("button", { name: /^Tại Bãi xe Bờ Hồ/ }).click();
+  await pageA.goto(`${WEB}/ban-do?place=${PARKING.slug}&report=1`);
+  await pageA.getByRole("button", { name: new RegExp(`^Tại ${esc(PARKING.name)}`) }).click();
   await pageA.getByRole("button", { name: "Bãi xe đầy" }).click();
   await pageA.getByRole("button", { name: "Gửi: Bãi xe đầy" }).click();
   await pageA.getByText("chưa xác minh").first().waitFor({ timeout: 15_000 });
@@ -167,15 +180,15 @@ await step("G10: user A reports 'Bãi xe đầy' — single report stays unverif
 });
 await step("G10: user B (mobile) registers, opts in and corroborates", async () => {
   await register(pageB, userB); await enableContribution(pageB);
-  await pageB.goto(`${WEB}/ban-do?place=bai-xe-bo-ho-dev&report=1`);
-  await pageB.getByRole("button", { name: /^Tại Bãi xe Bờ Hồ/ }).click();
+  await pageB.goto(`${WEB}/ban-do?place=${PARKING.slug}&report=1`);
+  await pageB.getByRole("button", { name: new RegExp(`^Tại ${esc(PARKING.name)}`) }).click();
   await pageB.getByRole("button", { name: "Bãi xe đầy" }).click();
   await pageB.getByRole("button", { name: "Gửi: Bãi xe đầy" }).click();
   await pageB.getByText("tình trạng này giờ được xác nhận").waitFor({ timeout: 15_000 });
   await shot(pageB, "mobile-08-report-corroborated");
 });
 await step("G10: place now shows KNOWN 'Bãi đầy' with source and freshness; watcher notified", async () => {
-  await pageA.goto(`${WEB}/dia-diem/bai-xe-bo-ho-dev`);
+  await pageA.goto(`${WEB}/dia-diem/${PARKING.slug}`);
   await pageA.locator(".state-card", { hasText: "Bãi đầy" }).waitFor();
   await pageA.getByText("Mới cập nhật").first().waitFor();
   await shot(pageA, "desktop-09-place-known");

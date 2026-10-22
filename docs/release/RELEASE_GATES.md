@@ -1,148 +1,131 @@
 # Release Gates — G0 to G11
 
-Gate definitions come from the V2 brief §14. A gate is marked PASS only when its full definition was met with recorded evidence. Local runs that support a gate but do not meet its environment requirement are recorded as supporting evidence, not as PASS.
+Gate definitions come from the V2 brief §14. A gate is marked PASS only when its full definition was met with recorded evidence. Local runs that support a gate without meeting its environment requirement are listed as supporting evidence, not as PASS.
 
-**Common run context**
-- Commit: `bdb769b` on `feat/reality-v2-completion`. Base: `fix/p0-audit-checkpoint-1@2fbac77`.
+**Run context (this revision)**
+- Commit: `4678f78` on `feat/reality-v2-completion` (Draft PR #5). Earlier record: `bdb769b` / `c3e14b4`.
 - Date: 2026-10-22.
-- Environment "local": Linux sandbox, Node 22, PostgreSQL 16.x + PostGIS 3.4 on 127.0.0.1. The API ran with `APP_ENV=development`, `DEV_FAKE_ROUTING=true` and `ROUTE_RATE_LIMIT_SCALE=20`. The web ran from a `next start` production build.
-- Network: the sandbox cannot reach Overpass, Open-Meteo, OSM tiles or TomTom. In screenshots the basemap shows its documented "basemap unavailable" state.
+- Local environment: Linux sandbox, Node 22.22, PostgreSQL 16 + PostGIS 3.4.
+  - API: `APP_ENV=development`, dev fixtures, `DEV_FAKE_ROUTING=true`, `MAIL_TRANSPORT=smtp` to a local SMTP sink, `INTERNAL_PROXY_SECRET` set.
+  - Web: `next start` production build.
+- The sandbox cannot reach Overpass, Open-Meteo, OSM tiles, TomTom, Gradle/Maven, the Expo API or `*.railway.app`.
+- QA (`reality-qa` on Railway): approved by the owner, but **not created**. Railway answered "Deploys have been paused due to an upstream issue" on every attempt (see `QA_DEPLOYMENT.md`).
 
 ## Summary
 
-| Gate | Status | One-line reason |
+| Gate | Status | Reason |
 |---|---|---|
-| G0 Repository & contract recovery | **PASS** | HEAD, branches, PRs and decisions recovered; missing masters identified |
-| G1 Backend | **PASS (local)** | 48 files / 324 tests incl. PostGIS integration; GitHub Actions run 39724229411 on PR #5 succeeded |
-| G2 Data readiness | **BLOCKED** | Live ingestion not verifiable from the sandbox; no QA environment; no licensed live traffic / flood / parking feeds |
-| G3 Web functional | **BLOCKED** | 20/20 browser E2E PASS locally, but the gate requires real QA APIs |
-| G4 Native Android | **BLOCKED** | Only the JS bundle export was verified; no SDK, EAS, emulator or device |
-| G5 Native iOS | **BLOCKED** | Only the JS bundle export was verified; no Xcode, EAS or device |
-| G6 Reality & trust | **BLOCKED** | All trust invariants PASS, but the State Matrix V2 document to verify against is missing |
-| G7 Visual fidelity | **BLOCKED** | Approved masters missing. Screenshots exist for 1536 / 390 / landscape; tablet and Dynamic Type NOT RUN |
-| G8 SEO | **NOT RUN** (partial) | Sitemap, robots, canonical and JSON-LD checked; crawl and performance budgets not run; indexing intentionally off outside production |
-| G9 Security & privacy | **PASS (local)** | Authorization, consent, export / delete, abuse controls, headers; 0 critical in production dependency audit |
-| G10 End-to-end product | **BLOCKED** | Full loop PASSES locally only with dev fixtures and straight-line routing; real routing needs a TomTom key |
-| G11 Release candidate | **FAIL** | Mandatory gates G2–G7 and G10 are unverified. Rollback and monitoring are not set up for a deployed environment |
+| G0 Repository & contract recovery | **PASS** | Unchanged; masters still missing |
+| G1 Backend | **PASS (local + CI)** | 54 files / 377 tests incl. PostGIS; CI run `39745834087` success on `4678f78` |
+| G2 Data readiness | **BLOCKED** | No QA environment (Railway incident); live ingestion unverified; no licensed live traffic / flood / parking feeds |
+| G3 Web functional | **BLOCKED** | 26/26 browser E2E PASS locally (desktop, tablet, mobile, landscape); the gate requires real QA APIs |
+| G4 Native Android | **BLOCKED** | JS bundles only. An installable debug-signed APK workflow exists (manual), but it needs the QA URL; no device testing |
+| G5 Native iOS | **BLOCKED** | Needs Apple signing / EAS credentials and a device |
+| G6 Reality & trust | **BLOCKED** | Invariants PASS; State Matrix V2 still missing |
+| G7 Visual fidelity | **BLOCKED** | Navy + amber reconstruction applied across web and mobile; screenshots at 1536 / 820 / 390 / landscape; **owner approval required**, masters missing |
+| G8 SEO | **NOT RUN** (partial local PASS) | Local crawl 17 pages / 0 issues; Lighthouse lab run done; deployed crawl and field CWV not run |
+| G9 Security & privacy | **PASS (local + CI)** | Enforced security gate (0 critical, 6 documented exceptions); recovery and verification flows E2E PASS |
+| G10 End-to-end product | **BLOCKED** | Full loop PASS locally with fixtures + straight-line routing; real routing / QA data needed |
+| G11 Release candidate | **FAIL** | G2–G8 and G10 unverified; QA not deployed |
+
+**Recommendation: NOT READY.**
 
 ## Details
 
-### G0 — Repository and contract recovery — PASS
-- Recovered state:
-  - `main@c5915eb` is a stub.
-  - `feat/production-foundation@dbe7c8f` has Draft PR #1.
-  - `fix/p0-audit-checkpoint-1@2fbac77` is the newest superset; this work branches from it.
-  - CI PRs #2–#4 are closed.
-- Decisions: `docs/audit/CHECKPOINT-01.md`, `docs/audit/CHECKPOINT-02.md`, and the approved GPS policy (skew 2000 ms / age 30 s / mocked never READY).
-- Missing: State Matrix V2, Flow 06 contract, Responsive Production Master / G01 Visual Master V1, Product V2 master, Stories contract.
-- Evidence: `docs/product/REALITY_FULL_PRODUCT_MASTER.md` §provenance.
-
-### G1 — Backend — PASS (local)
-- Command: `npm run typecheck` (exit 0), then `TEST_DATABASE_URL=postgres://postgres@127.0.0.1:5432/postgres npx vitest run`.
-- Result: 48 files, 324 tests, 0 failures, 33.7 s.
-- Covers:
-  - Authentication: rotation and reuse revocation.
-  - RBAC.
-  - zod validation and the error contract.
-  - Forward-only checksummed migrations.
-  - Rate limits.
-  - Ingestion resilience: retry, breaker, idempotency.
-  - Retention.
-  - OpenAPI contract (85 operations, `docs/api/openapi.json`).
-- Remaining:
-  - CI: GitHub Actions run `39724229411` (PR #5, commit `ee9508c`, ubuntu-latest, `postgis/postgis:16-3.4` service) succeeded: typecheck, tests, audit (warning-only), web build, Android and iOS exports. The job log could not be downloaded from the sandbox (log storage blocked), so the CI test count, and whether integration tests ran rather than skipped there, is not independently confirmed; the local run above is the confirmed count.
-  - No load test.
+### G1 — Backend — PASS (local + CI)
+- Commands:
+  - `npm run typecheck` (exit 0)
+  - `TEST_DATABASE_URL=postgres://postgres@127.0.0.1:5432/postgres npx vitest run` → **54 files, 377 tests, 0 failures**
+- New coverage in this revision:
+  - account recovery: verification, reset, expiry, single use, email binding, enumeration resistance, session revocation, change notices;
+  - federated sign-in with nonce binding;
+  - push dispatch: consent, quiet hours, priority, dead-token disable, no coordinates in payload;
+  - provider turn guidance parsing and the guidance engine;
+  - mail / push config safeguards, internal-hop client identity, security gate behaviour, palette parity and contrast.
+- When `TEST_DATABASE_URL` is set and the database is unreachable, the integration tests **fail**; they do not skip. Observed locally. The CI job sets it.
+- CI record:
+  - Run `39724229411` succeeded on `c3e14b4`.
+  - Run `39745834087` succeeded on `4678f78`. It covered the PostGIS integration tests, web build, Android / iOS exports with source maps, and the **blocking security gate** (step success; report artifact uploaded). Logs and artifacts cannot be downloaded from the sandbox.
 
 ### G2 — Data readiness — BLOCKED
-- Verified: adapter parsing, provenance, licence fields and freshness windows against recorded payloads (`tests/api-ingestion.int.test.ts`); fixture-leak guard (`tests/no-fake-data-leak.test.ts`).
-- Not verified: live Overpass / Open-Meteo fetches, real coverage in Hanoi or HCMC, ingestion quality over time.
-- Unblock:
-  1. Provision an isolated QA environment (proposed Railway `reality-qa` with PostGIS).
-  2. Run `scripts/worker.ts`.
-  3. Record coverage from the `/quan-tri/san-sang` readiness page.
-- Licensing: Open-Meteo commercial use is RESTRICTED; an owner decision is needed before commercial launch.
-- Missing feeds: live traffic, flood, parking occupancy, transit, events. The product shows UNKNOWN for these.
+- QA environment not created (Railway platform incident).
+- Adapters verified only against recorded payloads.
+- To unblock, follow the runbook in `QA_DEPLOYMENT.md`.
 
-### G3 — Web functional — BLOCKED (local E2E PASS)
-- Command: `bash e2e/reset-db.sh && cd e2e && DATABASE_URL=postgres://postgres@127.0.0.1:5432/reality_e2e node run.mjs`.
-- Result: 20 passed, 0 failed, 0 console errors, 0 axe violations. Viewports: desktop 1536×960, mobile 390×844, landscape 844×390.
-- Evidence: `docs/release/evidence/local/` (20 PNGs and `e2e-results.json`).
-- Blocker: the gate requires real QA APIs, and none are provisioned.
-- Defects fixed during this pass:
-  - MapLibre v6 worker blocked by bundling: now served same-origin.
-  - Journey destination was served from a stale 60 s cache: now uncached.
-  - E2E runs were not isolated: fixed with `reset-db.sh`.
+### G3 — Web functional — BLOCKED (local E2E 26/26)
+- Command: `bash e2e/reset-db.sh && cd e2e && SMTP_SINK_PORT=2525 DATABASE_URL=…/reality_e2e node run.mjs`.
+- Result: **26 passed, 0 failed, 0 console errors, 0 serious axe findings**. Viewports: desktop 1536, tablet 820, mobile 390, landscape 844×390.
+- Evidence: `docs/release/evidence/local/` (screenshots + `e2e-results.json`).
+- New steps cover email verification and the full forgot → reset flow: old password rejected, sessions revoked, change notice delivered.
 
 ### G4 — Native Android — BLOCKED
-- Command: `npm run export:android --workspace @app-map/mobile`. Result: PASS, Hermes bundle 2.95 MB.
-- Not run: installable APK / AAB, GPS on device, lifecycle, map, navigation.
-- Needs: Android SDK or EAS credentials and a device or emulator. Store publishing requires owner approval.
+- Done:
+  - `expo export` Android with source maps: PASS.
+  - Dynamic `app.config.ts` resolves App Links, the push `projectId` and the Apple entitlement from environment.
+- Installable build: the manual `Native QA build` workflow (debug-signed APK) is ready. It has **not been run**: it needs the QA API URL and would spend Actions minutes. A local build is impossible (Gradle/Maven unreachable).
+- Not run: GPS, permissions, lifecycle, guidance, push, offline on device.
 
 ### G5 — Native iOS — BLOCKED
-- Command: `npm run export:ios --workspace @app-map/mobile`. Result: PASS, Hermes bundle 2.95 MB.
-- Not run: installable build, permissions, device tests.
-- Needs: Xcode / EAS, an Apple developer account and a device.
+- Done: `expo export` iOS: PASS.
+- Needed: Apple Developer team, EAS credentials and a device. Sign in with Apple is gated on `APPLE_SIGN_IN=true` plus server client IDs.
 
-### G6 — Reality and trust — BLOCKED (invariants PASS)
-- PASS: `tests/state-engine.test.ts` and `tests/api-reality-trust.int.test.ts` cover:
-  - UNKNOWN without evidence.
-  - A single report is never KNOWN.
-  - Distinct-contributor corroboration.
-  - CONFLICT independent of freshness.
-  - Safety only from KNOWN.
-  - Moderation holds.
-  - Severity thresholds.
-- E2E G10 shows one report as "chưa xác minh" and the second contributor's report as KNOWN with source and freshness.
-- Blocker: State Matrix V2 is missing, so cell-by-cell verification is impossible.
+### G6 — Reality & trust — BLOCKED (invariants PASS)
+- Unchanged trust policy and tests.
+- New this revision: journey impact refresh failures are now shown as stale (web and mobile) instead of silently keeping the last answer.
 
-### G7 — Visual fidelity — BLOCKED
-- Approved masters are missing. The UI is a PROPOSED RECONSTRUCTION; no master was replaced.
-- Captured: desktop 1536, mobile 390 and landscape screenshots, plus automated axe checks.
-- Not run: tablet, Dynamic Type 200 %, manual screen reader pass.
-- Open decision: the mobile palette diverges from the web tokens.
+### G7 — Visual fidelity — BLOCKED (owner approval)
+- Owner direction applied: dark navy + amber/gold on web and mobile from one palette (`src/theme/navy-amber.ts`).
+- `tests/theme-parity.test.ts` enforces web == mobile tokens and WCAG AA for all text and state colours on all surfaces.
+- Screenshots: desktop / tablet / mobile / landscape in `docs/release/evidence/local/`.
+- Fixed defects:
+  - tablet navigation wrapping (tab bar ≤ 900 px);
+  - map attribution contrast;
+  - landscape journey height under the tab bar.
+- Not done: comparison against approved masters (missing), Dynamic Type 200 %, manual screen reader pass.
 
-### G8 — SEO — NOT RUN (partial checks pass)
-- PASS (E2E SEO step and place step):
-  - `robots.txt` disallows when `SITE_INDEXING` is not `true`.
-  - Sitemap and manifest are served.
-  - Canonical and JSON-LD are present on place pages.
-- NOT RUN: crawl of all public pages, Core Web Vitals / Lighthouse budgets. These need a deployed QA URL.
+### G8 — SEO — NOT RUN (partial local PASS)
+- `e2e/seo-crawl.mjs` (local): 17 pages (9 in sitemap), **0 issues**. It checks:
+  - status, title, description, `lang=vi`, single h1, self canonical, JSON-LD parse;
+  - private pages redirect or carry noindex and are absent from the sitemap;
+  - non-production robots disallows.
+- `e2e/perf.mjs` (Lighthouse 13 lab, local sandbox, simulated throttling). Evidence: `lighthouse.json`. Accessibility is 1.0 on every page.
 
-### G9 — Security and privacy — PASS (local)
-- PASS:
-  - Server-side RBAC (E2E Admin step plus int tests).
-  - Consent-gated contribution.
-  - Export (E2E G9) and account deletion (int tests).
-  - Rate limits and trusted-proxy identity.
-  - Single-use refresh rotation (E2E G9).
-  - httpOnly cookies; tokens are never exposed to client JS.
-  - CSP and security headers (E2E).
-  - Production config refusals.
-- `npm audit --omit=dev`:
-  - 0 critical. MapLibre was upgraded to 6.13.0 for GHSA-jrc7-96c5-q579.
-  - 23 high and 11 moderate remain, all in Expo / Metro / Jest build tooling and not shipped to browsers.
-- Remaining: Expo SDK upgrade for the tooling advisories, external penetration test, secrets management on a deployed environment.
+| Page | Mobile perf | LCP | CLS | TBT | Budget misses |
+|---|---|---|---|---|---|
+| `/` | 0.87 | 3.5 s | 0 | 148 ms | LCP |
+| `/di-dau` | 0.90 | 2.7 s | 0 | 277 ms | LCP |
+| `/du-lieu` | 0.88 | 3.4 s | 0.06 | 132 ms | LCP |
+| `/ban-do` | 0.34 | 8.6 s | 0.02 | 5.6 s | perf, LCP, TBT |
 
-### G10 — End-to-end product — BLOCKED (local loop PASS)
+- The SEO category scores 0.66 only because non-production robots blocks crawling (`is-crawlable`). That is expected.
+- The map page's TBT is dominated by MapLibre on software WebGL in the sandbox. It must be re-measured on QA with real devices.
+- Fonts are the main LCP render-delay contributor on text pages. One weight was dropped. Moving to `next/font` with adjusted fallbacks is a recommended follow-up.
+- Not run: crawl of the deployed QA site, field Core Web Vitals.
+
+### G9 — Security & privacy — PASS (local + CI)
+- Security gate:
+  - `scripts/security-gate.mjs` is blocking in CI. Tested in `tests/security-gate.test.ts`.
+  - **0 critical**; 6 advisories in 5 packages are documented and verified absent from shipped bundles, except one runtime-unreachable case (see `SECURITY_FINDINGS.md`).
+  - vitest critical issues fixed (2.1.9 → 4.1.12). postcss and uuid patched.
+- Account recovery:
+  - single-use hashed tokens with expiry and email binding;
+  - no account enumeration;
+  - reset revokes all sessions;
+  - production SMTP must use TLS;
+  - the outbox mail transport is refused in qa / production.
+- Federated sign-in: native clients must bind a nonce.
+- The web → API client identity is authenticated by `INTERNAL_PROXY_SECRET`. The header cannot be forged without the secret.
+- Push payloads carry no coordinates. Push is consent-gated, and quiet hours are respected except for safety-critical alerts.
+
+### G10 — End-to-end product — BLOCKED
 - PASS locally:
-  1. Open.
-  2. Search / discover.
-  3. Inspect place.
-  4. Understand state (UNKNOWN → corroborated KNOWN).
-  5. Decide.
-  6. Plan journey.
-  7. Start.
-  8. Arrive.
-  9. Save / watch / report / verify, with the watcher notified.
-  10. Landscape journey.
-- These used dev fixtures and `DEV_FAKE_ROUTING`.
-- Blockers:
-  - Real routing (TomTom key).
-  - Real data in QA.
-  - "Start navigation" means route plus impact only; turn-by-turn guidance is not implemented.
-  - "Handle changes" is verified only for impact refresh, not for re-routing against a live provider.
+  - open → discover → inspect → understand state;
+  - decide → plan → start → arrive;
+  - save / watch / report / verify;
+  - recovery.
+- Turn guidance:
+  - Implemented from provider instructions only (TomTom, `vi-VN`); suspended off-route.
+  - Not exercised end to end: the local routing double returns no guidance (by design), and TomTom needs the owner's key on QA.
 
 ### G11 — Release candidate — FAIL
-- Mandatory gates are unverified.
-- Not done: rollback and monitoring for a deployed environment, QA deploy, production approval.
-- **Recommendation: NOT READY.**
+QA is not deployed, and mandatory gates are not verified.
