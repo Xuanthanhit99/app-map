@@ -33,6 +33,7 @@ CI job logs and artifacts cannot be downloaded from this sandbox (blob storage b
 ## Blocked (external)
 
 1. **Railway QA.** Owner approved "sleep when idle". Every `create-project` call returned "Deploys have been paused due to an upstream issue". Nothing was created or billed. The runbook is in `docs/release/QA_DEPLOYMENT.md`.
+   - Attempts on 2026-10-22: the session's attempts between 07:12 and 08:17 UTC, plus a scheduled retry at 09:18 UTC. All returned the same error.
 2. **TomTom key.** The owner said they will add it to the QA API service. It is required for real routing and guidance.
 3. **Native.** No Android SDK path (Gradle/Maven unreachable), no Apple credentials, no devices. The manual APK workflow is ready.
 4. **Visual masters.** Still missing, so G7 cannot pass without owner approval.
