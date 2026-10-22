@@ -12,7 +12,8 @@ export function JourneyMap({ route, origin, destination, impacts, position }: { 
     if (!ref.current) return;
     const m = new maplibregl.Map({ container: ref.current, style: basemapStyle(), center: destination, zoom: 13, attributionControl: { compact: true } });
     m.addControl(new maplibregl.NavigationControl({}), "bottom-right");
-    m.on("load", () => {
+    const init = () => {
+      if (m.getSource("route")) return;
       m.addSource("route", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       m.addLayer({ id: "route-casing", type: "line", source: "route", paint: { "line-color": "#ffffff", "line-width": 9 }, layout: { "line-cap": "round", "line-join": "round" } });
       m.addLayer({ id: "route-line", type: "line", source: "route", paint: { "line-color": COLORS.lake, "line-width": 5 }, layout: { "line-cap": "round", "line-join": "round" } });
@@ -25,7 +26,8 @@ export function JourneyMap({ route, origin, destination, impacts, position }: { 
       }
       map.current = m;
       sync();
-    });
+    };
+    if (m.isStyleLoaded()) init(); else m.once("style.load", init);
     return () => { m.remove(); map.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

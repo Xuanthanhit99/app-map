@@ -137,13 +137,23 @@ export function freshnessFor(domain: RealityDomain, ageMs: number): "FRESH" | "A
 export type ImpactSeverity = "INFO" | "MINOR" | "SIGNIFICANT" | "SAFETY_CRITICAL";
 export const SEVERITY_RANK: Record<ImpactSeverity, number> = { INFO: 0, MINOR: 1, SIGNIFICANT: 2, SAFETY_CRITICAL: 3 };
 
+/** Verified conditions that are not hazards but change plans (explicit list, not inferred). */
+export const MINOR_INCONVENIENCE: Partial<Record<RealityDomain, string[]>> = {
+  ROAD: ["CONGESTED", "SLOW"],
+  PARKING: ["FULL", "CLOSED"],
+  PLACE_OPEN: ["CLOSED", "TEMPORARILY_CLOSED"],
+  QUEUE: ["LONG", "VERY_LONG"],
+  CROWD: ["VERY_BUSY"],
+  VEHICLE: ["BUS_DELAYED"],
+};
+
 export function severityOf(input: { truth: "KNOWN" | "UNKNOWN" | "CONFLICT"; safety: SafetyLevel; domain: RealityDomain; value: string | null; verifiedIncident?: boolean }): ImpactSeverity {
   if (input.verifiedIncident) return "SAFETY_CRITICAL";
   if (input.truth === "KNOWN") {
     if (input.safety === "BLOCKED") return "SAFETY_CRITICAL";
     if (input.safety === "AVOID") return "SIGNIFICANT";
     if (input.safety === "CAUTION") return "MINOR";
-    if (input.domain === "ROAD" && (input.value === "CONGESTED" || input.value === "SLOW")) return "MINOR";
+    if (input.value && MINOR_INCONVENIENCE[input.domain]?.includes(input.value)) return "MINOR";
     return "INFO";
   }
   // Uncertain information is surfaced, but never escalated past MINOR on its own.

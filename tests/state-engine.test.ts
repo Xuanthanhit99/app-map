@@ -83,6 +83,8 @@ describe("impact severity thresholds", () => {
     expect(severityOf({ truth: "KNOWN", safety: "CAUTION", domain: "ROAD", value: "ACCIDENT" })).toBe("MINOR");
     expect(severityOf({ truth: "KNOWN", safety: "NONE", domain: "ROAD", value: "CONGESTED" })).toBe("MINOR");
     expect(severityOf({ truth: "CONFLICT", safety: "NONE", domain: "ROAD", value: null })).toBe("MINOR");
+    expect(severityOf({ truth: "KNOWN", safety: "NONE", domain: "PARKING", value: "FULL" })).toBe("MINOR");
+    expect(severityOf({ truth: "KNOWN", safety: "NONE", domain: "PARKING", value: "AVAILABLE" })).toBe("INFO");
     expect(severityOf({ truth: "UNKNOWN", safety: "NONE", domain: "ROAD", value: null })).toBe("INFO");
     expect(severityOf({ truth: "UNKNOWN", safety: "NONE", domain: "ROAD", value: null, verifiedIncident: true })).toBe("SAFETY_CRITICAL");
   });

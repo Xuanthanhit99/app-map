@@ -37,6 +37,9 @@ export function MapExplorer(props: { initialQuery?: string; initialAt?: [number,
   const [locateMsg, setLocateMsg] = useState<string | null>(null);
   const [reporting, setReporting] = useState(Boolean(props.openReport));
   const [collapsed, setCollapsed] = useState(false);
+  const [basemapIssue, setBasemapIssue] = useState(false);
+  const side = useRef<HTMLElement>(null);
+  useEffect(() => { side.current?.scrollTo({ top: 0 }); }, [selected, reporting]);
   const [layers, setLayers] = useState({ places: true, states: true, reports: true });
 
   // ── Map lifecycle ──
@@ -53,7 +56,8 @@ export function MapExplorer(props: { initialQuery?: string; initialAt?: [number,
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: true }), "bottom-right");
     m.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
-    m.on("load", () => {
+    const init = () => {
+      if (m.getSource("places")) return;
       m.addSource("places", { type: "geojson", data: { type: "FeatureCollection", features: [] }, cluster: true, clusterRadius: 40, clusterMaxZoom: 15 });
       m.addLayer({ id: "place-clusters", type: "circle", source: "places", filter: ["has", "point_count"],
         paint: { "circle-color": "#DDEDEA", "circle-stroke-color": COLORS.lake, "circle-stroke-width": 1.5, "circle-radius": ["step", ["get", "point_count"], 14, 20, 18, 60, 24] } });
@@ -81,13 +85,15 @@ export function MapExplorer(props: { initialQuery?: string; initialAt?: [number,
       setReady(true);
       const b = m.getBounds();
       setBounds({ west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() });
-    });
+    };
+    if (m.isStyleLoaded()) init(); else m.once("style.load", init);
     m.on("moveend", () => {
       const b = m.getBounds();
       setBounds({ west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() });
       setZoom(m.getZoom());
     });
-    m.on("error", () => setStatus((s) => (s.kind === "offline" ? s : { kind: "error", message: "Một số lớp bản đồ nền không tải được. Dữ liệu tình trạng vẫn hiển thị nếu có." })));
+    // Basemap tile failures are reported separately: they never hide or block reality data.
+    m.on("error", () => setBasemapIssue(true));
     map.current = m;
     return () => { m.remove(); map.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -188,7 +194,7 @@ export function MapExplorer(props: { initialQuery?: string; initialAt?: [number,
 
   return (
     <div className="map-shell">
-      <aside className="map-side" aria-label="Bảng thông tin bản đồ" data-collapsed={collapsed}>
+      <aside ref={side} className="map-side" aria-label="Bảng thông tin bản đồ" data-collapsed={collapsed}>
         <button type="button" className="grabber" aria-label={collapsed ? "Mở rộng bảng thông tin" : "Thu gọn bảng thông tin"} onClick={() => setCollapsed((c) => !c)} style={{ border: 0, padding: 0, cursor: "pointer" }} />
         <div className="side-head">
           <form role="search" onSubmit={(e) => e.preventDefault()}>
@@ -247,10 +253,11 @@ export function MapExplorer(props: { initialQuery?: string; initialAt?: [number,
         <div className="map-toolbar">
           <button type="button" className="btn" onClick={() => void locate()} aria-label="Về vị trí của tôi"><IconLocate width={20} /></button>
         </div>
-        {(status.kind !== "idle" || locateMsg) ? (
+        {(status.kind !== "idle" || locateMsg || basemapIssue) ? (
           <div className="map-status" role="status" aria-live="polite">
             {status.kind === "loading" ? "Đang tải dữ liệu cho khung nhìn…" : status.kind !== "idle" ? <span className="row"><IconAlert width={16} />{status.message}</span> : null}
             {locateMsg ? <div>{locateMsg}</div> : null}
+            {basemapIssue && status.kind !== "offline" ? <div>Bản đồ nền tạm thời không tải được. Địa điểm và tình trạng vẫn hiển thị.</div> : null}
           </div>
         ) : null}
       </div>

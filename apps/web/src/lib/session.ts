@@ -5,16 +5,16 @@ import { ACCESS_COOKIE, API_URL, COOKIE_SECURE, REFRESH_COOKIE } from "./config"
 export type Tokens = { accessToken: string; refreshToken: string; accessExpiresAt: string; refreshExpiresAt: string };
 export type SessionUser = { id: string; email: string; displayName: string; role: "user" | "moderator" | "admin"; locale: string };
 
-/** httpOnly, SameSite=Lax cookies; refresh token scoped to the session endpoints only. */
+/** httpOnly cookies: access (SameSite=Lax), refresh (SameSite=Strict). The refresh token is used by proxy.ts to renew sessions before server rendering. */
 export async function setSessionCookies(t: Tokens) {
   const jar = await cookies();
   jar.set(ACCESS_COOKIE, t.accessToken, { httpOnly: true, sameSite: "lax", secure: COOKIE_SECURE, path: "/", expires: new Date(t.accessExpiresAt) });
-  jar.set(REFRESH_COOKIE, t.refreshToken, { httpOnly: true, sameSite: "strict", secure: COOKIE_SECURE, path: "/api/session", expires: new Date(t.refreshExpiresAt) });
+  jar.set(REFRESH_COOKIE, t.refreshToken, { httpOnly: true, sameSite: "strict", secure: COOKIE_SECURE, path: "/", expires: new Date(t.refreshExpiresAt) });
 }
 export async function clearSessionCookies() {
   const jar = await cookies();
   jar.delete({ name: ACCESS_COOKIE, path: "/" });
-  jar.delete({ name: REFRESH_COOKIE, path: "/api/session" });
+  jar.delete({ name: REFRESH_COOKIE, path: "/" });
 }
 
 export async function currentUser(): Promise<SessionUser | null> {

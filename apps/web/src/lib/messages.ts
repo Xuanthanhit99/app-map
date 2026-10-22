@@ -30,6 +30,9 @@ const MESSAGES: Record<string, string> = {
   OFFLINE: "Không có kết nối mạng. Dữ liệu hiển thị có thể là bản đã lưu.",
   API_UNREACHABLE: "Không kết nối được máy chủ REALITY. Hãy thử lại.",
   NOTIFICATION_CONSENT_REQUIRED: "Bật quyền thông báo trong Quyền riêng tư trước.",
+  ORIGIN_EQUALS_DESTINATION: "Bạn đang ở ngay điểm đến (dưới 30 m), không cần tìm đường.",
+  DESTINATION_REQUIRED: "Hãy chọn điểm đến.",
+  TOO_MANY_OPEN_JOURNEYS: "Bạn đang có 5 hành trình chưa kết thúc. Hãy kết thúc hoặc hủy bớt.",
   WATCH_AREA_LIMIT: "Bạn đã đạt giới hạn 20 khu vực theo dõi.",
 };
 export function messageFor(code: string | undefined): string {

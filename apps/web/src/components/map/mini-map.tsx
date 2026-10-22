@@ -13,5 +13,5 @@ export function MiniMap({ center, label }: { center: [number, number]; label: st
     new maplibregl.Marker({ element: el }).setLngLat(center).addTo(m);
     return () => m.remove();
   }, [center]);
-  return <div ref={ref} className="mini-map" role="img" aria-label={`Bản đồ vị trí: ${label}`} style={{ position: "relative" }} />;
+  return <div ref={ref} className="mini-map" role="group" aria-label={`Bản đồ vị trí: ${label}`} style={{ position: "relative" }} />;
 }

@@ -1,0 +1,139 @@
+{
+  "webUrl": "http://127.0.0.1:3000",
+  "runAt": "2026-10-22T04:18:06.773Z",
+  "passed": 20,
+  "failed": 0,
+  "results": [
+    {
+      "name": "desktop: home renders with honest pulse ledger",
+      "status": "PASS",
+      "ms": 3612
+    },
+    {
+      "name": "desktop: map loads places and opens inspector",
+      "status": "PASS",
+      "ms": 12538
+    },
+    {
+      "name": "desktop: place page is SSR with JSON-LD, canonical and unknown state",
+      "status": "PASS",
+      "ms": 6716
+    },
+    {
+      "name": "desktop: decide page form",
+      "status": "PASS",
+      "ms": 2003
+    },
+    {
+      "name": "mobile: home renders with honest pulse ledger",
+      "status": "PASS",
+      "ms": 2114
+    },
+    {
+      "name": "mobile: map loads places and opens inspector",
+      "status": "PASS",
+      "ms": 5358
+    },
+    {
+      "name": "mobile: place page is SSR with JSON-LD, canonical and unknown state",
+      "status": "PASS",
+      "ms": 3620
+    },
+    {
+      "name": "mobile: decide page form",
+      "status": "PASS",
+      "ms": 1643
+    },
+    {
+      "name": "G10: user A registers and opts in to contribution",
+      "status": "PASS",
+      "ms": 3430
+    },
+    {
+      "name": "G10: user A saves and watches a place",
+      "status": "PASS",
+      "ms": 3763
+    },
+    {
+      "name": "G10: user A reports 'Bãi xe đầy' — single report stays unverified",
+      "status": "PASS",
+      "ms": 13882
+    },
+    {
+      "name": "G10: user B (mobile) registers, opts in and corroborates",
+      "status": "PASS",
+      "ms": 7058
+    },
+    {
+      "name": "G10: place now shows KNOWN 'Bãi đầy' with source and freshness; watcher notified",
+      "status": "PASS",
+      "ms": 7439
+    },
+    {
+      "name": "G10: decide → start journey → impact → arrive",
+      "status": "PASS",
+      "ms": 8339
+    },
+    {
+      "name": "G10: journey on landscape phone keeps the glance rail",
+      "status": "PASS",
+      "ms": 3409
+    },
+    {
+      "name": "G9: data export downloads a JSON copy",
+      "status": "PASS",
+      "ms": 33
+    },
+    {
+      "name": "G9: expired access cookie is silently renewed from the refresh cookie (single-use rotation)",
+      "status": "PASS",
+      "ms": 421
+    },
+    {
+      "name": "Admin: moderator console works with server-side RBAC",
+      "status": "PASS",
+      "ms": 5716
+    },
+    {
+      "name": "SEO: robots disallows non-production; sitemap and manifest served",
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "name": "Security headers on web responses",
+      "status": "PASS",
+      "ms": 21
+    }
+  ],
+  "consoleErrors": [],
+  "axe": [
+    {
+      "label": "desktop home",
+      "violations": []
+    },
+    {
+      "label": "desktop place",
+      "violations": []
+    },
+    {
+      "label": "desktop decide",
+      "violations": []
+    },
+    {
+      "label": "mobile home",
+      "violations": []
+    },
+    {
+      "label": "mobile place",
+      "violations": []
+    },
+    {
+      "label": "mobile decide",
+      "violations": []
+    },
+    {
+      "label": "admin readiness",
+      "violations": []
+    }
+  ]
+}

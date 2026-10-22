@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { LazyMiniMap } from "@/components/map/lazy";
 import { PlaceActions } from "@/components/place-actions";
@@ -15,9 +16,8 @@ const SCHEMA_TYPE: Record<string, string> = { cafe: "CafeOrCoffeeShop", restaura
   attraction: "TouristAttraction", viewpoint: "TouristAttraction", worship: "PlaceOfWorship", market: "Store", mall: "ShoppingCenter", cinema: "MovieTheater", library: "Library",
   playground: "Playground", sports: "SportsActivityLocation", hospital: "Hospital", pharmacy: "Pharmacy", parking: "ParkingFacility", fuel: "GasStation", hotel: "Hotel" };
 
-async function load(slug: string) {
-  return apiOrNull<PlaceDetail>(`/v1/places/${encodeURIComponent(slug)}`, { revalidate: 60 });
-}
+// Live states are evaluated per request (never served from a stale cache); deduplicated within one render.
+const load = cache((slug: string) => apiOrNull<PlaceDetail>(`/v1/places/${encodeURIComponent(slug)}`, { revalidate: false }));
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -43,7 +43,7 @@ export default async function PlacePage({ params }: { params: Promise<{ slug: st
   const saved = user ? (await api<PlaceDetail>(`/v1/places/${d.place.id}`, { auth: true })).saved : false;
   const p = d.place;
   const known = d.states.filter((s) => s.truth !== "UNKNOWN" || s.signals.length);
-  const unknownDomains = d.states.filter((s) => s.truth === "UNKNOWN" && !s.signals.length && (s.domain !== "PARKING" || p.category === "parking")).map((s) => domainLabel(s.domain).toLowerCase());
+  const unknownDomains = d.states.filter((s) => s.truth === "UNKNOWN" && !s.signals.length && s.domain !== "PRICE" && (s.domain !== "PARKING" || p.category === "parking")).map((s) => domainLabel(s.domain).toLowerCase());
   const simpleHours = p.openingHours && /^(Mo|Tu|We|Th|Fr|Sa|Su)(-(Mo|Tu|We|Th|Fr|Sa|Su))? \d{2}:\d{2}-\d{2}:\d{2}$/.test(p.openingHours.raw) ? p.openingHours.raw : undefined;
   const jsonLd = {
     "@context": "https://schema.org", "@type": SCHEMA_TYPE[p.category] ?? "Place", name: p.name, url: `${SITE_URL}/dia-diem/${p.slug}`,

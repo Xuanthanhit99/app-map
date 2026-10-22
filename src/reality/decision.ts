@@ -94,10 +94,10 @@ export function scoreCandidate(c: Candidate, input: DecisionInput): ScoredOption
     const visit = category?.typicalVisitMinutes ?? 45;
     estimate = { travelMinutes, method: "STRAIGHT_LINE_X1_35_AVG_SPEED", label: "Ước tính, không phải thời gian dẫn đường", visitMinutesAssumed: visit };
     if (input.availableMinutes !== null) {
-      const needed = travelMinutes * 2 + Math.min(visit, input.availableMinutes);
+      const needed = travelMinutes * 2 + visit;
       if (travelMinutes * 2 >= input.availableMinutes) excluded = "Không đủ thời gian cho đường đi và về (ước tính)";
-      else factors.push({ factor: "TIME_FIT", effect: needed <= input.availableMinutes ? 10 : -10,
-        text: needed <= input.availableMinutes ? `Vừa với ${input.availableMinutes} phút bạn có (ước tính)` : "Có thể không đủ thời gian để ở lâu (ước tính)", basis: "ASSUMPTION" });
+      else if (needed <= input.availableMinutes) factors.push({ factor: "TIME_FIT", effect: 10, text: `Vừa với ${input.availableMinutes} phút bạn có (ước tính)`, basis: "ASSUMPTION" });
+      else unknowns.push(`Thời gian ở lại có thể ngắn hơn thường lệ (khoảng ${input.availableMinutes - travelMinutes * 2} phút, ước tính)`);
     }
   } else {
     unknowns.push("Khoảng cách: chưa có vị trí xuất phát");

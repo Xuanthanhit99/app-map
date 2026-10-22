@@ -9,7 +9,7 @@
 :root {
   --lake-900: #073B3A; --lake-800: #0B4F4D; --lake-700: #12615E; --lake-600: #19726E; --lake-100: #DDEDEA; --lake-50: #EFF7F5;
   --paper: #F7F8F6; --surface: #FFFFFF; --surface-2: #F2F4F1;
-  --ink: #17201F; --ink-2: #53605E; --ink-3: #6B7775; --line: #DCE2DF; --line-strong: #C3CCC8;
+  --ink: #17201F; --ink-2: #53605E; --ink-3: #5B6765; --line: #DCE2DF; --line-strong: #C3CCC8;
   --info: #2878A5; --positive: #2E7D5B; --caution: #B7791F; --avoid: #D65A24; --danger: #C83D3D; --blocked: #982F35;
   --conflict: #7654A6; --unknown: #687472; --offline: #626A73;
   --focus: #2878A5;
@@ -137,16 +137,16 @@ textarea.input { min-height: 96px; resize: vertical; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
 /* ── State chip: truth = shape + glyph, freshness = ring, safety = colour + words ── */
-.state { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; padding: 3px 12px 3px 8px; border-radius: var(--r-chip); font-size: var(--t-sm); font-weight: 600; border: 1.5px solid currentColor; background: color-mix(in srgb, currentColor 9%, white); color: var(--lake-800); line-height: 1.2; }
-.state .glyph { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; font-size: 12px; font-weight: 700; flex: none; color: #fff; background: currentColor; }
+.state { --c: var(--lake-800); display: inline-flex; align-items: center; gap: 8px; min-height: 30px; padding: 3px 12px 3px 8px; border-radius: var(--r-chip); font-size: var(--t-sm); font-weight: 600; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 9%, white); color: var(--c); line-height: 1.2; }
+.state .glyph { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; font-size: 11px; font-weight: 700; flex: none; background: var(--c); }
 .state .glyph span { color: #fff; }
-.state[data-truth="UNKNOWN"] { color: var(--unknown); border-style: dashed; background: var(--surface); }
-.state[data-truth="UNKNOWN"] .glyph { background: transparent; border: 1.5px dashed currentColor; }
-.state[data-truth="UNKNOWN"] .glyph span { color: var(--unknown); }
-.state[data-truth="CONFLICT"] { color: var(--conflict); background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--conflict) 12%, white) 0 6px, var(--surface) 6px 12px); }
-.state[data-safety="CAUTION"] { color: var(--caution); }
-.state[data-safety="AVOID"] { color: var(--avoid); }
-.state[data-safety="BLOCKED"] { color: var(--blocked); }
+.state[data-truth="UNKNOWN"] { --c: var(--unknown); border-style: dashed; background: var(--surface); }
+.state[data-truth="UNKNOWN"] .glyph { background: transparent; border: 1.5px dashed var(--c); }
+.state[data-truth="UNKNOWN"] .glyph span { color: var(--c); }
+.state[data-truth="CONFLICT"] { --c: var(--conflict); background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--conflict) 12%, white) 0 6px, var(--surface) 6px 12px); }
+.state[data-safety="CAUTION"] { --c: var(--caution); }
+.state[data-safety="AVOID"] { --c: var(--avoid); }
+.state[data-safety="BLOCKED"] { --c: var(--blocked); }
 .state .text { color: var(--ink); }
 .fresh { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-xs); color: var(--ink-2); }
 .fresh .ring { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--lake-700); flex: none; }
@@ -223,6 +223,8 @@ textarea.input { min-height: 96px; resize: vertical; }
   .map-shell { grid-template-columns: 1fr; height: calc(100dvh - var(--header-h) - 56px); }
   .map-side { position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; max-height: 55%; border-right: 0; border-top: 1px solid var(--line); border-radius: var(--r-sheet) var(--r-sheet) 0 0; box-shadow: 0 -8px 24px rgba(7,59,58,.12); }
   .map-side[data-collapsed="true"] { max-height: 128px; }
+  .map-side .chips { flex-wrap: nowrap; overflow-x: auto; max-height: none !important; padding-bottom: 2px; }
+  .map-side .chip-btn { flex: none; }
   .map-side .grabber { width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); margin: 8px auto 0; }
   .map-status { bottom: auto; top: 12px; left: 12px; right: 76px; }
 }
@@ -290,3 +292,4 @@ table.data tr:last-child td { border-bottom: 0; }
 
 /* Full-height app screens (map, journey) have no footer. */
 body:has(.map-shell) .site-footer, body:has(.journey-layout) .site-footer { display: none; }
+.maplibregl-ctrl-attrib a { color: var(--lake-800) !important; text-decoration: underline; }
