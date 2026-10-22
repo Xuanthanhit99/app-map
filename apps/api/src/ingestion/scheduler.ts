@@ -58,7 +58,7 @@ export function createJobs(deps: SchedulerDeps) {
 /** Long-running worker loop. Each job has its own interval and never overlaps itself. */
 export function startScheduler(deps: SchedulerDeps): { stop(): void } {
   const jobs = createJobs(deps);
-  const timers: NodeJS.Timeout[] = [];
+  const timers: ReturnType<typeof setInterval>[] = [];
   const running = new Set<string>();
   const every = (name: string, ms: number, fn: () => Promise<unknown>) => {
     const tick = async () => {
