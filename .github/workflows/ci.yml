@@ -36,11 +36,19 @@ jobs:
         run: npm run typecheck
       - name: Unit, contract and PostGIS integration tests
         run: npm test
-      - name: Dependency audit (production, high+)
-        run: npm audit --omit=dev --audit-level=high || echo "::warning::npm audit reported issues (see log)"
       - name: Build web
         run: npm run build --workspace @app-map/web
-      - name: Export Android production bundle
-        run: npm run export:android --workspace @app-map/mobile
-      - name: Export iOS production bundle
-        run: npm run export:ios --workspace @app-map/mobile
+      - name: Export Android production bundle (with source maps for the security gate)
+        run: npm run export:android --workspace @app-map/mobile -- --source-maps
+      - name: Export iOS production bundle (with source maps for the security gate)
+        run: npm run export:ios --workspace @app-map/mobile -- --source-maps
+      - name: Security gate (blocking; exceptions in security/audit-exceptions.json)
+        run: node scripts/security-gate.mjs --bundle-map apps/mobile/dist/android --bundle-map apps/mobile/dist/ios --report security-gate.json
+      - name: Upload security gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-gate
+          path: security-gate.json
+          if-no-files-found: ignore
+          retention-days: 30
