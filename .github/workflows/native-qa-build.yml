@@ -1,0 +1,53 @@
+name: Native QA build
+# Manual only (release gate). Produces an installable, debug-signed Android APK pointed at the QA API.
+# Not a store build: no production keystore, no submission. iOS needs Apple signing credentials (EAS);
+# without them only an unsigned simulator build is possible, which this workflow does not attempt.
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "QA API base URL (https://…)"
+        required: true
+      web_url:
+        description: "QA web URL (https://…)"
+        required: true
+
+concurrency:
+  group: native-qa-build
+  cancel-in-progress: true
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EXPO_PUBLIC_API_BASE_URL: ${{ inputs.api_base_url }}
+      EXPO_PUBLIC_WEB_URL: ${{ inputs.web_url }}
+      EXPO_NO_TELEMETRY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install workspace dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Generate native Android project
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install --clean
+      - name: Build release APK (debug keystore — QA only)
+        working-directory: apps/mobile/android
+        run: ./gradlew --no-daemon assembleRelease
+      - name: Record checksum
+        run: sha256sum apps/mobile/android/app/build/outputs/apk/release/app-release.apk | tee apk.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reality-qa-android-${{ github.sha }}
+          path: |
+            apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            apk.sha256
+          retention-days: 14

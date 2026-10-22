@@ -1,4 +1,5 @@
 "use client";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
 
 /**

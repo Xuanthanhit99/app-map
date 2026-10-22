@@ -1,10 +1,8 @@
 /* REALITY web — "Night Chart" navy + amber (src/theme/navy-amber.ts). PROPOSED RECONSTRUCTION pending approved masters.
    State is never carried by colour alone: every state chip also has a glyph and words. */
 @import "@fontsource/be-vietnam-pro/400.css";
-@import "@fontsource/be-vietnam-pro/500.css";
 @import "@fontsource/be-vietnam-pro/600.css";
 @import "@fontsource/be-vietnam-pro/700.css";
-@import "maplibre-gl/dist/maplibre-gl.css";
 
 :root {
   /* Night Chart — navy + amber (mirrors src/theme/navy-amber.ts; parity enforced by tests/theme-parity.test.ts). */
@@ -220,7 +218,7 @@ textarea.input { min-height: 96px; resize: vertical; }
 .map-side .side-body { padding: var(--s4); display: grid; gap: var(--s4); }
 .map-toolbar { position: absolute; z-index: 5; top: 12px; right: 12px; display: grid; gap: 8px; }
 .map-toolbar .btn { background: var(--surface); box-shadow: var(--shadow-float); border: 1px solid var(--line); color: var(--ink); }
-.map-status { position: absolute; z-index: 5; left: 12px; bottom: 28px; max-width: min(460px, calc(100% - 24px)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-control); padding: 10px 14px; font-size: var(--t-xs); color: var(--ink-2); box-shadow: var(--shadow-float); }
+.map-status { position: absolute; z-index: 5; left: 12px; top: 12px; /* top-anchored: growing text never shifts it (CLS) */ max-width: min(460px, calc(100% - 24px)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-control); padding: 10px 14px; font-size: var(--t-xs); color: var(--ink-2); box-shadow: var(--shadow-float); }
 .legend { display: grid; gap: 6px; font-size: var(--t-xs); color: var(--ink-2); }
 .legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -2px; margin-right: 6px; }
 .place-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 4px; border-radius: 10px; cursor: pointer; background: transparent; border: 0; text-align: left; font: inherit; color: inherit; width: 100%; }
@@ -300,6 +298,6 @@ table.data tr:last-child td { border-bottom: 0; }
 
 /* Full-height app screens (map, journey) have no footer. */
 body:has(.map-shell) .site-footer, body:has(.journey-layout) .site-footer { display: none; }
-.maplibregl-ctrl.maplibregl-ctrl-attrib { background: rgba(7, 28, 44, 0.88); color: var(--ink); }
-.maplibregl-ctrl-attrib a { color: var(--accent) !important; text-decoration: underline; }
-.maplibregl-ctrl-attrib-button { filter: invert(1); }
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib, .maplibregl-map .maplibregl-ctrl-attrib.maplibregl-compact { background: rgba(7, 28, 44, 0.88); color: var(--ink); }
+.maplibregl-map .maplibregl-ctrl-attrib a { color: var(--accent) !important; text-decoration: underline; }
+.maplibregl-map .maplibregl-ctrl-attrib-button { filter: invert(1); }
