@@ -20,10 +20,10 @@ export const registerSchema = z.object({
   locale: z.enum(["vi", "en"]).default("vi"),
   client: clientSchema,
 }).strict();
-const loginSchema = z.object({ email: emailSchema, password: z.string().min(1).max(200), client: clientSchema }).strict();
-const refreshSchema = z.object({ refreshToken: z.string().min(20).max(200) }).strict();
-const federatedSchema = z.object({ provider: z.enum(["google", "apple"]), idToken: z.string().min(20).max(8192), displayName: z.string().trim().min(1).max(80).optional(), client: clientSchema }).strict();
-const passwordChangeSchema = z.object({ currentPassword: z.string().min(1).max(200), newPassword: z.string().min(1).max(200) }).strict();
+export const loginSchema = z.object({ email: emailSchema, password: z.string().min(1).max(200), client: clientSchema }).strict();
+export const refreshSchema = z.object({ refreshToken: z.string().min(20).max(200) }).strict();
+export const federatedSchema = z.object({ provider: z.enum(["google", "apple"]), idToken: z.string().min(20).max(8192), displayName: z.string().trim().min(1).max(80).optional(), client: clientSchema }).strict();
+export const passwordChangeSchema = z.object({ currentPassword: z.string().min(1).max(200), newPassword: z.string().min(1).max(200) }).strict();
 
 export type TokenPair = { accessToken: string; refreshToken: string; accessExpiresAt: string; refreshExpiresAt: string; tokenType: "Bearer" };
 export type PublicUser = { id: string; email: string; displayName: string; role: string; locale: string; emailVerified: boolean; createdAt: string };

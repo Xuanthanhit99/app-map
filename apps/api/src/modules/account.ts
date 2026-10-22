@@ -11,7 +11,7 @@ import { toPublicUser } from "./identity";
 export const CONSENT_PURPOSES = ["location_foreground", "location_background", "context_personalization", "notifications", "analytics", "journey_sharing", "contribution_public"] as const;
 export const CURRENT_POLICY_VERSION = "2026-10-22";
 
-const profileSchema = z.object({ displayName: z.string().trim().min(1).max(80).optional(), locale: z.enum(["vi", "en"]).optional() }).strict();
+export const profileSchema = z.object({ displayName: z.string().trim().min(1).max(80).optional(), locale: z.enum(["vi", "en"]).optional() }).strict();
 export const preferencesSchema = z.object({
   travelMode: z.enum(["DRIVING", "WALKING", "CYCLING", "MOTORBIKE"]).optional(),
   accessibilityNeeds: z.array(z.enum(["WHEELCHAIR", "STEP_FREE", "LOW_VISION", "HEARING", "REDUCED_MOBILITY"])).max(5).optional(),
@@ -19,9 +19,9 @@ export const preferencesSchema = z.object({
   notifyMinSeverity: z.enum(["INFO", "MINOR", "SIGNIFICANT", "SAFETY_CRITICAL"]).optional(),
   quietHours: z.object({ startHour: z.number().int().min(0).max(23), endHour: z.number().int().min(0).max(24) }).nullable().optional(),
 }).strict();
-const consentSchema = z.object({ purpose: z.enum(CONSENT_PURPOSES), granted: z.boolean() }).strict();
-const savedPlaceSchema = z.object({ placeId: z.string().uuid(), label: z.string().trim().max(60).optional() }).strict();
-const deleteSchema = z.object({ password: z.string().max(200).optional(), confirm: z.literal("XOA TAI KHOAN") }).strict();
+export const consentSchema = z.object({ purpose: z.enum(CONSENT_PURPOSES), granted: z.boolean() }).strict();
+export const savedPlaceSchema = z.object({ placeId: z.string().uuid(), label: z.string().trim().max(60).optional() }).strict();
+export const deleteSchema = z.object({ password: z.string().max(200).optional(), confirm: z.literal("XOA TAI KHOAN") }).strict();
 
 export async function currentConsents(db: AppDeps["db"], userId: string): Promise<Record<string, { granted: boolean; policyVersion: string; at: string }>> {
   const { rows } = await db.query<{ purpose: string; granted: boolean; policy_version: string; created_at: Date }>(

@@ -44,7 +44,7 @@ const latLng = z.string().regex(/^-?\d{1,2}(\.\d+)?,-?\d{1,3}(\.\d+)?$/).transfo
   return { lat, lng };
 }).refine((p) => Math.abs(p.lat) <= 90 && Math.abs(p.lng) <= 180, "out of range");
 
-const listSchema = z.object({
+export const listSchema = z.object({
   q: z.string().trim().min(2).max(120).optional(),
   category: z.string().regex(/^[a-z_]{2,32}$/).optional(),
   near: latLng.optional(),

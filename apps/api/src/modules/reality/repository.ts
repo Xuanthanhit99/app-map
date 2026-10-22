@@ -68,6 +68,21 @@ export async function evaluatePlace(q: Queryable, placeId: string, now: Date, do
   });
 }
 
+/** Batched place evaluation (one query) for decision ranking. */
+export async function evaluatePlaces(q: Queryable, placeIds: string[], now: Date, domains: RealityDomain[] = PLACE_DOMAINS): Promise<Map<string, PublicState[]>> {
+  const out = new Map<string, PublicState[]>();
+  if (!placeIds.length) return out;
+  const { rows } = await q.query<EvidenceRow>(`${EVIDENCE_SELECT} AND o.place_id = ANY($2) AND o.domain = ANY($3)`, [now, placeIds, domains]);
+  for (const id of placeIds) {
+    const own = rows.filter((r) => r.place_id === id);
+    out.set(id, domains.map((domain) => {
+      const list = own.filter((r) => r.domain === domain);
+      return publicState(`place:${id}:${domain}`, evaluateState(domain, list.map(toEvidence), now.getTime()), list);
+    }));
+  }
+  return out;
+}
+
 /** Point-domain states (road, weather, activity) grouped by subject cell inside a bbox. */
 export async function statesInBBox(q: Queryable, bbox: BBox, now: Date, domains: RealityDomain[] = ["ROAD", "WEATHER", "ACTIVITY"], limit = 300): Promise<PublicState[]> {
   const { rows } = await q.query<EvidenceRow>(

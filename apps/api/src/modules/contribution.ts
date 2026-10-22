@@ -32,7 +32,7 @@ export const TRUST = {
   penaltyRejected: 0.1,
 } as const;
 
-const reportSchema = z.object({
+export const reportSchema = z.object({
   domain: z.string(),
   value: z.string(),
   latitude: z.number().min(-90).max(90),
@@ -44,7 +44,7 @@ const reportSchema = z.object({
   moving: z.boolean().default(false),
 }).strict();
 
-const voteSchema = z.object({
+export const voteSchema = z.object({
   vote: z.enum(["CONFIRM", "DENY"]),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
@@ -80,7 +80,7 @@ async function clusterRootLocation(q: Queryable, clusterId: string): Promise<{ l
 }
 
 /** Recompute cluster statuses after a change. Returns subject keys touched. */
-async function recomputeCluster(q: pg.PoolClient, clusterId: string): Promise<void> {
+async function recomputeCluster(q: pg.PoolClient, clusterId: string, now: Date): Promise<void> {
   const { rows } = await q.query<{ id: string; value: string; reporter_id: string | null; status: string; deny_count: number; confirm_count: number; held_for_review: boolean }>(
     `SELECT id, value, reporter_id, status, deny_count, confirm_count, held_for_review FROM reports
       WHERE cluster_id = $1 AND status IN ('PENDING','CORROBORATED','DISPUTED')`, [clusterId]);
@@ -105,9 +105,9 @@ async function recomputeCluster(q: pg.PoolClient, clusterId: string): Promise<vo
     }
   }
   // A denied value no longer contributes as evidence.
-  await q.query(`UPDATE observations o SET valid_until = GREATEST(o.observed_at + interval '1 second', now())
+  await q.query(`UPDATE observations o SET valid_until = GREATEST(o.observed_at + interval '1 second', $2)
                   FROM reports r WHERE o.report_id = r.id AND r.cluster_id = $1 AND r.status = 'DISPUTED'
-                   AND r.deny_count > r.confirm_count AND o.valid_until > now()`, [clusterId]);
+                   AND r.deny_count > r.confirm_count AND o.valid_until > $2`, [clusterId, now]);
 }
 
 export function createContributionService(deps: AppDeps) {
@@ -186,7 +186,7 @@ export function createContributionService(deps: AppDeps) {
          VALUES ($1,$2,$3,$4, ST_SetSRID(ST_MakePoint($5,$6),4326)::geography, 'community', $7, 'COMMUNITY_REPORT', $8, $9, $10)`,
         [domain, input.value, input.placeId ? "PLACE" : "POINT", input.placeId ?? null, anchor.lng, anchor.lat, report.id, observedAt, expiresAt,
           Math.round((0.3 + 0.4 * trust) * 1000) / 1000]);
-      if (!held) await recomputeCluster(client, clusterId);
+      if (!held) await recomputeCluster(client, clusterId, now);
       await audit(client, { actor: user, action: "report.submitted", targetType: "REPORT", targetId: report.id, detail: { domain, value: input.value, held, moving: input.moving }, requestId });
       const subjectKey = subjectKeyFor({ domain, place_id: input.placeId ?? null, geomLat: anchor.lat, geomLng: anchor.lng });
       const changes = held ? [] : await propagate(client, [subjectKey], now);
@@ -219,7 +219,7 @@ export function createContributionService(deps: AppDeps) {
              FROM observations o WHERE o.report_id = $1 LIMIT 1`,
           [reportId, now, Math.round((0.3 + 0.4 * (voter.rows[0]?.trust_score ?? 0.5)) * 1000) / 1000, `vote:${reportId}:${user.id}`]);
       }
-      await recomputeCluster(client, r.cluster_id ?? r.id);
+      await recomputeCluster(client, r.cluster_id ?? r.id, now);
       await audit(client, { actor: user, action: "report.voted", targetType: "REPORT", targetId: reportId, detail: { vote: input.vote }, requestId });
       const anchor = await client.query<{ lat: number; lng: number }>("SELECT ST_Y(geom::geometry) AS lat, ST_X(geom::geometry) AS lng FROM observations WHERE report_id = $1 LIMIT 1", [reportId]);
       const a = anchor.rows[0] ?? { lat: r.lat, lng: r.lng };
@@ -241,8 +241,8 @@ export function createContributionService(deps: AppDeps) {
       const row = r.rows[0];
       if (!row) throw notFound("REPORT_NOT_FOUND");
       await client.query("UPDATE reports SET status = 'HIDDEN', updated_at = now() WHERE id = $1", [reportId]);
-      await client.query("UPDATE observations SET valid_until = GREATEST(observed_at + interval '1 second', now()) WHERE report_id = $1 AND valid_until > now()", [reportId]);
-      if (row.cluster_id) await recomputeCluster(client, row.cluster_id);
+      await client.query("UPDATE observations SET valid_until = GREATEST(observed_at + interval '1 second', $2) WHERE report_id = $1 AND valid_until > $2", [reportId, now]);
+      if (row.cluster_id) await recomputeCluster(client, row.cluster_id, now);
       await audit(client, { actor: user, action: "report.withdrawn", targetType: "REPORT", targetId: reportId, requestId });
       const anchor = await client.query<{ lat: number; lng: number }>("SELECT ST_Y(geom::geometry) AS lat, ST_X(geom::geometry) AS lng FROM observations WHERE report_id = $1 LIMIT 1", [reportId]);
       const a = anchor.rows[0] ?? { lat: row.lat, lng: row.lng };

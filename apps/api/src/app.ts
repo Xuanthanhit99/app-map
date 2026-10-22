@@ -11,6 +11,7 @@ import { registerGeocodeRoutes } from "./modules/geocode";
 import { registerRoutingRoutes } from "./modules/routing";
 import { registerHealthRoutes } from "./modules/health";
 import { handleVerifiedDecisionRead } from "./verified-decision-http";
+import { buildOpenApi } from "./openapi";
 import { evidenceRepositoryFromEnv, type VerifiedEvidenceRepository } from "./verified-evidence-repository";
 
 export type BuiltApp = {
@@ -37,6 +38,7 @@ export function buildApp(deps: AppDeps, identifyClient: ClientIdentityResolver, 
   registerContributionRoutes(router, deps);
   registerRoutingRoutes(router, deps);
   for (const register of extra) register(router, deps);
+  router.get("/v1/openapi.json", () => ({ body: buildOpenApi(router) }), { cacheSeconds: 300 });
   const listener = createRequestListener(router, {
     authenticate: identity.authenticate,
     rateLimits: deps.rateLimits,
