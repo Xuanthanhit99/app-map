@@ -7,6 +7,7 @@ import { OverpassAdapter } from "./adapters/osm-overpass";
 import { OpenMeteoAdapter } from "./adapters/open-meteo";
 import { runIngestion, tileBBox, type RunOutcome } from "./framework";
 import { upsertRegions, type CoverageRegion } from "./regions";
+import { applyRetention } from "./retention";
 
 export type SchedulerDeps = { db: Db; config: AppConfig; regions: CoverageRegion[]; now: () => Date; transport?: typeof fetch; log?: (e: Record<string, unknown>) => void };
 
@@ -40,7 +41,7 @@ export function createJobs(deps: SchedulerDeps) {
   }
 
   /** Expire reports and re-evaluate subjects whose evidence may have lapsed (meaningful changes fan out). */
-  async function maintenance(): Promise<{ expired: number; reevaluated: number; changes: number }> {
+  async function maintenance() {
     const now = deps.now();
     const expired = await expireReports(deps.db, now);
     const { rows } = await deps.db.query<{ subject_key: string }>(
@@ -49,7 +50,8 @@ export function createJobs(deps: SchedulerDeps) {
     const keys = rows.map((r) => r.subject_key);
     const changes = await propagate(deps.db, keys, now);
     await new PostgresRateLimitStore(deps.db).sweep(now.getTime());
-    return { expired, reevaluated: keys.length, changes: changes.length };
+    const retention = await applyRetention(deps.db, now);
+    return { expired, reevaluated: keys.length, changes: changes.length, retention };
   }
 
   return { places, weather, maintenance, ensureRegions: () => upsertRegions(deps.db, deps.regions) };

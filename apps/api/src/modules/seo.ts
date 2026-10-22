@@ -49,6 +49,12 @@ export function registerSeoRoutes(router: Router, deps: AppDeps) {
     return { body: { indexable: rows[0].indexable } };
   }, { cacheSeconds: 600 });
 
+  router.get("/v1/sources", async () => {
+    const { rows } = await db.query(`SELECT id, name, kind, domains, license, attribution, commercial_use, update_frequency, data_nature, enabled, notes FROM data_sources ORDER BY enabled DESC, id`);
+    return { body: { items: rows.map((r) => ({ id: r.id, name: r.name, kind: r.kind, domains: r.domains, license: r.license, attribution: r.attribution,
+      commercialUse: r.commercial_use, updateFrequency: r.update_frequency, nature: r.data_nature, enabled: r.enabled, notes: r.notes })) } };
+  }, { cacheSeconds: 600 });
+
   router.get("/v1/areas", async () => {
     const { rows } = await db.query(`SELECT a.id, a.name, a.kind, ST_Y(a.centroid::geometry) AS lat, ST_X(a.centroid::geometry) AS lng,
         ST_XMin(a.bbox::geometry) AS w, ST_YMin(a.bbox::geometry) AS s, ST_XMax(a.bbox::geometry) AS e, ST_YMax(a.bbox::geometry) AS n,

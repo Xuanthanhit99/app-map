@@ -4,16 +4,18 @@
   "version": "0.1.0",
   "workspaces": [
     "apps/mobile",
-    "apps/api"
+    "apps/api",
+    "apps/web"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit && npm run typecheck --workspace @app-map/api && npm run typecheck --workspace @app-map/mobile",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspace @app-map/api && npm run typecheck --workspace @app-map/mobile && npm run typecheck --workspace @app-map/web",
     "test": "vitest run",
     "test:watch": "vitest",
     "mobile:start": "npm run start --workspace @app-map/mobile",
     "test:int": "vitest run tests/*.int.test.ts",
     "db:migrate": "npm run migrate --workspace @app-map/api",
-    "api:dev": "npm run dev --workspace @app-map/api"
+    "api:dev": "npm run dev --workspace @app-map/api",
+    "web:dev": "npm run dev --workspace @app-map/web"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

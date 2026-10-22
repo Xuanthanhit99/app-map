@@ -73,6 +73,7 @@ export const ROUTE_DOCS: Record<string, Doc> = {
   "POST /v1/stories/:id/submit": { tag: "Stories", summary: "Submit for review (sources required)", status: 204 },
   "GET /v1/seo/sitemap": { tag: "SEO", summary: "Indexable entities for the sitemap" },
   "GET /v1/seo/places/:slug": { tag: "SEO", summary: "Indexability of a place page" },
+  "GET /v1/sources": { tag: "SEO", summary: "Public catalog of data sources, licences and limitations" },
   "GET /v1/areas": { tag: "SEO", summary: "Coverage areas" },
   "GET /v1/areas/:id": { tag: "SEO", summary: "Area discovery data" },
   "GET /v1/areas/:id/categories/:category": { tag: "SEO", summary: "Category inside an area" },

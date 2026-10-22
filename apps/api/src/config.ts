@@ -16,6 +16,8 @@ export type AppConfig = {
   ingestion: { enabled: boolean; overpassUrl: string; openMeteoUrl: string; userAgent: string };
   /** Seed fixture data for local development. Refused in qa/production (no fake production data). */
   allowDevFixtures: boolean;
+  /** Straight-line routing double for local E2E only. Refused outside development/test. */
+  devFakeRouting: boolean;
 };
 
 export class ConfigError extends Error { constructor(m: string) { super(m); this.name = "ConfigError"; } }
@@ -31,6 +33,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (!Number.isInteger(port) || port <= 0 || port > 65535) throw new ConfigError("INVALID_PORT");
   const allowDevFixtures = env.ALLOW_DEV_FIXTURES === "true";
   if (allowDevFixtures && (appEnv === "qa" || appEnv === "production")) throw new ConfigError("DEV_FIXTURES_FORBIDDEN_IN_" + appEnv.toUpperCase());
+  const devFakeRouting = env.DEV_FAKE_ROUTING === "true";
+  if (devFakeRouting && (appEnv === "qa" || appEnv === "production")) throw new ConfigError("DEV_FAKE_ROUTING_FORBIDDEN_IN_" + appEnv.toUpperCase());
   const store = (env.RATE_LIMIT_STORE ?? (appEnv === "production" || appEnv === "qa" ? "postgres" : "memory")) as AppConfig["rateLimitStore"];
   if (store !== "memory" && store !== "postgres") throw new ConfigError("INVALID_RATE_LIMIT_STORE");
   return {
@@ -54,5 +58,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       userAgent: env.INGESTION_USER_AGENT ?? "REALITY/0.2 (+https://github.com/Xuanthanhit99/app-map)",
     },
     allowDevFixtures,
+    devFakeRouting,
   };
 }

@@ -6,3 +6,7 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+.next/
+apps/web/.next/
+*.tsbuildinfo
+evidence/tmp/
