@@ -13,7 +13,7 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 | Gate | Status | One-line reason |
 |---|---|---|
 | G0 Repository & contract recovery | **PASS** | HEAD, branches, PRs and decisions recovered; missing masters identified |
-| G1 Backend | **PASS (local)** | 48 files / 324 tests incl. PostGIS integration; CI run pending on the PR |
+| G1 Backend | **PASS (local)** | 48 files / 324 tests incl. PostGIS integration; GitHub Actions run 39724229411 on PR #5 succeeded |
 | G2 Data readiness | **BLOCKED** | Live ingestion not verifiable from the sandbox; no QA environment; no licensed live traffic / flood / parking feeds |
 | G3 Web functional | **BLOCKED** | 20/20 browser E2E PASS locally, but the gate requires real QA APIs |
 | G4 Native Android | **BLOCKED** | Only the JS bundle export was verified; no SDK, EAS, emulator or device |
@@ -50,7 +50,7 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
   - Retention.
   - OpenAPI contract (85 operations, `docs/api/openapi.json`).
 - Remaining:
-  - The CI run of `.github/workflows/ci.yml` with the PostGIS service has not executed yet; it runs on the Draft PR.
+  - CI: GitHub Actions run `39724229411` (PR #5, commit `ee9508c`, ubuntu-latest, `postgis/postgis:16-3.4` service) succeeded: typecheck, tests, audit (warning-only), web build, Android and iOS exports. The job log could not be downloaded from the sandbox (log storage blocked), so the CI test count, and whether integration tests ran rather than skipped there, is not independently confirmed; the local run above is the confirmed count.
   - No load test.
 
 ### G2 — Data readiness — BLOCKED
