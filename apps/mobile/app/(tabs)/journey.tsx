@@ -8,6 +8,11 @@ import { searchPlaces, type PlaceResult, type PlaceSearch } from "../../src/infr
 import { checkPlanRoute, type RouteCheck } from "../../src/infrastructure/api/routeVerificationClient";
 import { formatDurationVi } from "../../src/features/journey/formatDuration";
 import { createLatestRequestGate } from "../../src/features/journey/latestRequestGate";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { messageFor } from "@core/i18n/error-messages";
+import { api, ApiError } from "../../src/infrastructure/api/client";
+import { useAuth } from "../../src/infrastructure/auth/AuthContext";
+import { useLocationPreference } from "../../src/infrastructure/location/LocationPreferenceContext";
 
 
 type PlanItem = { id: string; title?: string; stops?: { placeId: string }[]; evidence?: { truth?: string; source?: string; observedAt?: string; provenanceId?: string } };
@@ -23,7 +28,33 @@ function isVerified(plan: PlanItem): boolean {
     Number.isFinite(observed) && observed <= Date.now() && Date.now() - observed <= 300000;
 }
 
+function PlannedFromPlace({ slug }: { slug: string }) {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { choice } = useLocationPreference();
+  const location = useForegroundLocationLifecycle(choice === "ENABLE");
+  const [place, setPlace] = useState<{ id: string; name: string } | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  useEffect(() => { void api<{ place: { id: string; name: string } }>(`/v1/places/${encodeURIComponent(slug)}`).then((r) => setPlace(r.place)).catch(() => setMsg("Không tải được điểm đến.")); }, [slug]);
+  async function start() {
+    if (location.status !== "READY" || !place) return;
+    try {
+      const r = await api<{ journey: { id: string } }>("/v1/journeys", { method: "POST", body: { origin: { latitude: location.latitude, longitude: location.longitude }, destinationPlaceId: place.id, mode: "DRIVING" } });
+      router.push({ pathname: "/journey/[id]", params: { id: r.journey.id } });
+    } catch (e) { setMsg(messageFor(e instanceof ApiError ? e.code : undefined)); }
+  }
+  if (!place) return msg ? <Text style={styles.body}>{msg}</Text> : null;
+  return <View style={styles.card}>
+    <Text style={styles.heading}>Đi tới {place.name}</Text>
+    {!user ? <Text style={styles.body}>Đăng nhập (mục Tôi) để lưu hành trình và nhận cảnh báo dọc tuyến.</Text>
+      : location.status !== "READY" ? <Text style={styles.body}>{choice !== "ENABLE" ? "Bật định vị trong mục Tôi để bắt đầu từ vị trí hiện tại." : "Đang xác định vị trí…"}</Text>
+      : <Pressable accessibilityRole="button" onPress={() => void start()} style={styles.previewPrimary}><Text style={styles.previewPrimaryText}>Tính tuyến từ vị trí hiện tại</Text></Pressable>}
+    {msg ? <Text style={styles.body}>{msg}</Text> : null}
+  </View>;
+}
+
 export default function JourneyTab() {
+  const { to } = useLocalSearchParams<{ to?: string }>();
 
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
@@ -126,6 +157,7 @@ export default function JourneyTab() {
     </View>;
   }
   const searchPanel = <ScrollView style={styles.searchPanel} contentContainerStyle={styles.searchContent} keyboardShouldPersistTaps="handled">
+      {to ? <PlannedFromPlace slug={to} /> : null}
       {isDesktop ? <><Text style={styles.eyebrow}>JOURNEY</Text><Text accessibilityRole="header" style={styles.title}>Lên kế hoạch hành trình</Text><Text style={styles.body}>Tìm địa chỉ, chọn đúng địa điểm rồi xem tuyến đường. Không cần nhập tọa độ.</Text></> : null}
       {isDesktop ? <View style={styles.realityCompact}><Text style={styles.realityCompactText}>Reality Check · Chưa có dữ liệu giao thông được xác minh</Text></View> : null}
       <View style={styles.card}>

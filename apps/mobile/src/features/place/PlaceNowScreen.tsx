@@ -1,49 +1,44 @@
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { buildPlaceNowViewModel } from "../../../../../src/features/place-now/place-now";
-import { describeProvenance } from "@core/presentation/provenance-presentation";
-import { theme } from "../../ui/theme";
+import { useCallback, useEffect, useState } from "react";
+import { Linking, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { messageFor } from "@core/i18n/error-messages";
+import { api, ApiError } from "../../infrastructure/api/client";
+import { useAuth } from "../../infrastructure/auth/AuthContext";
+import { Button, Card, H, Notice, P, Screen, StateRow, type MobileState } from "../../ui/kit";
 
+type Detail = { place: { id: string; slug: string; name: string; categoryLabel: string; address: string | null; coordinate: [number, number]; openingHours: { raw: string; note: string } | null; wheelchair: string | null; source: { attribution: string } };
+  states: MobileState[]; saved: boolean; evaluatedAt: string };
+
+/** Place Now, backed by the live API. No local fixtures: unknown is shown as unknown. */
 export function PlaceNowScreen() {
-  const { width, height, fontScale } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const vm = buildPlaceNowViewModel({
-    facts: { id: "place-1", name: "Cà phê bên hồ", category: "CAFE", address: "Hà Nội" },
-    live: {
-      domain: { open: "OPEN", crowd: "BUSY", queue: "SHORT", availableSeating: "LIMITED" },
-      truthStatus: "KNOWN", freshness: "FRESH", systemAvailability: "ONLINE",
-      permission: "NOT_REQUIRED", contentAvailability: "CONTENT", interactionLifecycle: "NONE",
-      fetchLifecycle: "IDLE", safetyLevel: "NONE",
-      provenance: [{ sourceType: "COMMUNITY", confidence: "MEDIUM" }],
-    },
-  }, {
-    widthClass: width >= 768 ? "TABLET" : width >= 420 ? "LARGE_PHONE" : "SMALL_PHONE",
-    orientation: width > height ? "LANDSCAPE" : "PORTRAIT",
-    dynamicTypeScale: fontScale,
-  });
-
+  const { slug } = useLocalSearchParams<{ slug?: string }>();
+  const router = useRouter();
+  const { user } = useAuth();
+  const [d, setD] = useState<Detail | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const load = useCallback(async () => {
+    if (!slug) { setError("Thiếu địa điểm."); return; }
+    try { setD(await api<Detail>(`/v1/places/${encodeURIComponent(slug)}`)); setError(null); }
+    catch (e) { setError(messageFor(e instanceof ApiError ? e.code : undefined)); }
+  }, [slug]);
+  useEffect(() => { void load(); }, [load]);
+  if (error) return <Screen title="Địa điểm"><Notice tone="error">{error}</Notice><Button kind="secondary" label="Thử lại" onPress={() => void load()} /></Screen>;
+  if (!d) return <Screen title="Địa điểm"><P muted>Đang tải tình trạng hiện tại…</P></Screen>;
+  const informative = d.states.filter((s) => s.truth !== "UNKNOWN" || s.signals.length);
+  const unknown = d.states.filter((s) => s.truth === "UNKNOWN" && !s.signals.length && s.domain !== "PRICE");
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24, paddingHorizontal: 16, gap: 16 }}>
-      <Text style={styles.eyebrow}>PLACE NOW</Text>
-      <Text accessibilityRole="header" style={styles.name}>{vm.place.name}</Text>
-      <View accessible accessibilityLabel={vm.accessibility.label} style={styles.liveCard}>
-        <Text style={styles.cue}>● TÌNH TRẠNG HIỆN TẠI</Text>
-        <Text style={styles.headline} allowFontScaling maxFontSizeMultiplier={2}>{vm.headline}</Text>
-        <Text style={styles.body} allowFontScaling maxFontSizeMultiplier={2}>{vm.supportingText}</Text>
-      </View>
-      <Text accessibilityRole="header" style={styles.section}>Bằng chứng gần đây</Text>
-      {vm.evidence.map((e, i) => <Text key={i} style={styles.body}>{describeProvenance(e)}</Text>)}
-    </ScrollView>
+    <Screen title={d.place.name} eyebrow={d.place.categoryLabel.toUpperCase()}>
+      {d.place.address ? <P muted>{d.place.address}</P> : null}
+      <View style={{ gap: 10 }}>{informative.map((s) => <StateRow key={s.domain} state={s} />)}</View>
+      {unknown.length ? <Card dashed><H>Chưa rõ lúc này</H><P muted small>Chưa có báo cáo đã đối chứng hay nguồn trực tiếp gần đây về: {unknown.map((s) => s.domain === "PLACE_OPEN" ? "mở cửa" : s.domain === "CROWD" ? "mức đông" : s.domain === "QUEUE" ? "hàng chờ" : "bãi xe").join(", ")}.</P></Card> : null}
+      {d.place.openingHours ? <P muted small>Giờ mở cửa công bố: {d.place.openingHours.raw}. {d.place.openingHours.note}</P> : null}
+      <Button label="Chỉ đường" onPress={() => router.push({ pathname: "/(tabs)/journey", params: { to: d.place.slug } })} />
+      <Button kind="secondary" label="Báo tình trạng tại đây" onPress={() => router.push({ pathname: "/report-action", params: { placeId: d.place.id, placeName: d.place.name } })} />
+      {user ? <Button kind="secondary" label={d.saved ? "Đã lưu" : "Lưu địa điểm"} disabled={d.saved} onPress={() => void api("/v1/me/saved-places", { method: "POST", body: { placeId: d.place.id } }).then(() => { setMsg("Đã lưu."); return load(); }).catch((e) => setMsg(messageFor(e instanceof ApiError ? e.code : undefined)))} /> : null}
+      {msg ? <Notice>{msg}</Notice> : null}
+      <P muted small>Nguồn địa điểm: {d.place.source.attribution}. Bản đồ © OpenStreetMap contributors.</P>
+      {process.env.EXPO_PUBLIC_WEB_URL ? <Button kind="quiet" label="Mở trên web" onPress={() => void Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dia-diem/${d.place.slug}`)} /> : null}
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.color.background },
-  eyebrow: { ...theme.typography.label, color: theme.color.brand[700] },
-  name: { ...theme.typography.display, color: theme.color.textPrimary },
-  liveCard: { backgroundColor: theme.color.surface1, borderWidth: 1, borderColor: theme.color.border, borderRadius: theme.radius.card, padding: theme.spacing[4], gap: theme.spacing[2] },
-  cue: { ...theme.typography.label, color: theme.color.textSecondary },
-  headline: { ...theme.typography.title1, color: theme.color.textPrimary },
-  body: { ...theme.typography.body, color: theme.color.textSecondary },
-  section: { ...theme.typography.headline, color: theme.color.textPrimary },
-});

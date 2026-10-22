@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { getRealityDecisionCollection, type ApiCollection } from "../../infrastructure/api/realityDecisionClient";
+import { api } from "../../infrastructure/api/client";
+import { StateRow, type MobileState } from "../../ui/kit";
+
+type PulseItem = MobileState & { id: string; headline: string | null; placeId: string | null; change: { at: string } };
+type Pulse = { status: "ready" | "empty"; items: PulseItem[] } | { status: "error"; items: [] };
+const HA_NOI_BBOX = "105.78,20.98,105.88,21.08";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocationPreference } from "../../infrastructure/location/LocationPreferenceContext";
 import { useRouter } from "expo-router";
@@ -9,23 +14,25 @@ import { useForegroundLocationLifecycle } from "../../infrastructure/location/us
 
 export function RealityHomeScreen() {
   const insets = useSafeAreaInsets();
-  const [realityApi, setRealityApi] = useState<ApiCollection<{ id: string }>>({ status: "empty", items: [], reason: "API_NOT_CONFIGURED" });
-  const [decisionApi, setDecisionApi] = useState<ApiCollection<{ id: string }>>({ status: "empty", items: [], reason: "API_NOT_CONFIGURED" });
+  const [pulse, setPulse] = useState<Pulse | null>(null);
   const [apiLoading, setApiLoading] = useState(true);
-  useEffect(() => {
-    let active = true;
-    const base = process.env.EXPO_PUBLIC_API_BASE_URL;
-    Promise.all([getRealityDecisionCollection(base, "reality"), getRealityDecisionCollection(base, "decision")]).then(([reality, decision]) => {
-      if (!active) return;
-      setRealityApi(reality);
-      setDecisionApi(decision);
-      setApiLoading(false);
-    });
-    return () => { active = false; };
-  }, []);
   const router = useRouter();
   const { choice: locationChoice, hydrated, setChoice: setLocationChoice } = useLocationPreference();
   const location = useForegroundLocationLifecycle(hydrated && locationChoice === "ENABLE");
+  const ready = location.status === "READY";
+  const lat = ready ? Math.round(location.latitude * 100) / 100 : null;
+  const lng = ready ? Math.round(location.longitude * 100) / 100 : null;
+  useEffect(() => {
+    let active = true;
+    // World Pulse around the (coarsened) current position, or central Hà Nội when location is off.
+    const bbox = lat !== null && lng !== null ? `${(lng - 0.03).toFixed(2)},${(lat - 0.03).toFixed(2)},${(lng + 0.03).toFixed(2)},${(lat + 0.03).toFixed(2)}` : HA_NOI_BBOX;
+    setApiLoading(true);
+    api<{ status: "ready" | "empty"; items: PulseItem[] }>(`/v1/reality/pulse?bbox=${bbox}&hours=6`, { auth: false })
+      .then((r) => { if (active) setPulse(r); })
+      .catch(() => { if (active) setPulse({ status: "error", items: [] }); })
+      .finally(() => { if (active) setApiLoading(false); });
+    return () => { active = false; };
+  }, [lat, lng]);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -38,18 +45,23 @@ export function RealityHomeScreen() {
           </View>
           
         </View>
-        <View style={styles.statusLine}><Text style={styles.statusText}>TRẠNG THÁI · CHƯA CÓ TÍN HIỆU XÁC MINH</Text></View>
+        <View style={styles.statusLine}><Text style={styles.statusText}>{apiLoading ? "ĐANG KIỂM TRA TÍN HIỆU" : pulse?.status === "error" ? "KHÔNG TẢI ĐƯỢC TÍN HIỆU" : `${pulse?.items.filter((i) => i.truth === "KNOWN").length ?? 0} ĐÃ XÁC NHẬN · ${pulse?.items.filter((i) => i.truth !== "KNOWN").length ?? 0} CHƯA RÕ / MÂU THUẪN`}</Text></View>
 
         {hydrated && locationChoice === "ASK" ? <View style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị là tùy chọn</Text><Text style={styles.consentBody}>Bật để xem ngữ cảnh quanh bạn. Bạn vẫn có thể khám phá khi không bật.</Text><View style={styles.consentActions}><Pressable accessibilityRole="button" onPress={() => setLocationChoice("ENABLE")} style={styles.consentPrimary}><Text style={styles.consentPrimaryText}>Bật định vị</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setLocationChoice("SKIP")} style={styles.consentSecondary}><Text style={styles.consentSecondaryText}>Không bật</Text></Pressable></View></View> : hydrated && locationChoice === "ENABLE" && location.status === "DENIED" ? <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={styles.locationConsent}><Text style={styles.consentTitle}>Định vị bị từ chối · Mở cài đặt</Text><Text style={styles.consentBody}>Không cấp quyền vẫn sử dụng được các tính năng khám phá.</Text></Pressable> : null}
         <View style={styles.sectionHead}><View><Text style={styles.sectionTitle}>Reality Pulse</Text><Text style={styles.sectionMeta}>Tín hiệu quan trọng được ưu tiên theo tác động</Text></View></View>
-        <Text accessibilityRole="text" style={styles.sectionMeta}>{apiLoading ? "Đang kiểm tra tín hiệu từ API…" : realityApi.status === "error" ? "Không tải được tín hiệu. Hãy kiểm tra kết nối." : realityApi.status === "empty" ? "API chưa có tín hiệu đủ điều kiện hiển thị LIVE." : "API đã có tín hiệu; cần kiểm chứng provenance trước khi hiển thị."}</Text>
-        <View style={styles.pulseCard} accessibilityLabel="Reality Pulse: trạng thái bằng chứng">
-          <View style={styles.unknownIcon}><Text style={styles.unknownMark}>?</Text></View>
-          <View style={styles.flex}>
-            <Text style={styles.pulseTitle}>{apiLoading ? "Đang tải tín hiệu" : realityApi.status === "error" ? "Không tải được Reality Pulse" : realityApi.status === "empty" ? "Chưa có tín hiệu xác minh" : "Đang chờ kiểm chứng bằng chứng"}</Text>
-            <Text style={styles.pulseBody}>Không hiển thị dữ liệu LIVE khi chưa kiểm tra provenance, TruthStatus và Freshness.</Text>
+        {pulse && pulse.status === "ready" ? (
+          <View style={{ gap: 8 }}>{pulse.items.slice(0, 5).map((i) => (
+            <Pressable key={i.id} accessibilityRole="button" disabled={!i.placeId} onPress={() => i.placeId && router.push({ pathname: "/place", params: { slug: i.placeId } })}><StateRow state={i} /></Pressable>
+          ))}</View>
+        ) : (
+          <View style={styles.pulseCard} accessibilityLabel="Reality Pulse: trạng thái bằng chứng">
+            <View style={styles.unknownIcon}><Text style={styles.unknownMark}>?</Text></View>
+            <View style={styles.flex}>
+              <Text style={styles.pulseTitle}>{apiLoading ? "Đang tải tín hiệu" : pulse?.status === "error" ? "Không tải được Reality Pulse" : "Chưa có thay đổi nào trong 6 giờ qua"}</Text>
+              <Text style={styles.pulseBody}>Không có tín hiệu không có nghĩa là khu vực đang an toàn. Nếu bạn đang thấy ngập, tắc đường hay bãi xe đầy, hãy báo cho người khác.</Text>
+            </View>
           </View>
-        </View>
+        )}
 
         <Pressable accessibilityRole="button" accessibilityLabel="Cập nhật tình hình quanh bạn" onPress={() => router.push("/report-action")} style={styles.reportCard}>
           <View style={styles.reportIcon}><Text style={styles.reportIconText}>+</Text></View>
@@ -67,9 +79,9 @@ export function RealityHomeScreen() {
         <View style={styles.decideCard}>
           <Text style={styles.eyebrow}>DECIDE</Text>
           <Text style={styles.decideTitle}>Bạn muốn làm gì lúc này?</Text>
-          <Text style={styles.decideBody}>{apiLoading ? "Đang kiểm tra phương án…" : decisionApi.status === "error" ? "Không kết nối được Decision API." : decisionApi.status === "empty" ? "Chưa có phương án được xác minh. Không tạo kế hoạch khi thiếu dữ liệu." : "Đã nhận dữ liệu API; chờ kiểm chứng điều kiện và provenance."}</Text>
+          <Text style={styles.decideBody}>Kể điều bạn muốn làm. Bạn sẽ nhận vài lựa chọn kèm lý do, bằng chứng và những gì còn chưa rõ.</Text>
 
-          <Pressable accessibilityRole="button" accessibilityLabel="Xem các phương án hành trình" onPress={() => router.push("/(tabs)/journey")} style={styles.decideAction}><Text style={styles.decideActionText}>Xem phương án</Text><Text style={styles.decideActionText}>›</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Đi đâu bây giờ?" onPress={() => router.push("/decide")} style={styles.decideAction}><Text style={styles.decideActionText}>Đi đâu bây giờ?</Text><Text style={styles.decideActionText}>›</Text></Pressable>
         </View>
 
         <View style={styles.sectionHead}><View><Text style={styles.sectionTitle}>Cơ hội phù hợp lúc này</Text><Text style={styles.sectionMeta}>Chỉ hiện khi có đủ ngữ cảnh đáng tin cậy</Text></View></View>

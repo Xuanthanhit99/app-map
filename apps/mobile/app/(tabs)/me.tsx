@@ -1,40 +1,81 @@
-import { useState } from "react";
-import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCallback, useEffect, useState } from "react";
+import { Linking, Platform, View } from "react-native";
+import { messageFor } from "@core/i18n/error-messages";
+import { api, ApiError } from "../../src/infrastructure/api/client";
+import { useAuth } from "../../src/infrastructure/auth/AuthContext";
 import { useLocationPreference } from "../../src/infrastructure/location/LocationPreferenceContext";
+import { AuthPanel } from "../../src/features/account/AuthPanel";
+import { Button, Card, Field, H, Notice, P, Screen } from "../../src/ui/kit";
+
+const PURPOSES = [
+  ["contribution_public", "Đóng góp công khai", "Gửi và xác nhận báo cáo. Người khác chỉ thấy ô vị trí ~150 m, không thấy tên bạn."],
+  ["context_personalization", "Cá nhân hóa gợi ý", "Dùng tùy chọn của bạn khi gợi ý “Đi đâu bây giờ?”."],
+  ["journey_sharing", "Chia sẻ hành trình", "Cho phép tạo liên kết giờ đến dự kiến có thời hạn. Tắt sẽ thu hồi mọi liên kết."],
+  ["notifications", "Thông báo đẩy", "Gửi thông báo khi khu vực theo dõi có thay đổi đáng kể."],
+] as const;
+type Consents = Record<string, { granted: boolean }>;
 
 export default function MeTab() {
-  const insets = useSafeAreaInsets();
-  const [notice, setNotice] = useState(false);
+  const { user, ready, logout } = useAuth();
   const { choice, hydrated, setChoice } = useLocationPreference();
-  return <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 96 }]}>
-    <Text style={styles.eyebrow}>ME / PRIVACY</Text>
-    <Text accessibilityRole="header" style={styles.title}>Tôi</Text>
-    <Text style={styles.subtitle}>Bạn kiểm soát quyền riêng tư và ngữ cảnh cá nhân.</Text>
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Quyền riêng tư · Định vị</Text>
-      <Text style={styles.body}>Ứng dụng chỉ yêu cầu quyền vị trí khi bạn chọn bật. Tắt trong ứng dụng không thay đổi quyền hệ thống đã cấp.</Text>
-      <Text style={styles.status}>Lựa chọn hiện tại: {!hydrated ? "Đang tải lựa chọn đã lưu" : choice === "ENABLE" ? "Bật định vị" : choice === "SKIP" ? "Không bật" : "Chưa lựa chọn"}</Text>
-      <View style={styles.actions}>
-        <Pressable accessibilityRole="button" accessibilityState={{ selected: choice === "ENABLE" }} disabled={!hydrated} onPress={() => setChoice("ENABLE")} style={[styles.action, choice === "ENABLE" && styles.selected]}><Text style={[styles.actionText, choice === "ENABLE" && styles.selectedText]}>Bật định vị</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityState={{ selected: choice === "SKIP" }} disabled={!hydrated} onPress={() => setChoice("SKIP")} style={[styles.action, choice === "SKIP" && styles.selected]}><Text style={[styles.actionText, choice === "SKIP" && styles.selectedText]}>Không bật</Text></Pressable>
-      </View>
-      <Pressable accessibilityRole="button" onPress={() => { if (Platform.OS !== "web") void Linking.openSettings(); else setNotice(true); }} style={styles.settings}><Text style={styles.settingsText}>{Platform.OS === "web" ? "Quản lý quyền vị trí trong trình duyệt" : Platform.OS === "ios" ? "Quản lý quyền trong cài đặt iOS" : "Quản lý quyền trong cài đặt Android"}</Text></Pressable>
-      <Text style={styles.note}>Lựa chọn được lưu trên thiết bị để sử dụng khi mở lại ứng dụng. {Platform.OS === "web" ? "Quyền định vị được quản lý trong phần quyền trang web của trình duyệt." : "Quyền định vị của hệ thống được quản lý riêng trong Cài đặt thiết bị."}</Text>
-    </View>
-    <Modal visible={notice} transparent animationType="fade" onRequestClose={() => setNotice(false)}><View style={styles.modalOverlay}><View style={styles.modalCard}><Text style={styles.cardTitle}>Quyền vị trí trên trình duyệt</Text><Text style={styles.body}>Mở biểu tượng quyền trang web bên cạnh địa chỉ, chọn Vị trí và cho phép truy cập. Sau đó tải lại trang. Bạn vẫn xem bản đồ được khi không cấp quyền.</Text><Pressable accessibilityRole="button" onPress={() => setNotice(false)} style={styles.modalAction}><Text style={styles.modalActionText}>Đã hiểu</Text></Pressable></View></View></Modal>
-    <View style={styles.card}><Text style={styles.cardTitle}>Phương tiện và ngữ cảnh</Text><Text style={styles.body}>Chưa có hồ sơ phương tiện. Không tự suy đoán thông tin cá nhân hoặc phương tiện.</Text></View>
-  </ScrollView>;
+  const [consents, setConsents] = useState<Consents>({});
+  const [msg, setMsg] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [pw, setPw] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const load = useCallback(async () => { if (user) setConsents((await api<{ consents: Consents }>("/v1/me/consents").catch(() => ({ consents: {} }))).consents); }, [user]);
+  useEffect(() => { void load(); }, [load]);
+  async function toggle(purpose: string, granted: boolean) {
+    try { setConsents((await api<{ consents: Consents }>("/v1/me/consents", { method: "POST", body: { purpose, granted } })).consents); }
+    catch (e) { setMsg(messageFor(e instanceof ApiError ? e.code : undefined)); }
+  }
+  async function deleteAccount() {
+    try { await api("/v1/me/delete", { method: "POST", body: { password: pw, confirm } }); await logout(); setMsg("Tài khoản đã được xóa vĩnh viễn."); }
+    catch (e) { setMsg(messageFor(e instanceof ApiError ? e.code : undefined)); }
+  }
+  const web = process.env.EXPO_PUBLIC_WEB_URL;
+  return (
+    <Screen title="Tôi" eyebrow="TÀI KHOẢN · QUYỀN RIÊNG TƯ">
+      {!ready ? <P muted>Đang tải phiên đăng nhập…</P> : user ? (
+        <Card><H>{user.displayName}</H><P muted small>{user.email}</P><Button kind="secondary" label="Đăng xuất" onPress={() => void logout()} /></Card>
+      ) : <AuthPanel />}
+      <Card>
+        <H>Định vị</H>
+        <P muted small>Ứng dụng chỉ dùng vị trí khi đang mở (không theo dõi nền). Tắt trong ứng dụng không thay đổi quyền hệ thống đã cấp.</P>
+        <P small>Lựa chọn hiện tại: {!hydrated ? "đang tải" : choice === "ENABLE" ? "Bật định vị" : choice === "SKIP" ? "Không bật" : "Chưa lựa chọn"}</P>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <View style={{ flex: 1 }}><Button kind={choice === "ENABLE" ? "primary" : "secondary"} label="Bật định vị" onPress={() => setChoice("ENABLE")} disabled={!hydrated} /></View>
+          <View style={{ flex: 1 }}><Button kind={choice === "SKIP" ? "primary" : "secondary"} label="Không bật" onPress={() => setChoice("SKIP")} disabled={!hydrated} /></View>
+        </View>
+        {Platform.OS !== "web" ? <Button kind="quiet" label={Platform.OS === "ios" ? "Quản lý quyền trong Cài đặt iOS" : "Quản lý quyền trong Cài đặt Android"} onPress={() => void Linking.openSettings()} /> : null}
+      </Card>
+      {user ? (
+        <>
+          <Card>
+            <H>Quyền riêng tư</H>
+            {PURPOSES.map(([k, title, desc]) => (
+              <View key={k} style={{ gap: 6, paddingVertical: 6 }}>
+                <P>{title}</P><P muted small>{desc}</P>
+                <Button kind={consents[k]?.granted ? "secondary" : "primary"} label={consents[k]?.granted ? "Tắt" : "Bật"} onPress={() => void toggle(k, !consents[k]?.granted)} />
+              </View>
+            ))}
+          </Card>
+          {web ? <Card><H>Dữ liệu của bạn</H><P muted small>Tải bản sao toàn bộ dữ liệu trên trang web Reality (đăng nhập cùng tài khoản).</P><Button kind="secondary" label="Mở trang xuất dữ liệu" onPress={() => void Linking.openURL(`${web}/tai-khoan/quyen-rieng-tu`)} /></Card> : null}
+          <Card>
+            <H>Xóa tài khoản</H>
+            <P muted small>Xóa vĩnh viễn tài khoản và dữ liệu cá nhân. Báo cáo đã gửi được giữ cho lịch sử an toàn nhưng tách khỏi bạn.</P>
+            {!deleting ? <Button kind="danger" label="Xóa tài khoản…" onPress={() => setDeleting(true)} /> : (
+              <View style={{ gap: 10 }}>
+                <Field label="Mật khẩu" value={pw} onChangeText={setPw} secureTextEntry />
+                <Field label="Gõ XOA TAI KHOAN để xác nhận" value={confirm} onChangeText={setConfirm} autoCapitalize="characters" />
+                <Button kind="danger" label="Xóa vĩnh viễn" disabled={confirm !== "XOA TAI KHOAN"} onPress={() => void deleteAccount()} />
+                <Button kind="quiet" label="Hủy" onPress={() => setDeleting(false)} />
+              </View>
+            )}
+          </Card>
+        </>
+      ) : null}
+      {msg ? <Notice>{msg}</Notice> : null}
+    </Screen>
+  );
 }
-const styles = StyleSheet.create({
-  modalOverlay:{flex:1,backgroundColor:"rgba(0,0,0,.68)",justifyContent:"center",padding:22},modalCard:{backgroundColor:"#102A3B",padding:20,borderRadius:18,gap:14,borderColor:"#36556A",borderWidth:1},modalAction:{backgroundColor:"#F4C979",minHeight:48,borderRadius:12,alignItems:"center",justifyContent:"center"},modalActionText:{color:"#071C2C",fontWeight:"800"},
-  root:{flex:1,backgroundColor:"#071C2C"},content:{paddingHorizontal:18,gap:14},
-  eyebrow:{fontSize:11,fontWeight:"800",letterSpacing:1.2,color:"#F4C979"},title:{fontSize:28,fontWeight:"800",color:"#F4F4F0"},subtitle:{fontSize:13,lineHeight:19,color:"#A9BFCE"},
-  card:{borderRadius:20,padding:16,gap:12,backgroundColor:"#102A3B",borderWidth:1,borderColor:"#36556A"},
-  cardTitle:{fontSize:17,fontWeight:"800",color:"#F4F4F0"},body:{fontSize:13,lineHeight:20,color:"#A9BFCE"},
-  status:{fontSize:13,fontWeight:"700",color:"#F4C979"},actions:{flexDirection:"row",gap:9},
-  action:{minHeight:48,flex:1,alignItems:"center",justifyContent:"center",borderRadius:12,borderWidth:1,borderColor:"#36556A",backgroundColor:"#17364A"},
-  selected:{backgroundColor:"#F4C979",borderColor:"#F4C979"},actionText:{fontSize:12,fontWeight:"700",color:"#F4C979"},selectedText:{color:"#071C2C"},
-  settings:{minHeight:44,justifyContent:"center"},settingsText:{fontSize:13,fontWeight:"700",color:"#F4C979"},
-  note:{fontSize:11,lineHeight:17,color:"#A9BFCE"}
-});
