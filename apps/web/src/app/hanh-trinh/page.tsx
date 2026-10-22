@@ -13,7 +13,7 @@ const STATUS: Record<string, string> = { PLANNED: "Đã lên kế hoạch", ACTI
 export default async function JourneyPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const user = await currentUser();
-  const dest = sp.to ? await apiOrNull<PlaceDetail>(`/v1/places/${encodeURIComponent(sp.to)}`) : null;
+  const dest = sp.to ? await apiOrNull<PlaceDetail>(`/v1/places/${encodeURIComponent(sp.to)}`, { revalidate: false }) : null;
   const from = sp.from?.split(",").map(Number);
   const history = user ? (await api<{ items: Journey[] }>("/v1/journeys", { auth: true }).catch(() => ({ items: [] as Journey[] }))).items : [];
   return (

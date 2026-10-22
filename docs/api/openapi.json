@@ -6442,6 +6442,47 @@
         }
       }
     },
+    "/v1/sources": {
+      "get": {
+        "operationId": "GET_v1_sources",
+        "summary": "Public catalog of data sources, licences and limitations",
+        "tags": [
+          "SEO"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/areas": {
       "get": {
         "operationId": "GET_v1_areas",

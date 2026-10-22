@@ -1,5 +1,7 @@
 "use client";
-import maplibregl, { type GeoJSONSource, type Map as MlMap } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import { configureMaplibreWorker } from "./maplibre";
+import { type GeoJSONSource, type Map as MlMap } from "maplibre-gl";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { call, ClientApiError } from "@/lib/client-api";
@@ -45,6 +47,7 @@ export function MapExplorer(props: { initialQuery?: string; initialAt?: [number,
   // ── Map lifecycle ──
   useEffect(() => {
     if (!container.current || map.current) return;
+    configureMaplibreWorker();
     const m = new maplibregl.Map({
       container: container.current,
       style: basemapStyle(),
@@ -71,13 +74,13 @@ export function MapExplorer(props: { initialQuery?: string; initialAt?: [number,
       m.addLayer({ id: "state-glyph", type: "symbol", source: "states", layout: { "text-field": ["get", "glyph"], "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": STATE_COLOR } });
       m.addSource("reports", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       m.addLayer({ id: "report-cells", type: "circle", source: "reports", paint: { "circle-color": "transparent", "circle-stroke-color": COLORS.unknown, "circle-stroke-width": 1.5, "circle-radius": 14, "circle-stroke-opacity": 0.8 } }, "state-halo");
-      m.on("click", "place-clusters", async (e) => {
+      m.on("click", "place-clusters", async (e: maplibregl.MapLayerMouseEvent) => {
         const f = e.features?.[0];
         if (!f) return;
         const z = await (m.getSource("places") as GeoJSONSource).getClusterExpansionZoom(f.properties.cluster_id as number);
         m.easeTo({ center: (f.geometry as GeoJSON.Point).coordinates as [number, number], zoom: z, duration: prefersReducedMotion() ? 0 : 400 });
       });
-      m.on("click", "place-points", (e) => { const id = e.features?.[0]?.properties?.id; if (typeof id === "string") void openPlace(id); });
+      m.on("click", "place-points", (e: maplibregl.MapLayerMouseEvent) => { const id = e.features?.[0]?.properties?.id; if (typeof id === "string") void openPlace(id); });
       for (const l of ["place-points", "place-clusters", "state-points"]) {
         m.on("mouseenter", l, () => { m.getCanvas().style.cursor = "pointer"; });
         m.on("mouseleave", l, () => { m.getCanvas().style.cursor = ""; });

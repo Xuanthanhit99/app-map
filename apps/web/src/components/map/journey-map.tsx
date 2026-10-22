@@ -1,5 +1,7 @@
 "use client";
-import maplibregl, { type GeoJSONSource } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import { configureMaplibreWorker } from "./maplibre";
+import { type GeoJSONSource } from "maplibre-gl";
 import { useEffect, useRef } from "react";
 import type { Coordinate, ImpactItem } from "@/lib/types";
 import { basemapStyle, COLORS, STATE_COLOR } from "./map-core";
@@ -10,6 +12,7 @@ export function JourneyMap({ route, origin, destination, impacts, position }: { 
   const me = useRef<maplibregl.Marker | null>(null);
   useEffect(() => {
     if (!ref.current) return;
+    configureMaplibreWorker();
     const m = new maplibregl.Map({ container: ref.current, style: basemapStyle(), center: destination, zoom: 13, attributionControl: { compact: true } });
     m.addControl(new maplibregl.NavigationControl({}), "bottom-right");
     const init = () => {

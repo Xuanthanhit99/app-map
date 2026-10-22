@@ -10,3 +10,4 @@ coverage/
 apps/web/.next/
 *.tsbuildinfo
 evidence/tmp/
+apps/web/public/vendor/

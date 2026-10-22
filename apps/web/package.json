@@ -6,7 +6,9 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prebuild": "node scripts/copy-maplibre-worker.mjs",
+    "predev": "node scripts/copy-maplibre-worker.mjs"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
@@ -15,7 +17,7 @@
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.3.0",
-    "maplibre-gl": "^5.24.0",
+    "maplibre-gl": "6.13.0",
     "next": "^16.4.2",
     "server-only": "^0.0.1"
   }

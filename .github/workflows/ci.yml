@@ -1,36 +1,46 @@
 name: CI
+# Budget policy (≤ $10/month): one job per PR update, no matrix, cancel superseded runs.
+# Browser E2E (e2e/) is run locally / against QA at release gates, not on every push.
 on:
   pull_request:
   push:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  contracts-and-mobile:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - name: Install workspace dependencies
-        run: npm install --no-audit --no-fund
-      - name: Test behavior contracts
-        run: npm test
-      - name: Typecheck core and Expo runtime
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck core, API, mobile, web
         run: npm run typecheck
-      - name: Detect mobile workspace
-        id: mobile
-        shell: bash
-        run: |
-          if [ -f apps/mobile/package.json ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "Mobile workspace is not present on this baseline; mobile export gates are not applicable."
-          fi
+      - name: Unit, contract and PostGIS integration tests
+        run: npm test
+      - name: Dependency audit (production, high+)
+        run: npm audit --omit=dev --audit-level=high || echo "::warning::npm audit reported issues (see log)"
+      - name: Build web
+        run: npm run build --workspace @app-map/web
       - name: Export Android production bundle
-        if: steps.mobile.outputs.exists == 'true'
         run: npm run export:android --workspace @app-map/mobile
       - name: Export iOS production bundle
-        if: steps.mobile.outputs.exists == 'true'
         run: npm run export:ios --workspace @app-map/mobile
