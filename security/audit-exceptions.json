@@ -1,0 +1,66 @@
+{
+  "$comment": "Every moderate/high advisory reported by `npm audit` must be fixed or listed here. Critical advisories cannot be excepted. Each entry is re-reviewed before `expires`; the gate fails on expiry. Scope meanings: build-tool = runs only on the build/CI machine against repository-controlled inputs and is verified absent from shipped bundles; dev-tool = test/dev tooling only; runtime-unreachable = ships in an artifact but the vulnerable function is not called (evidence required).",
+  "reviewed": "2026-10-22",
+  "exceptions": [
+    {
+      "package": "braces",
+      "advisories": ["GHSA-vfj7-8cjw-p6xm"],
+      "severity": "high",
+      "scope": "build-tool",
+      "path": "expo > @expo/metro > metro-file-map > micromatch > braces@3.0.3",
+      "artifact": "none shipped; Metro file crawler on the build machine",
+      "justification": "Stack-exhaustion DoS via deeply nested brace patterns. Patterns come only from Metro/Expo configuration in this repository, never from users or the network.",
+      "evidence": "No patched braces release exists (3.0.3 is the latest). Absent from Android/iOS bundle source maps (checked by scripts/security-gate.mjs --bundle-map in CI).",
+      "remediation": "Expo SDK upgrade once Metro moves to a patched matcher (npm audit fix target: expo@58).",
+      "expires": "2027-01-20"
+    },
+    {
+      "package": "image-size",
+      "advisories": ["GHSA-5p2g-fcmc-qvqq", "GHSA-w3rx-r6r6-pgpr"],
+      "severity": "high",
+      "scope": "build-tool",
+      "path": "expo > @expo/metro > metro > image-size@1.2.1",
+      "artifact": "none shipped; Metro reads image dimensions of repository assets at bundle time",
+      "justification": "Infinite-loop DoS on crafted JXL/HEIF/ICNS files. Only repository assets are parsed; the app never parses images with this library at runtime.",
+      "evidence": "Fix exists only in image-size 2.x, whose API (Buffer-only imageSize, separate imageSizeFromFile) is incompatible with metro@0.83 calling imageSize(path); forcing it would break asset bundling. Absent from bundle source maps (gate-checked).",
+      "remediation": "Expo SDK upgrade (metro with image-size >= 2.0.3).",
+      "expires": "2027-01-20"
+    },
+    {
+      "package": "node-forge",
+      "advisories": ["GHSA-86w9-cpqp-85rv"],
+      "severity": "high",
+      "scope": "build-tool",
+      "path": "expo > @expo/cli > node-forge@1.4.0 (and @expo/code-signing-certificates)",
+      "artifact": "none shipped; Expo CLI manifest code signing",
+      "justification": "RSA PKCS#1 v1.5 signature verification flaw. Used by Expo CLI only for expo-updates manifest code signing; this app does not install expo-updates and app.json configures no codeSigningCertificate, so no signature is verified with node-forge in any build or at runtime.",
+      "evidence": "No patched node-forge release exists (1.4.0 is the latest). apps/mobile/app.json has no updates/codeSigning config; expo-updates absent from apps/mobile/package.json. Absent from bundle source maps (gate-checked).",
+      "remediation": "Re-evaluate before enabling expo-updates/code signing; Expo SDK upgrade.",
+      "expires": "2027-01-20"
+    },
+    {
+      "package": "sprintf-js",
+      "advisories": ["GHSA-hp3w-g68c-fv3c"],
+      "severity": "moderate",
+      "scope": "dev-tool",
+      "path": "react-native > babel-jest > babel-plugin-istanbul > @istanbuljs/load-nyc-config > js-yaml > argparse > sprintf-js@1.0.3",
+      "artifact": "none shipped; Jest coverage tooling pulled in by react-native",
+      "justification": "DoS through unbounded precision specifiers. Only reachable via argparse CLI formatting inside coverage tooling, which this repository does not run (tests use vitest).",
+      "evidence": "No patched sprintf-js release exists (1.1.3 is the latest). Absent from bundle source maps (gate-checked).",
+      "remediation": "Disappears with react-native >= 0.88 (Expo SDK upgrade).",
+      "expires": "2027-01-20"
+    },
+    {
+      "package": "decode-uri-component",
+      "advisories": ["GHSA-vcc3-ghjq-m6fr"],
+      "severity": "moderate",
+      "scope": "runtime-unreachable",
+      "path": "expo-router@6.0.24 > query-string@7.1.3 > decode-uri-component@0.2.2",
+      "artifact": "Android and iOS JS bundles (query-string/index.js and decode-uri-component/index.js are bundled)",
+      "justification": "Exponential decoding DoS on malformed percent-encoded input. In query-string 7.1.3 decodeComponent is reached only through parse/parseUrl/extract decoding. expo-router 6.0.24 calls only queryString.stringify (build/fork/getPathFromState.js:276 and getPathFromState-forks.js:71; its parse call in getStateFromPath.js:538 is commented out), and no other bundled module imports query-string.",
+      "evidence": "Upgrading query-string to 9.x is unsafe: 9.x is ESM default-export only, so expo-router's __importStar(require('query-string')).stringify would be undefined at runtime. stringify output parity between 7.1.3 and 9.5.1 was confirmed, but the interop break makes an override incorrect.",
+      "remediation": "expo-router >= 58.0.25 (Expo SDK upgrade).",
+      "expires": "2027-01-20"
+    }
+  ]
+}
