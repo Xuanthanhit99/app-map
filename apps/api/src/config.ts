@@ -18,6 +18,14 @@ export type AppConfig = {
   allowDevFixtures: boolean;
   /** Straight-line routing double for local E2E only. Refused outside development/test. */
   devFakeRouting: boolean;
+  /**
+   * Outbound email. `none` = not configured (verification/reset report EMAIL_DELIVERY_UNAVAILABLE);
+   * `smtp` = real delivery (QA uses an isolated Mailpit catcher); `outbox` = in-memory capture,
+   * development/test only.
+   */
+  mail: { transport: "none" | "smtp" | "outbox"; smtpUrl?: string; requireTls: boolean; from: string };
+  /** Push delivery. `expo` sends through the Expo push service (FCM/APNs credentials live in EAS). */
+  push: { provider: "none" | "expo"; expoAccessToken?: string };
 };
 
 export class ConfigError extends Error { constructor(m: string) { super(m); this.name = "ConfigError"; } }
@@ -37,6 +45,18 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (devFakeRouting && (appEnv === "qa" || appEnv === "production")) throw new ConfigError("DEV_FAKE_ROUTING_FORBIDDEN_IN_" + appEnv.toUpperCase());
   const store = (env.RATE_LIMIT_STORE ?? (appEnv === "production" || appEnv === "qa" ? "postgres" : "memory")) as AppConfig["rateLimitStore"];
   if (store !== "memory" && store !== "postgres") throw new ConfigError("INVALID_RATE_LIMIT_STORE");
+  const mailTransport = (env.MAIL_TRANSPORT ?? "none") as AppConfig["mail"]["transport"];
+  if (!["none", "smtp", "outbox"].includes(mailTransport)) throw new ConfigError("INVALID_MAIL_TRANSPORT");
+  if (mailTransport === "outbox" && (appEnv === "qa" || appEnv === "production")) throw new ConfigError("MAIL_OUTBOX_FORBIDDEN_IN_" + appEnv.toUpperCase());
+  if (mailTransport === "smtp") {
+    let u: URL;
+    try { u = new URL(env.SMTP_URL ?? ""); } catch { throw new ConfigError("SMTP_URL_REQUIRED"); }
+    if (u.protocol !== "smtp:" && u.protocol !== "smtps:") throw new ConfigError("INVALID_SMTP_URL");
+    // Production mail must be encrypted in transit: implicit TLS (smtps://) or enforced STARTTLS.
+    if (appEnv === "production" && u.protocol !== "smtps:" && env.SMTP_REQUIRE_TLS !== "true") throw new ConfigError("SMTP_TLS_REQUIRED_IN_PRODUCTION");
+  }
+  const pushProvider = (env.PUSH_PROVIDER ?? "none") as AppConfig["push"]["provider"];
+  if (pushProvider !== "none" && pushProvider !== "expo") throw new ConfigError("INVALID_PUSH_PROVIDER");
   return {
     port,
     databaseUrl,
@@ -59,5 +79,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     },
     allowDevFixtures,
     devFakeRouting,
+    mail: { transport: mailTransport, ...(mailTransport === "smtp" ? { smtpUrl: env.SMTP_URL! } : {}), requireTls: env.SMTP_REQUIRE_TLS === "true", from: env.MAIL_FROM ?? "REALITY <no-reply@reality.local>" },
+    push: { provider: pushProvider, ...(env.EXPO_ACCESS_TOKEN ? { expoAccessToken: env.EXPO_ACCESS_TOKEN } : {}) },
   };
 }

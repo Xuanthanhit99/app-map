@@ -4,6 +4,7 @@ import { call, ClientApiError } from "@/lib/client-api";
 import { messageFor } from "@/lib/messages";
 import { useApi } from "@/lib/use-api";
 import { ErrorNote, Loading } from "@/components/dash-nav";
+import { AccountSecurity } from "@/components/account-security";
 
 type Prefs = { travelMode: string; accessibilityNeeds: string[]; preferredCategories: string[]; notifyMinSeverity: string; quietHours: { startHour: number; endHour: number } | null };
 const ACCESS = [["WHEELCHAIR", "Xe lăn"], ["STEP_FREE", "Không bậc thang"], ["LOW_VISION", "Thị lực kém"], ["HEARING", "Khiếm thính"], ["REDUCED_MOBILITY", "Đi lại khó khăn"]] as const;
@@ -29,6 +30,7 @@ export default function Settings() {
     } catch (err) { setMsg(messageFor(err instanceof ClientApiError ? err.code : undefined)); }
   }
   return (
+    <div className="stack-lg">
     <form className="stack-lg" onSubmit={save} aria-labelledby="h">
       <div className="stack"><h1 id="h" style={{ fontSize: "var(--t-2xl)" }}>Tùy chọn</h1><p className="muted">Tùy chọn chỉ được dùng để cá nhân hóa gợi ý khi bạn bật “Cá nhân hóa theo ngữ cảnh” trong Quyền riêng tư. Bạn có thể đổi hoặc xóa bất cứ lúc nào.</p></div>
       <div className="panel stack">
@@ -42,5 +44,7 @@ export default function Settings() {
       {msg ? <p className="small" role="status">{msg}</p> : null}
       <div><button className="btn btn-primary" type="submit">Lưu tùy chọn</button></div>
     </form>
+    <AccountSecurity />
+    </div>
   );
 }

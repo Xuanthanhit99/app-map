@@ -8,6 +8,8 @@ import { OpenMeteoAdapter } from "./adapters/open-meteo";
 import { runIngestion, tileBBox, type RunOutcome } from "./framework";
 import { upsertRegions, type CoverageRegion } from "./regions";
 import { applyRetention } from "./retention";
+import { createPushSender } from "../lib/push";
+import { dispatchPendingPushes } from "../modules/push-dispatch";
 
 export type SchedulerDeps = { db: Db; config: AppConfig; regions: CoverageRegion[]; now: () => Date; transport?: typeof fetch; log?: (e: Record<string, unknown>) => void };
 
@@ -74,6 +76,8 @@ export function startScheduler(deps: SchedulerDeps): { stop(): void } {
   };
   void jobs.ensureRegions();
   every("maintenance", 60_000, () => jobs.maintenance());
+  const push = createPushSender(deps.config, deps.transport);
+  if (push.available) every("push", 30_000, async () => { const r = await dispatchPendingPushes(deps.db, push, deps.now()); if (r.notifications) (deps.log ?? ((e) => process.stdout.write(JSON.stringify(e) + "\n")))({ event: "push_dispatch", ...r }); });
   if (deps.config.ingestion.enabled) {
     every("weather", 15 * 60_000, () => jobs.weather());
     every("places", 6 * 3_600_000, () => jobs.places()); // idempotency window keeps it daily per tile

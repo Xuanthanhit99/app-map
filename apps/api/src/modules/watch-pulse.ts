@@ -96,7 +96,13 @@ export function registerWatchAndPulseRoutes(router: Router, deps: AppDeps) {
   router.post("/v1/me/push-tokens", async (ctx) => {
     const input = parse(z.object({ token: z.string().regex(/^(ExponentPushToken|ExpoPushToken)\[[A-Za-z0-9_-]{10,100}\]$/), platform: z.enum(["ios", "android", "web"]) }).strict(), ctx.body);
     if (!(await hasConsent(db, ctx.user!.id, "notifications"))) throw badRequest("NOTIFICATION_CONSENT_REQUIRED");
-    await db.query("INSERT INTO push_tokens (token, user_id, platform) VALUES ($1,$2,$3) ON CONFLICT (token) DO UPDATE SET user_id = EXCLUDED.user_id, platform = EXCLUDED.platform", [input.token, ctx.user!.id, input.platform]);
+    await db.query("INSERT INTO push_tokens (token, user_id, platform) VALUES ($1,$2,$3) ON CONFLICT (token) DO UPDATE SET user_id = EXCLUDED.user_id, platform = EXCLUDED.platform, disabled_at = NULL, disabled_reason = NULL", [input.token, ctx.user!.id, input.platform]);
+    return { status: 204 };
+  }, { auth: "user" });
+  // Sign-out / opt-out on a device: the token stops receiving pushes for this account.
+  router.post("/v1/me/push-tokens/remove", async (ctx) => {
+    const input = parse(z.object({ token: z.string().min(10).max(200) }).strict(), ctx.body);
+    await db.query("DELETE FROM push_tokens WHERE token = $1 AND user_id = $2", [input.token, ctx.user!.id]);
     return { status: 204 };
   }, { auth: "user" });
 

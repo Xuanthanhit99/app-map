@@ -7,6 +7,7 @@ import { messageFor } from "@/lib/messages";
 import type { Coordinate, Impact, Journey } from "@/lib/types";
 import { LazyJourneyMap } from "./map/lazy";
 import { LOCATE_MESSAGES } from "./map/map-core";
+import { formatDistanceVi, nextInstruction } from "@core/routing/guidance";
 
 const STATUS: Record<Journey["status"], string> = { PLANNED: "Đã lên kế hoạch", ACTIVE: "Đang đi", PAUSED: "Tạm dừng", ARRIVED: "Đã đến nơi", CANCELLED: "Đã hủy", STOPPED: "Đã dừng" };
 const SEV: Record<string, string> = { SAFETY_CRITICAL: "Nguy hiểm đã xác nhận", SIGNIFICANT: "Ảnh hưởng đáng kể", MINOR: "Bất tiện nhỏ", INFO: "Thông tin" };
@@ -23,8 +24,11 @@ export function JourneyView({ initial, initialImpact }: { initial: Journey; init
   const lastSent = useRef(0);
   const lastFix = useRef<GeolocationPosition | null>(null);
 
+  const [impactAt, setImpactAt] = useState<number>(() => Date.now());
+  const [impactStale, setImpactStale] = useState(false);
   const refreshImpact = useCallback(async () => {
-    try { setImpact(await call<Impact>(`/v1/journeys/${j.id}/impact`)); } catch { /* keep last known impact; status shown below */ }
+    // A failed refresh keeps the last answer but says so: stale safety information is never presented as current.
+    try { setImpact(await call<Impact>(`/v1/journeys/${j.id}/impact`)); setImpactAt(Date.now()); setImpactStale(false); } catch { setImpactStale(true); }
   }, [j.id]);
   useEffect(() => { const t = setInterval(() => void refreshImpact(), 60_000); return () => clearInterval(t); }, [refreshImpact]);
 
@@ -85,7 +89,15 @@ export function JourneyView({ initial, initialImpact }: { initial: Journey; init
 
         {checks.arrivalDetected && j.status === "ACTIVE" ? <div className="notice notice-ok" role="status"><span>Có vẻ bạn đã tới nơi. <button type="button" className="btn btn-primary btn-sm" onClick={() => void event("ARRIVE")}>Xác nhận đã đến</button></span></div> : null}
         {checks.offRoute && j.status === "ACTIVE" ? <div className="notice notice-warn" role="alert"><span>Bạn có vẻ đã đi lệch tuyến. <button type="button" className="btn btn-secondary btn-sm" onClick={() => void reroute()}>Tính lại tuyến</button></span></div> : null}
+        {(() => {
+          if (j.status !== "ACTIVE" || !j.route || !pos) return null;
+          const n = nextInstruction(j.route.coordinates, j.guidance?.instructions, pos);
+          if (n.status === "NEXT") return <div className="panel" role="status" aria-live="polite"><p className="xsmall muted">{formatDistanceVi(n.inMeters)}</p><p style={{ fontSize: "var(--t-lg)", fontWeight: 700 }}>{n.instruction.text}</p><p className="xsmall muted">Chỉ dẫn từ {j.guidance?.provider ?? "nhà cung cấp định tuyến"}</p></div>;
+          if (n.status === "OFF_ROUTE") return <div className="notice notice-warn" role="alert"><span>Bạn đang cách tuyến khoảng {n.offRouteMeters} m nên chỉ dẫn tạm dừng. <button type="button" className="btn btn-secondary btn-sm" onClick={() => void reroute()}>Tính lại tuyến</button></span></div>;
+          return null;
+        })()}
         {gpsMsg && live ? <p className="small muted" role="status">{gpsMsg}</p> : null}
+        {impactStale ? <div className="notice notice-warn" role="alert"><span>Không cập nhật được tác động dọc tuyến từ lúc {new Date(impactAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}. Thông tin bên dưới có thể đã cũ.</span></div> : null}
         {error ? <div className="notice notice-error" role="alert">{error}</div> : null}
 
         <div className="row">

@@ -9,7 +9,7 @@ export const ErrorEnvelope = z.object({
 
 export const PublicUser = z.object({ id: z.string().uuid(), email: z.string(), displayName: z.string(), role: z.enum(["user", "moderator", "admin"]), locale: z.string(), emailVerified: z.boolean(), createdAt: z.string() });
 export const TokenPair = z.object({ accessToken: z.string().startsWith("rat_"), refreshToken: z.string().startsWith("rrt_"), accessExpiresAt: z.string(), refreshExpiresAt: z.string(), tokenType: z.literal("Bearer") });
-export const AuthResponse = z.object({ user: PublicUser, tokens: TokenPair });
+export const AuthResponse = z.object({ user: PublicUser, tokens: TokenPair, verificationEmail: z.enum(["SENT", "FAILED", "UNAVAILABLE", "NOT_NEEDED"]).optional() });
 
 const Coordinate = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
 export const SourceRef = z.object({ id: z.string(), name: z.string(), attribution: z.string(), license: z.string() });
@@ -61,7 +61,9 @@ export const Journey = z.object({
   id: z.string().uuid(), status: z.enum(["PLANNED", "ACTIVE", "PAUSED", "ARRIVED", "CANCELLED", "STOPPED"]), mode: z.string(),
   origin: Coordinate, destination: Coordinate, destinationPlaceId: z.string().nullable(), destinationLabel: z.string().nullable(),
   route: z.object({ provider: z.string().nullable(), revision: z.number().int(), distanceMeters: z.number().nullable(), durationSeconds: z.number().nullable(), durationLabel: z.string(), coordinates: z.array(Coordinate) }).nullable(),
-  routeStatus: z.enum(["AVAILABLE", "UNAVAILABLE"]), canStart: z.boolean(), startedAt: z.string().nullable(), endedAt: z.string().nullable(), createdAt: z.string(),
+  routeStatus: z.enum(["AVAILABLE", "UNAVAILABLE"]),
+  guidance: z.object({ provider: z.string().nullable(), revision: z.number().int(), instructions: z.array(z.object({ routeOffsetMeters: z.number(), maneuver: z.string(), text: z.string(), street: z.string().optional() })) }).nullable(),
+  canStart: z.boolean(), startedAt: z.string().nullable(), endedAt: z.string().nullable(), createdAt: z.string(),
 });
 export const PulseResponse = z.object({ status: z.enum(["ready", "empty"]), reason: z.string().optional(), note: z.string(), evaluatedAt: z.string(),
   items: z.array(z.object({ id: z.string(), subjectKey: z.string(), domain: z.string(), headline: z.string().nullable(), truth: z.string(), freshness: z.string().nullable(),

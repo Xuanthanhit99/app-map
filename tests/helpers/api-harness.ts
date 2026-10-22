@@ -8,6 +8,8 @@ import { createPool, type Db } from "../../apps/api/src/db/pool";
 import { migrate } from "../../apps/api/src/db/migrate";
 import { MemoryRateLimitStore } from "../../apps/api/src/http/rate-limit";
 import type { AppDeps } from "../../apps/api/src/modules/deps";
+import { OutboxMailer } from "../../apps/api/src/lib/mailer";
+import { UnavailablePushSender } from "../../apps/api/src/lib/push";
 import { registerAll } from "../../apps/api/src/modules/registry";
 import { UnconfiguredEvidenceRepository } from "../../apps/api/src/verified-evidence-repository";
 
@@ -61,6 +63,7 @@ export async function startHarness(options: { extra?: Registrar[]; overrides?: P
   const deps: AppDeps = {
     db, config, rateLimits: new MemoryRateLimitStore(), now: () => clock.now, routing: null,
     verifyIdToken: async () => { throw new Error("not configured"); },
+    mailer: new OutboxMailer(), push: new UnavailablePushSender(),
     ...options.overrides,
   };
   const { listener } = buildApp(deps, createClientIdentityResolver({ mode: "none" }), options.extra ?? registerAll(), new UnconfiguredEvidenceRepository());

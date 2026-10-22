@@ -5,6 +5,7 @@ import type { ClientIdentityResolver } from "./client-identity";
 import type { AppDeps } from "./modules/deps";
 import { createIdentityService, registerIdentityRoutes } from "./modules/identity";
 import { registerAccountRoutes } from "./modules/account";
+import { createAccountRecoveryService, registerAccountRecoveryRoutes } from "./modules/account-recovery";
 import { registerPlaceRoutes } from "./modules/places";
 import { registerContributionRoutes } from "./modules/contribution";
 import { registerGeocodeRoutes } from "./modules/geocode";
@@ -31,7 +32,9 @@ export function buildApp(deps: AppDeps, identifyClient: ClientIdentityResolver, 
   const router = new Router();
   const identity = createIdentityService(deps);
   registerHealthRoutes(router, deps);
-  registerIdentityRoutes(router, identity);
+  const recovery = createAccountRecoveryService(deps);
+  registerIdentityRoutes(router, identity, recovery, deps.mailer.available);
+  registerAccountRecoveryRoutes(router, recovery, deps);
   registerAccountRoutes(router, deps);
   registerGeocodeRoutes(router, deps);
   registerPlaceRoutes(router, deps);

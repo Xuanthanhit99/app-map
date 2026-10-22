@@ -36,6 +36,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         {mode === "register" ? <span id="pw-hint" className="hint">Ít nhất 10 ký tự. Một cụm từ dễ nhớ là lựa chọn tốt.</span> : null}</div>
       {error ? <div className="notice notice-error" role="alert">{error}</div> : null}
       <button className="btn btn-primary btn-lg" type="submit" disabled={busy || !hydrated}>{busy ? "Đang xử lý…" : mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}</button>
+      {mode === "login" ? <p className="small"><Link href="/quen-mat-khau">Quên mật khẩu?</Link></p> : null}
       <p className="small muted">{mode === "login" ? <>Chưa có tài khoản? <Link href={`/dang-ky?next=${encodeURIComponent(next)}`}>Tạo tài khoản</Link></> : <>Đã có tài khoản? <Link href={`/dang-nhap?next=${encodeURIComponent(next)}`}>Đăng nhập</Link></>}</p>
       {mode === "register" ? <p className="xsmall muted">Khi tạo tài khoản, bạn đồng ý với <Link href="/dieu-khoan">Điều khoản</Link> và <Link href="/quyen-rieng-tu">Chính sách quyền riêng tư</Link>. Vị trí, chia sẻ hành trình và đóng góp công khai đều tắt cho tới khi bạn bật.</p> : null}
     </form>

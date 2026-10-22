@@ -1,5 +1,5 @@
 import type { Coordinate } from "../../../src/map/map-contract";
-import type { RoutingProvider, RoutingRequest, RoutingResult } from "../../../src/routing/routing-contract";
+import type { RouteInstruction, RoutingProvider, RoutingRequest, RoutingResult } from "../../../src/routing/routing-contract";
 
 type FetchLike = typeof fetch;
 
@@ -7,7 +7,24 @@ interface TomTomResponse {
   routes?: Array<{
     summary?: { lengthInMeters?: number; travelTimeInSeconds?: number };
     legs?: Array<{ points?: Array<{ latitude?: number; longitude?: number }> }>;
+    guidance?: { instructions?: Array<{ routeOffsetInMeters?: number; maneuver?: string; message?: string; street?: string }> };
   }>;
+}
+
+/** Keeps only well-formed, monotonically ordered steps; malformed guidance degrades to route-only. */
+function instructions(payload: TomTomResponse, lengthMeters: number): RouteInstruction[] | undefined {
+  const raw = payload.routes?.[0]?.guidance?.instructions;
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const out: RouteInstruction[] = [];
+  let last = -1;
+  for (const i of raw) {
+    const offset = i.routeOffsetInMeters;
+    if (typeof offset !== "number" || !Number.isFinite(offset) || offset < last || offset > lengthMeters + 50) return undefined;
+    if (typeof i.message !== "string" || !i.message.trim() || typeof i.maneuver !== "string") return undefined;
+    last = offset;
+    out.push({ routeOffsetMeters: Math.round(offset), maneuver: i.maneuver.slice(0, 40), text: i.message.trim().slice(0, 200), ...(typeof i.street === "string" && i.street.trim() ? { street: i.street.trim().slice(0, 120) } : {}) });
+  }
+  return out.slice(0, 500);
 }
 
 function mode(mode: RoutingRequest["mode"]): string {
@@ -40,6 +57,9 @@ export class TomTomRoutingProvider implements RoutingProvider {
     url.searchParams.set("traffic", "true");
     url.searchParams.set("travelMode", mode(request.mode));
     url.searchParams.set("routeRepresentation", "polyline");
+    // Provider-issued turn guidance in Vietnamese; REALITY never invents instructions.
+    url.searchParams.set("instructionsType", "text");
+    url.searchParams.set("language", "vi-VN");
 
     let response: Response;
     try {
@@ -64,12 +84,14 @@ export class TomTomRoutingProvider implements RoutingProvider {
       return { status: "FAILURE", reason: "INVALID_RESPONSE", retryable: false, provider: this.id };
     }
 
+    const steps = instructions(payload, summary.lengthInMeters);
     return {
       status: "SUCCESS",
       provider: this.id,
       distanceMeters: summary.lengthInMeters,
       durationSeconds: summary.travelTimeInSeconds,
       route: { id: `tomtom-${Date.now()}`, source: "ROUTING_ENGINE", generatedAt: Date.now(), coordinates: routeCoordinates },
+      ...(steps ? { instructions: steps } : {}),
     };
   }
 }

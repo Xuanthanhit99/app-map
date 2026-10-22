@@ -5,6 +5,7 @@ import { consentSchema, deleteSchema, preferencesSchema, profileSchema, savedPla
 import { reportSchema, voteSchema } from "./modules/contribution";
 import { decideSchema } from "./modules/decision";
 import { federatedSchema, loginSchema, passwordChangeSchema, refreshSchema, registerSchema } from "./modules/identity";
+import { forgotSchema, resetSchema, tokenSchema } from "./modules/account-recovery";
 import { createSchema as journeyCreateSchema, eventSchema as journeyEventSchema } from "./modules/journeys";
 import { listSchema as placeListSchema } from "./modules/places";
 import { storySchema } from "./modules/stories";
@@ -24,6 +25,11 @@ export const ROUTE_DOCS: Record<string, Doc> = {
   "POST /v1/auth/logout-all": { tag: "Identity", summary: "Revoke every session", status: 204 },
   "POST /v1/auth/password": { tag: "Identity", summary: "Change password (revokes other sessions)", body: passwordChangeSchema, status: 204 },
   "GET /v1/auth/sessions": { tag: "Identity", summary: "Active sessions" },
+  "GET /v1/auth/capabilities": { tag: "Identity", summary: "Which account features are actually available (email delivery, federated providers, push)", response: z.object({ emailDelivery: z.boolean(), passwordReset: z.boolean(), emailVerification: z.boolean(), federated: z.object({ google: z.boolean(), apple: z.boolean() }), push: z.boolean() }) },
+  "POST /v1/auth/email/verify/request": { tag: "Identity", summary: "Send a verification email (503 EMAIL_DELIVERY_UNAVAILABLE without a mail transport)", status: 202, response: z.object({ status: z.enum(["SENT", "ALREADY_VERIFIED"]) }) },
+  "POST /v1/auth/email/verify/confirm": { tag: "Identity", summary: "Confirm an email address with a single-use token (24 h)", body: tokenSchema, response: z.object({ status: z.literal("VERIFIED") }) },
+  "POST /v1/auth/password/forgot": { tag: "Identity", summary: "Request a password reset email; identical 202 whether or not the account exists", body: forgotSchema, status: 202, response: z.object({ status: z.literal("ACCEPTED") }) },
+  "POST /v1/auth/password/reset": { tag: "Identity", summary: "Set a new password with a single-use token (30 min); revokes every session", body: resetSchema, status: 204 },
   "GET /v1/me": { tag: "Account", summary: "Profile and current consents" },
   "PATCH /v1/me": { tag: "Account", summary: "Update profile", body: profileSchema },
   "GET /v1/me/preferences": { tag: "Account", summary: "Personalization preferences" },
@@ -65,6 +71,7 @@ export const ROUTE_DOCS: Record<string, Doc> = {
   "GET /v1/me/notifications": { tag: "Watch", summary: "Notifications", response: C.NotificationList },
   "POST /v1/me/notifications/read": { tag: "Watch", summary: "Mark notifications read", status: 204 },
   "POST /v1/me/push-tokens": { tag: "Watch", summary: "Register an Expo push token (notification consent required)", status: 204 },
+  "POST /v1/me/push-tokens/remove": { tag: "Watch", summary: "Stop pushes to a device token for this account (sign-out / opt-out)", status: 204 },
   "GET /v1/stories": { tag: "Stories", summary: "Published stories" },
   "GET /v1/stories/:slug": { tag: "Stories", summary: "Story detail" },
   "GET /v1/me/stories": { tag: "Stories", summary: "Own stories" },

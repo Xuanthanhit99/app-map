@@ -13,7 +13,7 @@ export const APPLE: Omit<OidcProviderConfig, "audiences"> = {
   provider: "apple", issuers: ["https://appleid.apple.com"], jwksUrl: "https://appleid.apple.com/auth/keys",
 };
 
-export type VerifiedIdentity = { provider: "google" | "apple"; subject: string; email: string | null; emailVerified: boolean; name: string | null };
+export type VerifiedIdentity = { provider: "google" | "apple"; subject: string; email: string | null; emailVerified: boolean; name: string | null; nonce?: string | null };
 export class OidcError extends Error { constructor(code: string) { super(code); this.name = "OidcError"; } }
 
 type Jwk = JsonWebKey & { kid?: string; alg?: string; use?: string };
@@ -72,6 +72,7 @@ export function createOidcVerifier(fetcher: JwksFetcher = defaultFetcher, now: (
       email: typeof payload.email === "string" ? payload.email : null,
       emailVerified,
       name: typeof payload.name === "string" ? payload.name : null,
+      nonce: typeof payload.nonce === "string" ? payload.nonce : null,
     };
   };
 }

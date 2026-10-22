@@ -10,6 +10,7 @@ import { hashPassword, passwordProblems, randomToken, sha256, sha256Hex, verifyP
 import { APPLE, GOOGLE, OidcError } from "../lib/oidc";
 import { audit } from "./audit";
 import type { AppDeps } from "./deps";
+import type { AccountRecoveryService } from "./account-recovery";
 
 export const emailSchema = z.string().trim().toLowerCase().email().max(254);
 const clientSchema = z.enum(["web", "ios", "android", "admin", "unknown"]).default("unknown");
@@ -22,7 +23,7 @@ export const registerSchema = z.object({
 }).strict();
 export const loginSchema = z.object({ email: emailSchema, password: z.string().min(1).max(200), client: clientSchema }).strict();
 export const refreshSchema = z.object({ refreshToken: z.string().min(20).max(200) }).strict();
-export const federatedSchema = z.object({ provider: z.enum(["google", "apple"]), idToken: z.string().min(20).max(8192), displayName: z.string().trim().min(1).max(80).optional(), client: clientSchema }).strict();
+export const federatedSchema = z.object({ provider: z.enum(["google", "apple"]), idToken: z.string().min(20).max(8192), nonce: z.string().min(16).max(128).optional(), displayName: z.string().trim().min(1).max(80).optional(), client: clientSchema }).strict();
 export const passwordChangeSchema = z.object({ currentPassword: z.string().min(1).max(200), newPassword: z.string().min(1).max(200) }).strict();
 
 export type TokenPair = { accessToken: string; refreshToken: string; accessExpiresAt: string; refreshExpiresAt: string; tokenType: "Bearer" };
@@ -158,6 +159,14 @@ export function createIdentityService(deps: AppDeps) {
     } catch (e) {
       throw unauthorized(e instanceof OidcError ? `ID_TOKEN_${e.message}` : "ID_TOKEN_INVALID");
     }
+    // Native clients bind the sign-in to a one-time nonce (replay protection). Apple returns the
+    // SHA-256 of the nonce the app supplied; Google returns it verbatim.
+    if (input.client === "ios" || input.client === "android") {
+      if (!input.nonce) throw badRequest("NONCE_REQUIRED");
+      if (identity.nonce !== input.nonce && identity.nonce !== sha256Hex(input.nonce)) throw unauthorized("ID_TOKEN_NONCE_MISMATCH");
+    } else if (input.nonce && identity.nonce !== input.nonce && identity.nonce !== sha256Hex(input.nonce)) {
+      throw unauthorized("ID_TOKEN_NONCE_MISMATCH");
+    }
     return withTransaction(db, async (client) => {
       const linked = await client.query<UserRow>(
         `SELECT u.* FROM federated_identities f JOIN users u ON u.id = f.user_id WHERE f.provider = $1 AND f.subject = $2`,
@@ -211,18 +220,20 @@ export function createIdentityService(deps: AppDeps) {
 
 export type IdentityService = ReturnType<typeof createIdentityService>;
 
-export function registerIdentityRoutes(router: Router, identity: IdentityService) {
+export function registerIdentityRoutes(router: Router, identity: IdentityService, recovery: AccountRecoveryService, mailAvailable: boolean) {
   const authLimit = { name: "auth", limit: 20, windowMs: 15 * 60_000 };
   router.post("/v1/auth/register", async (ctx) => {
     const result = await identity.register(parse(registerSchema, ctx.body), ctx.requestId);
-    return { status: 201, body: result };
+    // Sent after the account commits; a delivery failure never fails registration (user can resend).
+    const verificationEmail = mailAvailable ? ((await recovery.sendVerification(result.user.id, ctx.requestId)).sent ? "SENT" : "FAILED") : "UNAVAILABLE";
+    return { status: 201, body: { ...result, verificationEmail } };
   }, { rateLimit: { name: "register", limit: 5, windowMs: 60 * 60_000 } });
   router.post("/v1/auth/login", async (ctx) => ({ body: await identity.login(parse(loginSchema, ctx.body), ctx.clientKey, ctx.requestId) }), { rateLimit: authLimit });
   router.post("/v1/auth/refresh", async (ctx) => ({ body: { tokens: await identity.refresh(parse(refreshSchema, ctx.body).refreshToken, ctx.requestId) } }), { rateLimit: { name: "refresh", limit: 60, windowMs: 15 * 60_000 } });
   router.post("/v1/auth/federated", async (ctx) => ({ body: await identity.federated(parse(federatedSchema, ctx.body), ctx.requestId) }), { rateLimit: authLimit });
   router.post("/v1/auth/logout", async (ctx) => { await identity.revokeSession(ctx.user!, "current", ctx.requestId); return { status: 204 }; }, { auth: "user" });
   router.post("/v1/auth/logout-all", async (ctx) => { await identity.revokeSession(ctx.user!, "all", ctx.requestId); return { status: 204 }; }, { auth: "user" });
-  router.post("/v1/auth/password", async (ctx) => { await identity.changePassword(ctx.user!, parse(passwordChangeSchema, ctx.body), ctx.requestId); return { status: 204 }; }, { auth: "user", rateLimit: authLimit });
+  router.post("/v1/auth/password", async (ctx) => { await identity.changePassword(ctx.user!, parse(passwordChangeSchema, ctx.body), ctx.requestId); await recovery.notifyPasswordChanged(ctx.user!.id, ctx.requestId); return { status: 204 }; }, { auth: "user", rateLimit: authLimit });
   router.get("/v1/auth/sessions", async (ctx) => ({ body: { items: await identity.listSessions(ctx.user!) } }), { auth: "user" });
 }
 

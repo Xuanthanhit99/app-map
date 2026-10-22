@@ -148,7 +148,7 @@ describe("authenticated internal hop (web BFF -> API)", () => {
 
   it("refuses short secrets and reads INTERNAL_PROXY_SECRET from env", () => {
     expect(() => createClientIdentityResolver({ mode: "none", internalProxySecret: "short" })).toThrow(ClientIdentityConfigError);
-    const fromEnv = clientIdentityResolverFromEnv({ TRUST_PROXY: "none", INTERNAL_PROXY_SECRET: SECRET } as NodeJS.ProcessEnv);
+    const fromEnv = clientIdentityResolverFromEnv({ TRUST_PROXY: "none", INTERNAL_PROXY_SECRET: SECRET } as unknown as NodeJS.ProcessEnv);
     expect(fromEnv(req("10.0.0.1", { "x-reality-proxy-token": SECRET, "x-reality-client-ip": "198.51.100.9" })).key).toBe("client:198.51.100.9");
   });
 });

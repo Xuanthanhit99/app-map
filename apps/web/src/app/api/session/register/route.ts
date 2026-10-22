@@ -9,5 +9,5 @@ export async function POST(request: Request) {
   const data = await r.json().catch(() => ({ error: "API_UNREACHABLE" }));
   if (!r.ok) return NextResponse.json({ error: data.error, details: data.details }, { status: r.status });
   await setSessionCookies(data.tokens);
-  return NextResponse.json({ user: data.user }, { status: 201 });
+  return NextResponse.json({ user: data.user, verificationEmail: data.verificationEmail }, { status: 201 });
 }

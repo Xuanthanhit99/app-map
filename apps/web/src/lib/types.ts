@@ -46,6 +46,7 @@ export type Journey = {
   destinationPlaceId: string | null; destinationLabel: string | null;
   route: { provider: string | null; revision: number; distanceMeters: number | null; durationSeconds: number | null; durationLabel: string; coordinates: Coordinate[] } | null;
   routeStatus: "AVAILABLE" | "UNAVAILABLE"; canStart: boolean; startedAt: string | null; endedAt: string | null; createdAt: string;
+  guidance: { provider: string | null; revision: number; instructions: { routeOffsetMeters: number; maneuver: string; text: string; street?: string }[] } | null;
 };
 export type ImpactItem = { kind: "STATE" | "INCIDENT"; severity: Severity; label: string; truth: Truth; value?: string | null; freshness?: Freshness | null;
   confidence?: number; sources?: SourceRef[]; distanceFromRouteMeters?: number; coordinate?: Coordinate; subjectKey?: string };

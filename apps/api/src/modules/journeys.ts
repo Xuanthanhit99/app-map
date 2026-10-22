@@ -41,7 +41,7 @@ export const eventSchema = z.object({
 type JourneyRow = {
   id: string; user_id: string; status: string; mode: string; o_lat: number; o_lng: number; d_lat: number; d_lng: number;
   destination_place_id: string | null; destination_label: string | null; route: { coordinates: [number, number][] } | null;
-  route_provider: string | null; distance_m: number | null; duration_s: number | null; route_revision: number;
+  route_provider: string | null; distance_m: number | null; duration_s: number | null; route_revision: number; route_instructions: unknown[] | null;
   started_at: Date | null; ended_at: Date | null; created_at: Date; updated_at: Date;
 };
 const SELECT = `SELECT j.*, ST_Y(origin::geometry) AS o_lat, ST_X(origin::geometry) AS o_lng, ST_Y(destination::geometry) AS d_lat, ST_X(destination::geometry) AS d_lng,
@@ -55,6 +55,8 @@ function journeyOut(j: JourneyRow, now: Date) {
     route: j.route ? { provider: j.route_provider, revision: j.route_revision, distanceMeters: j.distance_m, durationSeconds: j.duration_s,
       durationLabel: "Ước tính của nhà cung cấp định tuyến", coordinates: j.route.coordinates } : null,
     routeStatus: j.route ? "AVAILABLE" : "UNAVAILABLE",
+    // Provider guidance for this route revision; null = route-only navigation (no invented turns).
+    guidance: j.route && Array.isArray(j.route_instructions) && j.route_instructions.length ? { provider: j.route_provider, revision: j.route_revision, instructions: j.route_instructions } : null,
     canStart: j.status === "PLANNED" && Boolean(j.route) && routeAgeMs <= JOURNEY_POLICY.routeMaxAgeForStartMs,
     startedAt: j.started_at?.toISOString() ?? null, endedAt: j.ended_at?.toISOString() ?? null, createdAt: j.created_at.toISOString(),
   };
@@ -112,12 +114,12 @@ export function createJourneyService(deps: AppDeps) {
     const active = await db.query<{ n: number }>("SELECT count(*)::int AS n FROM journeys WHERE user_id = $1 AND status IN ('PLANNED','ACTIVE','PAUSED')", [user.id]);
     if ((active.rows[0]?.n ?? 0) >= 5) throw conflict("TOO_MANY_OPEN_JOURNEYS");
     const { rows } = await db.query<{ id: string }>(
-      `INSERT INTO journeys (user_id, status, mode, origin, destination, destination_place_id, destination_label, route_geom, route_provider, distance_m, duration_s, created_at, updated_at)
+      `INSERT INTO journeys (user_id, status, mode, origin, destination, destination_place_id, destination_label, route_geom, route_provider, distance_m, duration_s, created_at, updated_at, route_instructions)
        VALUES ($1,'PLANNED',$2, ST_SetSRID(ST_MakePoint($3,$4),4326)::geography, ST_SetSRID(ST_MakePoint($5,$6),4326)::geography, $7, $8,
-               CASE WHEN $9::text IS NULL THEN NULL ELSE ST_GeomFromGeoJSON($9)::geography END, $10, $11, $12, $13, $13) RETURNING id`,
+               CASE WHEN $9::text IS NULL THEN NULL ELSE ST_GeomFromGeoJSON($9)::geography END, $10, $11, $12, $13, $13, $14::jsonb) RETURNING id`,
       [user.id, input.mode, input.origin.longitude, input.origin.latitude, dest.longitude, dest.latitude, input.destinationPlaceId ?? null, label,
         ok ? JSON.stringify({ type: "LineString", coordinates: ok.route.coordinates }) : null, ok?.provider ?? null,
-        ok ? Math.round(ok.distanceMeters) : null, ok ? Math.round(ok.durationSeconds) : null, deps.now()]);
+        ok ? Math.round(ok.distanceMeters) : null, ok ? Math.round(ok.durationSeconds) : null, deps.now(), ok?.instructions ? JSON.stringify(ok.instructions) : null]);
     await db.query("INSERT INTO journey_events (journey_id, type, detail) VALUES ($1,'PLANNED',$2)", [rows[0]!.id, JSON.stringify({ routeStatus: ok ? "AVAILABLE" : "UNAVAILABLE", ...(r && "failure" in r ? { failure: r.failure } : {}), ...(!deps.routing ? { failure: "ROUTING_PROVIDER_NOT_CONFIGURED" } : {}) })]);
     await audit(db, { actor: user, action: "journey.created", targetType: "JOURNEY", targetId: rows[0]!.id, requestId });
     const j = await load(user, rows[0]!.id);
@@ -215,8 +217,8 @@ export function createJourneyService(deps: AppDeps) {
     }
     await db.query(
       `UPDATE journeys SET origin = ST_SetSRID(ST_MakePoint($2,$3),4326)::geography, route_geom = ST_GeomFromGeoJSON($4)::geography,
-         route_provider = $5, distance_m = $6, duration_s = $7, route_revision = route_revision + 1, updated_at = $8 WHERE id = $1`,
-      [id, origin.longitude, origin.latitude, JSON.stringify({ type: "LineString", coordinates: r.route.coordinates }), r.provider, Math.round(r.distanceMeters), Math.round(r.durationSeconds), deps.now()]);
+         route_provider = $5, distance_m = $6, duration_s = $7, route_revision = route_revision + 1, updated_at = $8, route_instructions = $9::jsonb WHERE id = $1`,
+      [id, origin.longitude, origin.latitude, JSON.stringify({ type: "LineString", coordinates: r.route.coordinates }), r.provider, Math.round(r.distanceMeters), Math.round(r.durationSeconds), deps.now(), r.instructions ? JSON.stringify(r.instructions) : null]);
     await db.query("INSERT INTO journey_events (journey_id, type, detail) VALUES ($1,'REROUTED',$2)", [id, JSON.stringify({ revision: j.route_revision + 1 })]);
     await audit(db, { actor: user, action: "journey.rerouted", targetType: "JOURNEY", targetId: id, requestId });
     return journeyOut(await load(user, id), deps.now());
@@ -234,7 +236,7 @@ export function registerJourneyRoutes(router: Router, deps: AppDeps) {
     { auth: "user", rateLimit: { name: "journey-create", limit: 20, windowMs: 3_600_000 } });
   router.get("/v1/journeys", async (ctx) => {
     const { rows } = await db.query(`${SELECT} WHERE j.user_id = $1 ORDER BY j.created_at DESC LIMIT 50`, [ctx.user!.id]);
-    return { body: { items: rows.map((j) => { const o = svc.journeyOut(j, deps.now()); return { ...o, route: o.route ? { ...o.route, coordinates: [] } : null }; }) } };
+    return { body: { items: rows.map((j) => { const o = svc.journeyOut(j, deps.now()); return { ...o, route: o.route ? { ...o.route, coordinates: [] } : null, guidance: null }; }) } };
   }, { auth: "user" });
   router.get("/v1/journeys/:id", async (ctx) => {
     const j = await svc.load(ctx.user!, id(ctx.params.id));

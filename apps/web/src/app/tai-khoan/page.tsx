@@ -3,7 +3,7 @@ import { LogoutButton } from "@/components/account/logout-button";
 import { api } from "@/lib/server-api";
 import type { Notification } from "@/lib/types";
 
-type Me = { user: { displayName: string; email: string; createdAt: string; role: string }; consents: Record<string, { granted: boolean }> };
+type Me = { user: { displayName: string; email: string; createdAt: string; role: string; emailVerified: boolean }; consents: Record<string, { granted: boolean }> };
 
 export default async function Overview() {
   const [me, notes, saved, watches] = await Promise.all([
@@ -24,6 +24,7 @@ export default async function Overview() {
         <Link className="kpi" href="/tai-khoan/da-luu" style={{ textDecoration: "none" }}><div className="v">{saved.items.length}</div><div className="k">địa điểm đã lưu</div></Link>
         <Link className="kpi" href="/tai-khoan/theo-doi" style={{ textDecoration: "none" }}><div className="v">{watches.items.length}</div><div className="k">khu vực theo dõi</div></Link>
       </div>
+      {!me.user.emailVerified ? <div className="notice"><span>Email của bạn chưa được xác minh. <Link href="/tai-khoan/cai-dat">Xác minh trong Tùy chọn</Link> để có thể khôi phục tài khoản khi quên mật khẩu.</span></div> : null}
       {!contributing ? <div className="notice"><span>Bạn chưa bật đóng góp công khai. Bật trong <Link href="/tai-khoan/quyen-rieng-tu">Quyền riêng tư</Link> để báo tình trạng và giúp xác nhận báo cáo của người khác.</span></div> : null}
       <section className="stack" aria-labelledby="recent-n">
         <h2 id="recent-n">Thông báo gần đây</h2>

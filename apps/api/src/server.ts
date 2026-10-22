@@ -8,13 +8,15 @@ import { createOidcVerifier } from "./lib/oidc";
 import { TomTomRoutingProvider } from "./tomtom-routing-provider";
 import { registerAll } from "./modules/registry";
 import { devStraightLineRouting } from "./dev-routing";
+import { createMailer } from "./lib/mailer";
+import { createPushSender } from "./lib/push";
 
 // Fails closed on invalid configuration (TRUST_PROXY, APP_ENV, DATABASE_URL, fixtures in QA/production…).
 const config = loadConfig();
 const identifyClient = clientIdentityResolverFromEnv();
 const db = createPool(config.databaseUrl, Number(process.env.DB_POOL_MAX ?? 10));
 const routing = config.tomtomRoutingKey ? new TomTomRoutingProvider(config.tomtomRoutingKey) : config.devFakeRouting ? devStraightLineRouting : null;
-const base = { db, config, now: () => new Date(), routing, verifyIdToken: createOidcVerifier() };
+const base = { db, config, now: () => new Date(), routing, verifyIdToken: createOidcVerifier(), mailer: createMailer(config), push: createPushSender(config) };
 const deps = { ...base, rateLimits: rateLimitStoreFor(base) };
 
 async function main() {

@@ -46,7 +46,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   return body as T;
 }
 
-export async function signIn(path: "/v1/auth/login" | "/v1/auth/register", body: Record<string, unknown>) {
+export async function signIn(path: "/v1/auth/login" | "/v1/auth/register" | "/v1/auth/federated", body: Record<string, unknown>) {
   const data = await api<{ user: SessionUser; tokens: StoredTokens }>(path, { method: "POST", body, auth: false });
   await saveTokens(data.tokens);
   return data.user;
@@ -55,4 +55,4 @@ export async function signOut() {
   try { await api("/v1/auth/logout", { method: "POST" }); } catch { /* revoke best-effort; local tokens are always cleared */ }
   await saveTokens(null);
 }
-export type SessionUser = { id: string; email: string; displayName: string; role: string };
+export type SessionUser = { id: string; email: string; displayName: string; role: string; emailVerified: boolean };

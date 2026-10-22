@@ -237,6 +237,15 @@
                         "tokenType"
                       ],
                       "additionalProperties": false
+                    },
+                    "verificationEmail": {
+                      "type": "string",
+                      "enum": [
+                        "SENT",
+                        "FAILED",
+                        "UNAVAILABLE",
+                        "NOT_NEEDED"
+                      ]
                     }
                   },
                   "required": [
@@ -416,6 +425,15 @@
                         "tokenType"
                       ],
                       "additionalProperties": false
+                    },
+                    "verificationEmail": {
+                      "type": "string",
+                      "enum": [
+                        "SENT",
+                        "FAILED",
+                        "UNAVAILABLE",
+                        "NOT_NEEDED"
+                      ]
                     }
                   },
                   "required": [
@@ -684,6 +702,15 @@
                         "tokenType"
                       ],
                       "additionalProperties": false
+                    },
+                    "verificationEmail": {
+                      "type": "string",
+                      "enum": [
+                        "SENT",
+                        "FAILED",
+                        "UNAVAILABLE",
+                        "NOT_NEEDED"
+                      ]
                     }
                   },
                   "required": [
@@ -735,6 +762,11 @@
                     "type": "string",
                     "minLength": 20,
                     "maxLength": 8192
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "minLength": 16,
+                    "maxLength": 128
                   },
                   "displayName": {
                     "type": "string",
@@ -953,6 +985,358 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/capabilities": {
+      "get": {
+        "operationId": "GET_v1_auth_capabilities",
+        "summary": "Which account features are actually available (email delivery, federated providers, push)",
+        "tags": [
+          "Identity"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "emailDelivery": {
+                      "type": "boolean"
+                    },
+                    "passwordReset": {
+                      "type": "boolean"
+                    },
+                    "emailVerification": {
+                      "type": "boolean"
+                    },
+                    "federated": {
+                      "type": "object",
+                      "properties": {
+                        "google": {
+                          "type": "boolean"
+                        },
+                        "apple": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "google",
+                        "apple"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "push": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "emailDelivery",
+                    "passwordReset",
+                    "emailVerification",
+                    "federated",
+                    "push"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/email/verify/request": {
+      "post": {
+        "operationId": "POST_v1_auth_email_verify_request",
+        "summary": "Send a verification email (503 EMAIL_DELIVERY_UNAVAILABLE without a mail transport)",
+        "tags": [
+          "Identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-required-role": "user",
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SENT",
+                        "ALREADY_VERIFIED"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/email/verify/confirm": {
+      "post": {
+        "operationId": "POST_v1_auth_email_verify_confirm",
+        "summary": "Confirm an email address with a single-use token (24 h)",
+        "tags": [
+          "Identity"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "VERIFIED"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/password/forgot": {
+      "post": {
+        "operationId": "POST_v1_auth_password_forgot",
+        "summary": "Request a password reset email; identical 202 whether or not the account exists",
+        "tags": [
+          "Identity"
+        ],
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "ACCEPTED"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/password/reset": {
+      "post": {
+        "operationId": "POST_v1_auth_password_reset",
+        "summary": "Set a new password with a single-use token (30 min); revokes every session",
+        "tags": [
+          "Identity"
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "429": {
+            "description": "Rate limited (Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 200
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "token",
+                  "newPassword"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -5585,6 +5969,46 @@
       "post": {
         "operationId": "POST_v1_me_push_tokens",
         "summary": "Register an Expo push token (notification consent required)",
+        "tags": [
+          "Watch"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-required-role": "user",
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "429": {
+            "description": "Rate limited (Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/push-tokens/remove": {
+      "post": {
+        "operationId": "POST_v1_me_push_tokens_remove",
+        "summary": "Stop pushes to a device token for this account (sign-out / opt-out)",
         "tags": [
           "Watch"
         ],

@@ -8,12 +8,23 @@ export interface RoutingRequest {
   mode: TravelMode;
 }
 
+/** One provider-issued guidance step. Text is the provider's own (never synthesised by REALITY). */
+export interface RouteInstruction {
+  /** Distance along the route, from the start, where the maneuver happens. */
+  routeOffsetMeters: number;
+  maneuver: string;
+  text: string;
+  street?: string;
+}
+
 export interface RoutingSuccess {
   status: "SUCCESS";
   route: RouteGeometry;
   distanceMeters: number;
   durationSeconds: number;
   provider: string;
+  /** Present only when the provider returned guidance; absent means route-only navigation. */
+  instructions?: RouteInstruction[];
 }
 
 export type RoutingFailureReason = "UNAVAILABLE" | "TIMEOUT" | "NO_ROUTE" | "INVALID_RESPONSE";

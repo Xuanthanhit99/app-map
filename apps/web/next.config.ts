@@ -22,6 +22,12 @@ const config: NextConfig = {
   outputFileTracingRoot: root,
   poweredByHeader: false,
   output: "standalone",
+  async rewrites() {
+    return [
+      { source: "/.well-known/assetlinks.json", destination: "/api/well-known/assetlinks" },
+      { source: "/.well-known/apple-app-site-association", destination: "/api/well-known/aasa" },
+    ];
+  },
   async headers() {
     return [{
       source: "/:path*",

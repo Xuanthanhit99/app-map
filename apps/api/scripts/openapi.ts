@@ -1,3 +1,5 @@
+import { UnavailableMailer } from "../src/lib/mailer";
+import { UnavailablePushSender } from "../src/lib/push";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { buildApp } from "../src/app";
 import { createClientIdentityResolver } from "../src/client-identity";
@@ -11,7 +13,7 @@ import { UnconfiguredEvidenceRepository } from "../src/verified-evidence-reposit
 // Builds the router without connecting (pool is lazy) and writes docs/api/openapi.json.
 const config = loadConfig({ DATABASE_URL: "postgres://unused@localhost/unused", APP_ENV: "development" } as unknown as NodeJS.ProcessEnv);
 const db = createPool(config.databaseUrl, 1);
-const { router } = buildApp({ db, config, rateLimits: new MemoryRateLimitStore(), now: () => new Date(), routing: null, verifyIdToken: async () => { throw new Error("n/a"); } },
+const { router } = buildApp({ db, config, rateLimits: new MemoryRateLimitStore(), now: () => new Date(), routing: null, verifyIdToken: async () => { throw new Error("n/a"); }, mailer: new UnavailableMailer(), push: new UnavailablePushSender() },
   createClientIdentityResolver({ mode: "none" }), registerAll(), new UnconfiguredEvidenceRepository());
 
 const out = new URL("../../../docs/api/openapi.json", import.meta.url);
