@@ -60,7 +60,7 @@ export default function Privacy() {
         <div><button type="button" className="btn btn-secondary btn-sm" onClick={async () => { await call("/v1/auth/logout-all", { method: "POST" }); await fetch("/api/session/logout", { method: "POST" }); router.replace("/dang-nhap"); }}>Đăng xuất trên mọi thiết bị</button></div>
       </div>
       <div className="panel stack"><h2>Dữ liệu của bạn</h2><p className="small muted">Tải về bản sao toàn bộ dữ liệu Reality lưu về bạn (JSON).</p><div><button type="button" className="btn btn-secondary" onClick={() => void exportData()}>Tải dữ liệu của tôi</button></div></div>
-      <div className="panel stack" style={{ borderColor: "#F0C9C9" }}><h2>Xóa tài khoản</h2><p className="small muted">Tài khoản, tùy chọn, địa điểm đã lưu, khu vực theo dõi, hành trình và thông báo sẽ bị xóa vĩnh viễn. Báo cáo đã gửi được giữ lại cho lịch sử an toàn nhưng tách khỏi bạn và xóa ghi chú.</p>
+      <div className="panel stack" style={{ borderColor: "rgba(255, 138, 138, 0.5)" }}><h2>Xóa tài khoản</h2><p className="small muted">Tài khoản, tùy chọn, địa điểm đã lưu, khu vực theo dõi, hành trình và thông báo sẽ bị xóa vĩnh viễn. Báo cáo đã gửi được giữ lại cho lịch sử an toàn nhưng tách khỏi bạn và xóa ghi chú.</p>
         <div><button type="button" className="btn btn-danger" onClick={() => dialog.current?.showModal()}>Xóa tài khoản…</button></div></div>
       <dialog ref={dialog} className="dialog" aria-labelledby="del-h">
         <form method="dialog" className="stack" onSubmit={(e) => { e.preventDefault(); void deleteAccount(); }}>

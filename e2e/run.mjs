@@ -6,6 +6,8 @@ import chromium from "@sparticuz/chromium";
 import { chromium as pw } from "playwright-core";
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import pg from "pg";
+import { SMTPServer } from "smtp-server";
+import { simpleParser } from "mailparser";
 
 const WEB = process.env.WEB_URL ?? "http://127.0.0.1:3000";
 const OUT = new URL(`../docs/release/evidence/${process.env.EVIDENCE_DIR ?? "local"}/`, import.meta.url);
@@ -15,8 +17,33 @@ const run = Date.now().toString(36);
 const results = [];
 const consoleErrors = [];
 const axeFindings = [];
-const VIEWPORTS = { desktop: { viewport: { width: 1536, height: 960 } }, mobile: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } };
+const VIEWPORTS = { desktop: { viewport: { width: 1536, height: 960 } }, tablet: { viewport: { width: 820, height: 1180 }, isMobile: true, hasTouch: true }, mobile: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } };
 const HOAN_KIEM = { latitude: 21.0289, longitude: 105.8525, accuracy: 15 };
+
+// ── Mail capture: local SMTP sink (SMTP_SINK_PORT) or the QA Mailpit HTTP API (MAILPIT_URL). ──
+const mails = [];
+let sink = null;
+if (process.env.SMTP_SINK_PORT) {
+  sink = new SMTPServer({ authOptional: true, disabledCommands: ["STARTTLS"], logger: false,
+    onData(stream, _session, cb) { simpleParser(stream).then((m) => { mails.push({ to: m.to?.text ?? "", subject: m.subject ?? "", text: m.text ?? "" }); cb(); }).catch(cb); } });
+  await new Promise((r) => sink.listen(Number(process.env.SMTP_SINK_PORT), "127.0.0.1", r));
+}
+async function mailFor(to, subjectPart, timeoutMs = 15_000) {
+  const until = Date.now() + timeoutMs;
+  while (Date.now() < until) {
+    if (process.env.MAILPIT_URL) {
+      const list = await fetch(`${process.env.MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`).then((r) => r.json()).catch(() => ({ messages: [] }));
+      const hit = (list.messages ?? []).find((m) => m.Subject.includes(subjectPart));
+      if (hit) { const full = await fetch(`${process.env.MAILPIT_URL}/api/v1/message/${hit.ID}`).then((r) => r.json()); return { to, subject: full.Subject, text: full.Text }; }
+    } else {
+      const hit = [...mails].reverse().find((m) => m.to.includes(to) && m.subject.includes(subjectPart));
+      if (hit) return hit;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`no mail "${subjectPart}" for ${to}`);
+}
+const linkIn = (text, path) => { const m = new RegExp(`https?://[^\\s]+${path}\\?token=[^\\s]+`).exec(text); if (!m) throw new Error(`no ${path} link`); return m[0]; };
 
 // The serverless Chromium build runs single-process: one browser per context is the stable setup.
 const executablePath = await chromium.executablePath();
@@ -71,7 +98,7 @@ async function enableContribution(page) {
   await row.getByRole("button", { name: "Tắt" }).waitFor();
 }
 
-for (const kind of ["desktop", "mobile"]) {
+for (const kind of ["desktop", "tablet", "mobile"]) {
   const ctx = await context(kind);
   const page = await ctx.newPage();
   watch(page, kind);
@@ -221,6 +248,48 @@ await step("Admin: moderator console works with server-side RBAC", async () => {
   await axe(p, "admin readiness");
   await ctx.close();
 });
+// ── G9 account recovery: verification email → verified; forgot → reset → old password rejected. ──
+const userC = { email: `e2e.c.${run}@example.test`, password: "khoi phuc tai khoan 2026", name: "Người thử C" };
+if (sink || process.env.MAILPIT_URL) {
+  const ctxC = await context("mobile");
+  const pc = await ctxC.newPage(); watch(pc, "userC");
+  await step("G9: registration sends a verification email; the link verifies the address", async () => {
+    await register(pc, userC);
+    await pc.getByText("Email của bạn chưa được xác minh").waitFor();
+    const mail = await mailFor(userC.email, "Xác minh email");
+    await pc.goto(linkIn(mail.text, "/xac-minh-email"));
+    await pc.getByText("Email đã được xác minh").waitFor({ timeout: 15_000 });
+    if (new URL(pc.url()).search) throw new Error("token left in the address bar");
+    await shot(pc, "mobile-16-email-verified");
+    await pc.goto(`${WEB}/tai-khoan/cai-dat`);
+    await pc.getByText("Đã xác minh").first().waitFor();
+    await axe(pc, "mobile account security");
+  }, pc);
+  await step("G9: forgot password → reset link → new password works, old one rejected, sessions revoked", async () => {
+    await pc.goto(`${WEB}/quen-mat-khau`);
+    await pc.fill("#email", userC.email);
+    await pc.getByRole("button", { name: "Gửi liên kết đặt lại" }).click();
+    await pc.getByText("Nếu email này có tài khoản").waitFor();
+    await shot(pc, "mobile-17-forgot-sent");
+    const mail = await mailFor(userC.email, "Đặt lại mật khẩu");
+    await pc.goto(linkIn(mail.text, "/dat-lai-mat-khau"));
+    await pc.fill("#newPassword", "mat khau moi that dai 2026");
+    await pc.fill("#confirm", "mat khau moi that dai 2026");
+    await pc.getByRole("button", { name: "Đặt mật khẩu mới" }).click();
+    await pc.getByText("Đã đặt mật khẩu mới").waitFor({ timeout: 15_000 });
+    await shot(pc, "mobile-18-reset-done");
+    const priv = await pc.goto(`${WEB}/tai-khoan`);
+    if (!new URL(pc.url()).pathname.startsWith("/dang-nhap")) throw new Error(`session should be gone, at ${pc.url()} (${priv?.status()})`);
+    const old = await fetch(`${WEB}/api/session/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userC.email, password: userC.password }) });
+    if (old.status !== 401) throw new Error(`old password should fail, got ${old.status}`);
+    const neu = await fetch(`${WEB}/api/session/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userC.email, password: "mat khau moi that dai 2026" }) });
+    if (neu.status !== 200) throw new Error(`new password should work, got ${neu.status}`);
+    await mailFor(userC.email, "vừa được thay đổi");
+  }, pc);
+  await ctxC.close();
+} else {
+  results.push({ name: "G9: account recovery by email", status: "NOT RUN", ms: 0, error: "no SMTP_SINK_PORT or MAILPIT_URL" });
+}
 await step("SEO: robots disallows non-production; sitemap and manifest served", async () => {
   const robots = await (await fetch(`${WEB}/robots.txt`)).text();
   if (!/Disallow: \//.test(robots)) throw new Error("robots should disallow on non-production");
@@ -234,6 +303,7 @@ await step("Security headers on web responses", async () => {
 });
 
 await Promise.all(browsers.map((b) => b.close().catch(() => undefined)));
+if (sink) await new Promise((r) => sink.close(r));
 const summary = { webUrl: WEB, runAt: new Date().toISOString(), passed: results.filter((r) => r.status === "PASS").length, failed: results.filter((r) => r.status === "FAIL").length, results, consoleErrors, axe: axeFindings };
 writeFileSync(new URL("e2e-results.json", OUT), JSON.stringify(summary, null, 2));
 console.log(`\n${summary.passed} passed, ${summary.failed} failed, ${consoleErrors.length} console errors`);

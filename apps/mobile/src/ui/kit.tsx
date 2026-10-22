@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
+import { NAVY_AMBER as P_ } from "@core/theme/navy-amber";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DOMAIN_CATALOG, type RealityDomain } from "@core/reality/catalog";
 
 /** Mobile kit in the app's existing night palette (navy + amber). State is never colour-only: glyph + words. */
-export const C = { bg: "#071C2C", card: "#102A3B", raised: "#17364A", line: "#36556A", ink: "#F4F4F0", ink2: "#A9BFCE", accent: "#F4C979", onAccent: "#071C2C",
-  known: "#7FC8A9", caution: "#F0B35A", avoid: "#FF8A5B", blocked: "#FF6B6B", conflict: "#C3A6F2", unknown: "#B8C4CC", danger: "#FF8A8A" };
+export const C = { bg: P_.bg, card: P_.surface, raised: P_.surface2, line: P_.lineStrong, ink: P_.ink, ink2: P_.ink3, accent: P_.accent, onAccent: P_.onAccent,
+  known: P_.positive, caution: P_.caution, avoid: P_.avoid, blocked: P_.blocked, conflict: P_.conflict, unknown: P_.unknown, danger: P_.danger };
 
 export function Screen({ title, eyebrow, children, scroll = true }: { title: string; eyebrow?: string; children: ReactNode; scroll?: boolean }) {
   const insets = useSafeAreaInsets();

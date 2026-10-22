@@ -1,108 +1,138 @@
 {
   "webUrl": "http://127.0.0.1:3000",
-  "runAt": "2026-10-22T04:41:23.599Z",
-  "passed": 20,
+  "runAt": "2026-10-22T07:41:54.684Z",
+  "passed": 26,
   "failed": 0,
   "results": [
     {
       "name": "desktop: home renders with honest pulse ledger",
       "status": "PASS",
-      "ms": 3355
+      "ms": 3142
     },
     {
       "name": "desktop: map loads places and opens inspector",
       "status": "PASS",
-      "ms": 11413
+      "ms": 13979
     },
     {
       "name": "desktop: place page is SSR with JSON-LD, canonical and unknown state",
       "status": "PASS",
-      "ms": 7640
+      "ms": 8641
     },
     {
       "name": "desktop: decide page form",
       "status": "PASS",
-      "ms": 1935
+      "ms": 2216
+    },
+    {
+      "name": "tablet: home renders with honest pulse ledger",
+      "status": "PASS",
+      "ms": 2673
+    },
+    {
+      "name": "tablet: map loads places and opens inspector",
+      "status": "PASS",
+      "ms": 9089
+    },
+    {
+      "name": "tablet: place page is SSR with JSON-LD, canonical and unknown state",
+      "status": "PASS",
+      "ms": 5769
+    },
+    {
+      "name": "tablet: decide page form",
+      "status": "PASS",
+      "ms": 2017
     },
     {
       "name": "mobile: home renders with honest pulse ledger",
       "status": "PASS",
-      "ms": 2000
+      "ms": 2010
     },
     {
       "name": "mobile: map loads places and opens inspector",
       "status": "PASS",
-      "ms": 4977
+      "ms": 5884
     },
     {
       "name": "mobile: place page is SSR with JSON-LD, canonical and unknown state",
       "status": "PASS",
-      "ms": 3525
+      "ms": 3518
     },
     {
       "name": "mobile: decide page form",
       "status": "PASS",
-      "ms": 1549
+      "ms": 1724
     },
     {
       "name": "G10: user A registers and opts in to contribution",
       "status": "PASS",
-      "ms": 3363
+      "ms": 3613
     },
     {
       "name": "G10: user A saves and watches a place",
       "status": "PASS",
-      "ms": 4235
+      "ms": 4855
     },
     {
       "name": "G10: user A reports 'Bãi xe đầy' — single report stays unverified",
       "status": "PASS",
-      "ms": 13643
+      "ms": 13937
     },
     {
       "name": "G10: user B (mobile) registers, opts in and corroborates",
       "status": "PASS",
-      "ms": 6689
+      "ms": 8008
     },
     {
       "name": "G10: place now shows KNOWN 'Bãi đầy' with source and freshness; watcher notified",
       "status": "PASS",
-      "ms": 7064
+      "ms": 8214
     },
     {
       "name": "G10: decide → start journey → impact → arrive",
       "status": "PASS",
-      "ms": 8680
+      "ms": 11735
     },
     {
       "name": "G10: journey on landscape phone keeps the glance rail",
       "status": "PASS",
-      "ms": 3461
+      "ms": 5229
     },
     {
       "name": "G9: data export downloads a JSON copy",
       "status": "PASS",
-      "ms": 31
+      "ms": 38
     },
     {
       "name": "G9: expired access cookie is silently renewed from the refresh cookie (single-use rotation)",
       "status": "PASS",
-      "ms": 451
+      "ms": 859
     },
     {
       "name": "Admin: moderator console works with server-side RBAC",
       "status": "PASS",
-      "ms": 5798
+      "ms": 6976
+    },
+    {
+      "name": "G9: registration sends a verification email; the link verifies the address",
+      "status": "PASS",
+      "ms": 4060
+    },
+    {
+      "name": "G9: forgot password → reset link → new password works, old one rejected, sessions revoked",
+      "status": "PASS",
+      "ms": 3999
     },
     {
       "name": "SEO: robots disallows non-production; sitemap and manifest served",
       "status": "PASS",
-      "ms": 107
+      "ms": 61
     },
     {
       "name": "Security headers on web responses",
       "status": "PASS",
-      "ms": 36
+      "ms": 24
     }
   ],
   "consoleErrors": [],
@@ -120,6 +150,18 @@
       "violations": []
     },
     {
+      "label": "tablet home",
+      "violations": []
+    },
+    {
+      "label": "tablet place",
+      "violations": []
+    },
+    {
+      "label": "tablet decide",
+      "violations": []
+    },
+    {
       "label": "mobile home",
       "violations": []
     },
@@ -133,6 +175,10 @@
     },
     {
       "label": "admin readiness",
+      "violations": []
+    },
+    {
+      "label": "mobile account security",
       "violations": []
     }
   ]
