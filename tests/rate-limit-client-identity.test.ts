@@ -125,3 +125,30 @@ describe("guard integration", () => {
     expect(codes.filter((c) => c === 429).length).toBe(5);
   });
 });
+
+describe("authenticated internal hop (web BFF -> API)", () => {
+  const SECRET = "s".repeat(40);
+  const resolve = createClientIdentityResolver({ mode: "railway", internalProxySecret: SECRET });
+
+  it("keys on X-Reality-Client-IP only when the proxy token matches", () => {
+    expect(resolve(req("fd12::5", { "x-reality-proxy-token": SECRET, "x-reality-client-ip": "198.51.100.9" }))).toEqual({ key: "client:198.51.100.9", basis: "TRUSTED_HEADER" });
+  });
+
+  it("ignores the client-IP header with a wrong, missing or duplicated token and falls back to the edge mode", () => {
+    for (const token of ["wrong", undefined, [SECRET, SECRET]] as const) {
+      const headers: Record<string, string | string[]> = { "x-reality-client-ip": "198.51.100.9", "x-real-ip": "203.0.113.4" };
+      if (token !== undefined) headers["x-reality-proxy-token"] = token as string | string[];
+      expect(resolve(req("10.0.0.1", headers))).toEqual({ key: "client:203.0.113.4", basis: "TRUSTED_HEADER" });
+    }
+  });
+
+  it("a valid token without a usable client address shares one internal bucket", () => {
+    expect(resolve(req("fd12::5", { "x-reality-proxy-token": SECRET, "x-reality-client-ip": "nonsense" })).basis).toBe("UNATTRIBUTED");
+  });
+
+  it("refuses short secrets and reads INTERNAL_PROXY_SECRET from env", () => {
+    expect(() => createClientIdentityResolver({ mode: "none", internalProxySecret: "short" })).toThrow(ClientIdentityConfigError);
+    const fromEnv = clientIdentityResolverFromEnv({ TRUST_PROXY: "none", INTERNAL_PROXY_SECRET: SECRET } as NodeJS.ProcessEnv);
+    expect(fromEnv(req("10.0.0.1", { "x-reality-proxy-token": SECRET, "x-reality-client-ip": "198.51.100.9" })).key).toBe("client:198.51.100.9");
+  });
+});

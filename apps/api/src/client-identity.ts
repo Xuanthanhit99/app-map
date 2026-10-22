@@ -1,4 +1,5 @@
 import type { IncomingMessage } from "node:http";
+import { timingSafeEqual } from "node:crypto";
 import { BlockList, isIP } from "node:net";
 
 /**
@@ -18,6 +19,12 @@ import { BlockList, isIP } from "node:net";
  *
  * Requests whose trusted header is missing or malformed are not given their own identity: they
  * fall into a single per-peer "unattributed" bucket, so stripping the header cannot evade limits.
+ *
+ * Internal hop (web BFF → API): when INTERNAL_PROXY_SECRET is configured, a request carrying
+ * `X-Reality-Proxy-Token` equal to the secret (constant-time compare) is keyed on its
+ * `X-Reality-Client-IP`. This works over the private network and the public edge alike, without
+ * pinning provider-specific address ranges. A wrong or missing token falls back to the mode above,
+ * so the header pair cannot be forged without the secret.
  */
 export type TrustProxyMode = "none" | "railway" | "xff";
 export type ClientIdentity = {
@@ -88,10 +95,20 @@ function singleHeader(value: string | string[] | undefined): string | null {
   return typeof value === "string" ? value : null;
 }
 
+function tokenMatches(secret: Buffer, presented: string | null): boolean {
+  if (!presented) return false;
+  const p = Buffer.from(presented);
+  return p.length === secret.length && timingSafeEqual(p, secret);
+}
+
 export function createClientIdentityResolver(options: {
-  mode: TrustProxyMode; hops?: number; trustedProxyCidrs?: string;
+  mode: TrustProxyMode; hops?: number; trustedProxyCidrs?: string; internalProxySecret?: string;
 }): ClientIdentityResolver {
   const hops = options.hops ?? 1;
+  if (options.internalProxySecret !== undefined && options.internalProxySecret.length < 32) {
+    throw new ClientIdentityConfigError("INTERNAL_PROXY_SECRET_TOO_SHORT");
+  }
+  const internalSecret = options.internalProxySecret ? Buffer.from(options.internalProxySecret) : null;
   if (options.mode === "xff" && (!Number.isInteger(hops) || hops < 1 || hops > 5)) {
     throw new ClientIdentityConfigError("INVALID_TRUSTED_PROXY_HOPS");
   }
@@ -99,6 +116,10 @@ export function createClientIdentityResolver(options: {
   const peerKey = (peer: string | undefined) => `peer:${normalizeClientAddress(peer) ?? "unknown"}`;
   return (request) => {
     const peer = request.socket?.remoteAddress;
+    if (internalSecret && tokenMatches(internalSecret, singleHeader(request.headers["x-reality-proxy-token"]))) {
+      const forwarded = normalizeClientAddress(singleHeader(request.headers["x-reality-client-ip"]));
+      return forwarded ? { key: `client:${forwarded}`, basis: "TRUSTED_HEADER" } : { key: `unattributed:internal`, basis: "UNATTRIBUTED" };
+    }
     if (options.mode === "none") return { key: peerKey(peer), basis: "SOCKET_PEER" };
     const unattributed: ClientIdentity = { key: `unattributed:${normalizeClientAddress(peer) ?? "unknown"}`, basis: "UNATTRIBUTED" };
     // Request did not arrive from the pinned proxy network: its headers are client-written.
@@ -124,5 +145,6 @@ export function clientIdentityResolverFromEnv(env: NodeJS.ProcessEnv = process.e
     mode: raw,
     ...(hopsText ? { hops: Number(hopsText) } : {}),
     ...(env.TRUSTED_PROXY_CIDRS ? { trustedProxyCidrs: env.TRUSTED_PROXY_CIDRS } : {}),
+    ...(env.INTERNAL_PROXY_SECRET !== undefined && env.INTERNAL_PROXY_SECRET !== "" ? { internalProxySecret: env.INTERNAL_PROXY_SECRET } : {}),
   });
 }
