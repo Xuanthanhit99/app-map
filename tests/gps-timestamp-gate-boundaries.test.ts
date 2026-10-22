@@ -59,7 +59,7 @@ const emit = (overrides: { timestamp?: number; accuracy?: number | null; mocked?
   });
 };
 
-describe("GPS display gate timestamp boundaries (current behaviour)", () => {
+describe("GPS display gate timestamp boundaries (owner-approved policy 2026-10-22)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(NOW));
@@ -84,12 +84,14 @@ describe("GPS display gate timestamp boundaries (current behaviour)", () => {
     await mount(); emit({ timestamp: NOW });
     expect(native.state.value.status).toBe("READY");
   });
-  it("+1 ms in the future is rejected (zero future-skew tolerance today)", async () => {
+  it("+1 ms and +2000 ms future skew are accepted (approved tolerance)", async () => {
     await mount(); emit({ timestamp: NOW + 1 });
-    expect(native.state.value.status).toBe("REQUESTING");
+    expect(native.state.value.status).toBe("READY");
+    emit({ timestamp: NOW + 2000 });
+    expect(native.state.value.status).toBe("READY");
   });
-  it("+2000 ms in the future is rejected", async () => {
-    await mount(); emit({ timestamp: NOW + 2000 });
+  it("+2001 ms future skew is rejected as a clock error", async () => {
+    await mount(); emit({ timestamp: NOW + 2001 });
     expect(native.state.value.status).toBe("REQUESTING");
   });
   it("age exactly 30 000 ms is accepted; 30 001 ms is rejected as stale", async () => {
@@ -115,8 +117,14 @@ describe("GPS display gate timestamp boundaries (current behaviour)", () => {
     await mount();
     expect(native.state.value.status).toBe("REQUESTING");
   });
-  it("GAP (unapproved, reported): Android mocked=true fixes are currently not rejected", async () => {
+  it("explicit mocked=true never reaches READY", async () => {
     await mount(); emit({ mocked: true });
-    expect(native.state.value.status).toBe("READY");
+    expect(native.state.value.status).toBe("REQUESTING");
+  });
+  it("missing mock metadata stays UNKNOWN; mocked=false is only 'reported', never 'proven'", async () => {
+    await mount(); emit({});
+    expect(native.state.value).toMatchObject({ status: "READY", mockStatus: "UNKNOWN" });
+    emit({ mocked: false });
+    expect(native.state.value).toMatchObject({ status: "READY", mockStatus: "REPORTED_NOT_MOCKED" });
   });
 });

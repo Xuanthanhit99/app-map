@@ -10,7 +10,10 @@
     "typecheck": "tsc --noEmit && npm run typecheck --workspace @app-map/api && npm run typecheck --workspace @app-map/mobile",
     "test": "vitest run",
     "test:watch": "vitest",
-    "mobile:start": "npm run start --workspace @app-map/mobile"
+    "mobile:start": "npm run start --workspace @app-map/mobile",
+    "test:int": "vitest run tests/*.int.test.ts",
+    "db:migrate": "npm run migrate --workspace @app-map/api",
+    "api:dev": "npm run dev --workspace @app-map/api"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

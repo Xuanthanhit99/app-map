@@ -11,6 +11,7 @@ export type GPSRuntimeContext = {
 };
 export type RawGPSPosition = {
   timestamp?: number | null;
+  mocked?: boolean | null;
   coords?: { latitude?: number | null; longitude?: number | null; accuracy?: number | null } | null;
 };
 export type GPSLifecycleSnapshot = {
@@ -32,6 +33,7 @@ export function normalizeGPSPosition(
     ...(typeof coords?.longitude === "number" ? { longitude: coords.longitude } : {}),
     ...(typeof coords?.accuracy === "number" ? { accuracyMeters: coords.accuracy } : {}),
     ...(typeof position.timestamp === "number" ? { observedAt: position.timestamp } : {}),
+    ...(typeof position.mocked === "boolean" ? { mocked: position.mocked } : {}),
     evaluatedAt,
     source,
     permission: context.permission,

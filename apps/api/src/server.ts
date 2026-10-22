@@ -1,120 +1,32 @@
 import { createServer } from "node:http";
-import { applyApiGuards, logApiEvent } from "./api-guard";
+import { buildApp, rateLimitStoreFor } from "./app";
 import { clientIdentityResolverFromEnv } from "./client-identity";
+import { loadConfig } from "./config";
+import { createPool } from "./db/pool";
+import { migrate } from "./db/migrate";
+import { createOidcVerifier } from "./lib/oidc";
 import { TomTomRoutingProvider } from "./tomtom-routing-provider";
-import { handleRoutingRequest } from "./routing-http-handler";
-import { handleRealityDecisionRead } from "./reality-decision-read";
-import { handleVerifiedDecisionRead } from "./verified-decision-http";
-import { evidenceRepositoryFromEnv } from "./verified-evidence-repository";
+import { registerAll } from "./modules/registry";
 
-const port = Number(process.env.PORT ?? 3001);
-const key = process.env.TOMTOM_API_KEY;
-const primary = key ? new TomTomRoutingProvider(key) : null;
-const evidenceRepository = evidenceRepositoryFromEnv();
-// Fails closed at startup on an invalid TRUST_PROXY / TRUSTED_PROXY_HOPS / TRUSTED_PROXY_CIDRS value.
+// Fails closed on invalid configuration (TRUST_PROXY, APP_ENV, DATABASE_URL, fixtures in QA/production…).
+const config = loadConfig();
 const identifyClient = clientIdentityResolverFromEnv();
+const db = createPool(config.databaseUrl, Number(process.env.DB_POOL_MAX ?? 10));
+const base = { db, config, now: () => new Date(), routing: config.tomtomRoutingKey ? new TomTomRoutingProvider(config.tomtomRoutingKey) : null, verifyIdToken: createOidcVerifier() };
+const deps = { ...base, rateLimits: rateLimitStoreFor(base) };
 
-createServer(async (request, response) => {
-  const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:4173,http://localhost:4173,http://localhost:8081,http://127.0.0.1:8081").split(",").map(value => value.trim()).filter(Boolean);
-  const started = Date.now();
-  response.once("finish", () => logApiEvent("http_request", { requestId: String(response.getHeader("X-Request-Id") ?? ""), status: response.statusCode, durationMs: Date.now() - started }));
-  if (!applyApiGuards(request, response, allowedOrigins, identifyClient)) return;
-  if (request.method === "GET" && request.url === "/health/ready") {
-    const ready = Boolean(primary);
-    response.writeHead(ready ? 200 : 503, { "content-type": "application/json" });
-    response.end(JSON.stringify({ status: ready ? "ready" : "degraded", routingConfigured: ready, evidenceConfigured: Boolean(process.env.EVIDENCE_FEED_URL && process.env.EVIDENCE_FEED_TOKEN) }));
-    return;
+async function main() {
+  if (process.env.MIGRATE_ON_START === "true") {
+    const r = await migrate(db);
+    process.stdout.write(JSON.stringify({ event: "migrations", applied: r.applied }) + "\n");
   }
-  if (request.method === "GET" && request.url?.startsWith("/v1/places/search")) {
-    const url = new URL(request.url, "http://localhost");
-    if (url.pathname !== "/v1/places/search") {
-      response.writeHead(404); response.end(); return;
-    }
-    const q = (url.searchParams.get("q") ?? "").trim();
-    if ([...url.searchParams.keys()].some(param => param !== "q") || url.searchParams.getAll("q").length !== 1) {
-      response.writeHead(400, { "content-type": "application/json" }); response.end(JSON.stringify({ error: "INVALID_QUERY" })); return;
-    }
-    response.setHeader("Cache-Control", "no-store");
-    response.setHeader("Content-Type", "application/json; charset=utf-8");
-    if (q.length < 3 || q.length > 160) {
-      response.writeHead(400); response.end(JSON.stringify({ error: "INVALID_QUERY" })); return;
-    }
-    const searchKey = process.env.TOMTOM_SEARCH_API_KEY;
-    if (!searchKey) {
-      response.writeHead(503); response.end(JSON.stringify({ error: "GEOCODING_PROVIDER_NOT_CONFIGURED" })); return;
-    }
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 7000);
-      let upstream: Response;
-      try {
-        const searchUrl = new URL("https://api.tomtom.com/search/2/search/" + encodeURIComponent(q) + ".json");
-        searchUrl.searchParams.set("key", searchKey);
-        searchUrl.searchParams.set("limit", "5");
-        searchUrl.searchParams.set("typeahead", "true");
-        upstream = await fetch(searchUrl, { signal: controller.signal, redirect: "error" });
-      } finally { clearTimeout(timer); }
-      if (!upstream.ok) throw Error("GEOCODING_UPSTREAM_ERROR");
-      const data: unknown = await upstream.json();
-      const records = data && typeof data === "object" && "results" in data && Array.isArray(data.results) ? data.results : [];
-      const items = records.flatMap((entry: unknown) => {
-        if (!entry || typeof entry !== "object") return [];
-        const item = entry as Record<string, unknown>;
-        const pos = item.position as Record<string, unknown> | undefined;
-        const address = item.address as Record<string, unknown> | undefined;
-        const point = item.poi as Record<string, unknown> | undefined;
-        const lat = pos?.lat, lon = pos?.lon;
-        if (typeof lat !== "number" || typeof lon !== "number" || !Number.isFinite(lat) || !Number.isFinite(lon) ||
-            Math.abs(lat) > 90 || Math.abs(lon) > 180 || typeof item.id !== "string") return [];
-        const fullAddress = typeof address?.freeformAddress === "string" ? address.freeformAddress : "";
-        const name = typeof point?.name === "string" ? point.name : fullAddress;
-        if (!name.trim() || !fullAddress.trim()) return [];
-        return [{ id: item.id, name, address: fullAddress, coordinate: [lon, lat], source: "TomTom" }];
-      });
-      response.writeHead(200); response.end(JSON.stringify({ status: "ready", items }));
-    } catch {
-      response.writeHead(502); response.end(JSON.stringify({ error: "GEOCODING_UPSTREAM_UNAVAILABLE" }));
-    }
-    return;
-  }
-  if (request.method === "GET" && request.url === "/health/live") { response.writeHead(200, { "content-type": "application/json" }); response.end(JSON.stringify({ status: "ok" })); return; }
-  if (await handleVerifiedDecisionRead(request, response, evidenceRepository)) return;
-  if (handleRealityDecisionRead(request, response)) return;
-  if (request.method !== "POST" || request.url !== "/v1/routing/route") {
-    response.writeHead(404, { "content-type": "application/json" });
-    response.end(JSON.stringify({ error: "NOT_FOUND" }));
-    return;
-  }
-
-  if (!primary) {
-    response.writeHead(503, { "content-type": "application/json", "cache-control": "no-store" });
-    response.end(JSON.stringify({ error: "ROUTING_PROVIDER_NOT_CONFIGURED" }));
-    return;
-  }
-
-  try {
-    const chunks: Buffer[] = [];
-    let bytes = 0;
-    for await (const chunk of request) {
-      const buffer = Buffer.from(chunk);
-      bytes += buffer.length;
-      if (bytes > 16_384) {
-        response.writeHead(413, { "content-type": "application/json" });
-        response.end(JSON.stringify({ error: "PAYLOAD_TOO_LARGE" }));
-        return;
-      }
-      chunks.push(buffer);
-    }
-
-    if (!String(request.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) {
-      response.writeHead(415, { "content-type": "application/json" }); response.end(JSON.stringify({ error: "UNSUPPORTED_MEDIA_TYPE" })); return;
-    }
-    const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
-    const result = await handleRoutingRequest(body, { primary, timeoutMs: 8_000 });
-    response.writeHead(result.status, { "content-type": "application/json", "cache-control": "no-store" });
-    response.end(JSON.stringify(result.body));
-  } catch {
-    response.writeHead(400, { "content-type": "application/json", "cache-control": "no-store" });
-    response.end(JSON.stringify({ error: "INVALID_REQUEST" }));
-  }
-}).listen(port);
+  const { listener } = buildApp(deps, identifyClient, registerAll());
+  const server = createServer((req, res) => { void listener(req, res); });
+  server.headersTimeout = 15_000;
+  server.requestTimeout = 30_000;
+  server.listen(config.port, () => process.stdout.write(JSON.stringify({ event: "listening", port: config.port, env: config.env }) + "\n"));
+  const shutdown = () => { server.close(() => { void db.end().then(() => process.exit(0)); }); setTimeout(() => process.exit(1), 10_000).unref(); };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+}
+main().catch((e) => { process.stderr.write(JSON.stringify({ event: "startup_failed", error: e instanceof Error ? e.message : String(e) }) + "\n"); process.exit(1); });

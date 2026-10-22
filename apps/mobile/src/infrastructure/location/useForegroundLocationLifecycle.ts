@@ -4,6 +4,7 @@ import * as Location from "expo-location";
 import { reduceLocation, type LocationLifecycle } from "@core/location/location-lifecycle";
 import { createForegroundRestartGate } from "./foreground-restart-gate";
 import { createGPSLifecycleContract, type GPSFixSource } from "@core/location/gps-lifecycle-contract";
+import { evaluateDisplayFix, type MockStatus } from "@core/location/gps-quality";
 
 const STALE_AFTER_MS = 30_000;
 const LOCATION_DEBUG_PREFIX = "[RealityLocation]";
@@ -14,9 +15,10 @@ function debugLocation(event: string, detail?: unknown) {
   else console.info(LOCATION_DEBUG_PREFIX, event, detail);
 }
 
-function fix(position: Location.LocationObject) {
+function fix(position: Location.LocationObject, mockStatus: MockStatus) {
   return {
     type: "FIX" as const,
+    mockStatus,
     latitude: position.coords.latitude,
     longitude: position.coords.longitude,
     observedAt: position.timestamp,
@@ -100,14 +102,15 @@ export function useForegroundLocationLifecycle(enabled = true): LocationLifecycl
         trace("WATCH_REJECT", token, { source, reason: "INCOMPLETE_FIX", ...positionMeta(position) });
         return;
       }
-      // Existing 30s display freshness boundary; not an approved navigation policy.
-      if (snapshot.input.observedAt > snapshot.input.evaluatedAt ||
-          snapshot.input.evaluatedAt - snapshot.input.observedAt > STALE_AFTER_MS) {
-        trace("WATCH_REJECT", token, { source, reason: "TIMESTAMP_OUT_OF_RANGE", ...positionMeta(position) });
+      // Approved display policy: <= 2 000 ms future skew, <= 30 s age, explicit mock never READY.
+      const display = evaluateDisplayFix({ observedAt: snapshot.input.observedAt, evaluatedAt: snapshot.input.evaluatedAt,
+        mocked: (position as { mocked?: boolean }).mocked ?? null });
+      if (!display.accept) {
+        trace("WATCH_REJECT", token, { source, reason: display.reason, ...positionMeta(position) });
         return;
       }
-      trace("WATCH_FIX", token, { source, classification: snapshot.quality.classification, ...positionMeta(position) });
-      dispatch(fix(position));
+      trace("WATCH_FIX", token, { source, classification: snapshot.quality.classification, mockStatus: display.mockStatus, ...positionMeta(position) });
+      dispatch(fix(position, display.mockStatus));
       armStale(token);
     };
 

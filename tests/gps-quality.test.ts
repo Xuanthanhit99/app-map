@@ -48,3 +48,24 @@ describe("E-04B GPS quality evaluator - fail closed", () => {
     expect(results.every((r) => r.navigationEligible === false)).toBe(true);
   });
 });
+
+import { evaluateDisplayFix, APPROVED_DISPLAY_FIX_POLICY } from "../src/location/gps-quality";
+describe("approved display fix policy", () => {
+  const now = 1_000_000;
+  it("encodes 2000 ms skew and 30 s age", () => {
+    expect(APPROVED_DISPLAY_FIX_POLICY).toEqual({ maxFutureSkewMs: 2000, maxAgeMs: 30000 });
+  });
+  it.each([
+    [now + 2000, true], [now + 2001, false], [now - 30000, true], [now - 30001, false], [now, true],
+  ])("observedAt %d accept=%s", (observedAt, accept) => {
+    expect(evaluateDisplayFix({ observedAt, evaluatedAt: now }).accept).toBe(accept);
+  });
+  it("mocked=true is rejected regardless of time; missing metadata is UNKNOWN", () => {
+    expect(evaluateDisplayFix({ observedAt: now, evaluatedAt: now, mocked: true })).toEqual({ accept: false, reason: "MOCK_LOCATION" });
+    expect(evaluateDisplayFix({ observedAt: now, evaluatedAt: now })).toMatchObject({ accept: true, mockStatus: "UNKNOWN" });
+  });
+  it("evaluateGPSQuality marks explicit mock INVALID", () => {
+    expect(evaluateGPSQuality({ latitude: 21, longitude: 105, accuracyMeters: 5, observedAt: now, evaluatedAt: now,
+      source: "WATCH", permission: "GRANTED", servicesEnabled: true, appState: "FOREGROUND", mocked: true })).toMatchObject({ classification: "INVALID", reasons: ["MOCK_LOCATION"] });
+  });
+});
