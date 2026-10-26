@@ -11,12 +11,10 @@ function adv(pkg: string, id: string, severity: string) {
   return [pkg, { name: pkg, severity, isDirect: false, via: [{ source: 1, name: pkg, title: `${pkg} issue`, url: `https://github.com/advisories/${id}`, severity, range: "*" }], effects: [], range: "*", nodes: [`node_modules/${pkg}`], fixAvailable: false }];
 }
 const EXCEPTED = [
-  adv("braces", "GHSA-vfj7-8cjw-p6xm", "high"),
   adv("decode-uri-component", "GHSA-vcc3-ghjq-m6fr", "moderate"),
   adv("image-size", "GHSA-5p2g-fcmc-qvqq", "high"),
   adv("image-size", "GHSA-w3rx-r6r6-pgpr", "high"),
   adv("node-forge", "GHSA-86w9-cpqp-85rv", "high"),
-  adv("sprintf-js", "GHSA-hp3w-g68c-fv3c", "moderate"),
 ];
 
 function run(entries: unknown[][], extraArgs: string[] = []): { code: number; out: string } {
@@ -49,22 +47,22 @@ describe("security gate (scripts/security-gate.mjs)", () => {
   });
 
   it("fails on any critical advisory, even for an excepted package", () => {
-    const r = run([...EXCEPTED, adv("braces", "GHSA-crit-crit-crit", "critical")]);
+    const r = run([...EXCEPTED, adv("image-size", "GHSA-crit-crit-crit", "critical")]);
     expect(r.code).toBe(1);
-    expect(r.out).toContain("CRITICAL braces");
+    expect(r.out).toContain("CRITICAL image-size");
   });
 
   it("fails when a package excepted as build-tool ships in a bundle", () => {
     const map = join(dir, "bundle.js.map");
-    writeFileSync(map, JSON.stringify({ version: 3, sources: ["/node_modules/react/index.js", "/node_modules/braces/index.js"], mappings: "" }));
+    writeFileSync(map, JSON.stringify({ version: 3, sources: ["/node_modules/react/index.js", "/node_modules/image-size/index.js"], mappings: "" }));
     const r = run(EXCEPTED, ["--bundle-map", map]);
     expect(r.code).toBe(1);
-    expect(r.out).toContain("braces is excepted as build-tool but ships in a bundle");
+    expect(r.out).toContain("image-size is excepted as build-tool but ships in a bundle");
   });
 
   it("warns (does not fail) on stale exceptions", () => {
-    const r = run(EXCEPTED.filter(([n]) => n !== "sprintf-js"));
+    const r = run(EXCEPTED.filter(([n]) => n !== "node-forge"));
     expect(r.code).toBe(0);
-    expect(r.out).toContain("stale exception sprintf-js");
+    expect(r.out).toContain("stale exception node-forge");
   });
 });

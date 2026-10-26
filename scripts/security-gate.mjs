@@ -4,6 +4,8 @@
  *
  *   node scripts/security-gate.mjs [--bundle-map <file-or-dir>]... [--report <file>]
  *
+ * Live mode audits the workspace lockfile and e2e/package-lock.json. `--audit-json` audits only that file (unit tests).
+ *
  * Fails (exit 1) when:
  *  - any critical advisory is present (critical cannot be excepted);
  *  - any moderate/high advisory is not listed in security/audit-exceptions.json;
@@ -30,15 +32,22 @@ for (let i = 0; i < args.length; i++) {
 const REQUIRED = ["package", "advisories", "severity", "scope", "path", "artifact", "justification", "evidence", "remediation", "expires"];
 const SCOPES = new Set(["build-tool", "dev-tool", "runtime-unreachable"]);
 
-function runAudit() {
-  if (auditFile) return JSON.parse(readFileSync(auditFile, "utf8"));
+function runAudit(cwd) {
   try {
-    return JSON.parse(execFileSync("npm", ["audit", "--json"], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] }));
+    return JSON.parse(execFileSync("npm", ["audit", "--json", "--prefix", cwd], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] }));
   } catch (e) {
     // npm audit exits 1 when vulnerabilities exist; stdout still carries the JSON report.
     if (e.stdout) return JSON.parse(e.stdout);
     throw e;
   }
+}
+
+/** Root lockfile plus the separate e2e toolchain lockfile. --audit-json is the unit-test seam and audits only that file. */
+function collectAudits() {
+  if (auditFile) return [{ tree: "fixture", audit: JSON.parse(readFileSync(auditFile, "utf8")) }];
+  const trees = [{ tree: "root", audit: runAudit(ROOT) }];
+  if (statSync(join(ROOT, "e2e/package-lock.json"), { throwIfNoEntry: false })) trees.push({ tree: "e2e", audit: runAudit(join(ROOT, "e2e")) });
+  return trees;
 }
 
 function mapFiles(p) {
@@ -75,12 +84,19 @@ for (const ex of policy.exceptions) {
   if (ex.expires && ex.expires < today) failures.push(`exception ${ex.package}: expired on ${ex.expires} — re-review or fix`);
 }
 
-const audit = runAudit();
+const audits = collectAudits();
 const found = [];
-for (const [name, v] of Object.entries(audit.vulnerabilities ?? {})) {
-  for (const via of v.via) {
-    if (typeof via !== "object") continue; // transitive marker; the advisory itself is listed under its own package
-    found.push({ package: name, id: via.url.split("/").pop(), severity: via.severity, title: via.title, range: via.range, nodes: v.nodes });
+const seen = new Set();
+for (const { tree, audit } of audits) {
+  for (const [name, v] of Object.entries(audit.vulnerabilities ?? {})) {
+    for (const via of v.via) {
+      if (typeof via !== "object") continue; // transitive marker; the advisory itself is listed under its own package
+      const id = via.url.split("/").pop();
+      const key = `${tree}:${name}:${id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      found.push({ tree, package: name, id, severity: via.severity, title: via.title, range: via.range, nodes: v.nodes });
+    }
   }
 }
 
@@ -109,15 +125,15 @@ if (bundleMaps.length) {
 
 const summary = {
   checkedAt: new Date().toISOString(),
-  totals: audit.metadata?.vulnerabilities,
-  advisories: found.map(({ package: p, id, severity, title }) => ({ package: p, id, severity, title, status: severity === "critical" ? "FAIL" : used.has(`${p}:${id}`) ? "EXCEPTED" : severity === "low" ? "WARN" : "FAIL" })),
+  totals: Object.fromEntries(audits.map(({ tree, audit }) => [tree, audit.metadata?.vulnerabilities ?? null])),
+  advisories: found.map(({ tree, package: p, id, severity, title }) => ({ tree, package: p, id, severity, title, status: severity === "critical" ? "FAIL" : used.has(`${p}:${id}`) ? "EXCEPTED" : severity === "low" ? "WARN" : "FAIL" })),
   bundle: bundleReport,
   warnings,
   failures,
   result: failures.length ? "FAIL" : "PASS",
 };
 if (reportPath) { mkdirSync(dirname(resolve(ROOT, reportPath)), { recursive: true }); } if (reportPath) writeFileSync(resolve(ROOT, reportPath), JSON.stringify(summary, null, 2) + "\n");
-for (const a of summary.advisories) console.log(`${a.status.padEnd(8)} ${a.severity.padEnd(9)} ${a.package} ${a.id} — ${a.title}`);
+for (const a of summary.advisories) console.log(`${a.status.padEnd(8)} ${a.severity.padEnd(9)} ${(a.tree ?? "root").padEnd(8)} ${a.package} ${a.id} — ${a.title}`);
 if (bundleReport) console.log(`bundle maps: ${bundleReport.maps}, packages shipped: ${bundleReport.packages}; excepted packages: ${JSON.stringify(bundleReport.excepted)}`);
 for (const w of warnings) console.log(`warning: ${w}`);
 for (const f of failures) console.error(`FAIL: ${f}`);

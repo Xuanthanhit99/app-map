@@ -1,22 +1,26 @@
 {
-  "checkedAt": "2026-10-22T07:05:15.024Z",
+  "checkedAt": "2026-10-26T07:11:17.182Z",
   "totals": {
-    "info": 0,
-    "low": 0,
-    "moderate": 8,
-    "high": 23,
-    "critical": 0,
-    "total": 31
+    "root": {
+      "info": 0,
+      "low": 0,
+      "moderate": 3,
+      "high": 6,
+      "critical": 0,
+      "total": 9
+    },
+    "e2e": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
   },
   "advisories": [
     {
-      "package": "braces",
-      "id": "GHSA-vfj7-8cjw-p6xm",
-      "severity": "high",
-      "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
-      "status": "EXCEPTED"
-    },
-    {
+      "tree": "root",
       "package": "decode-uri-component",
       "id": "GHSA-vcc3-ghjq-m6fr",
       "severity": "moderate",
@@ -24,6 +28,7 @@
       "status": "EXCEPTED"
     },
     {
+      "tree": "root",
       "package": "image-size",
       "id": "GHSA-5p2g-fcmc-qvqq",
       "severity": "high",
@@ -31,6 +36,7 @@
       "status": "EXCEPTED"
     },
     {
+      "tree": "root",
       "package": "image-size",
       "id": "GHSA-w3rx-r6r6-pgpr",
       "severity": "high",
@@ -38,31 +44,15 @@
       "status": "EXCEPTED"
     },
     {
+      "tree": "root",
       "package": "node-forge",
       "id": "GHSA-86w9-cpqp-85rv",
       "severity": "high",
       "title": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements",
       "status": "EXCEPTED"
-    },
-    {
-      "package": "sprintf-js",
-      "id": "GHSA-hp3w-g68c-fv3c",
-      "severity": "moderate",
-      "title": "sprintf-js vulnerable to denial of service through unbounded precision specifiers",
-      "status": "EXCEPTED"
     }
   ],
-  "bundle": {
-    "maps": 2,
-    "packages": 75,
-    "excepted": {
-      "braces": "absent",
-      "image-size": "absent",
-      "node-forge": "absent",
-      "sprintf-js": "absent",
-      "decode-uri-component": "IN BUNDLE"
-    }
-  },
+  "bundle": null,
   "warnings": [],
   "failures": [],
   "result": "PASS"

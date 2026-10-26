@@ -65,7 +65,7 @@ export default function Privacy() {
       <dialog ref={dialog} className="dialog" aria-labelledby="del-h">
         <form method="dialog" className="stack" onSubmit={(e) => { e.preventDefault(); void deleteAccount(); }}>
           <h2 id="del-h">Xóa vĩnh viễn tài khoản?</h2>
-          <div className="field"><label htmlFor="del-pw">Mật khẩu</label><input id="del-pw" type="password" className="input" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /></div>
+          <div className="field"><label htmlFor="del-pw">Mật khẩu</label><input id="del-pw" type="password" className="input" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /><p className="xsmall muted">Để trống nếu tài khoản đăng nhập bằng Google hoặc Apple và không có mật khẩu.</p></div>
           <div className="field"><label htmlFor="del-c">Gõ <strong>XOA TAI KHOAN</strong> để xác nhận</label><input id="del-c" className="input" value={confirm} onChange={(e) => setConfirm(e.target.value)} /></div>
           {delErr ? <div className="notice notice-error" role="alert">{delErr}</div> : null}
           <div className="row"><button type="submit" className="btn btn-danger" disabled={confirm !== "XOA TAI KHOAN"}>Xóa vĩnh viễn</button><button type="button" className="btn btn-quiet" onClick={() => dialog.current?.close()}>Hủy</button></div>
