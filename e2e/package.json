@@ -1,0 +1,21 @@
+{
+  "name": "reality-e2e",
+  "private": true,
+  "description": "Browser E2E + visual evidence. Kept out of the npm workspaces so CI installs it only at release gates.",
+  "type": "module",
+  "scripts": {
+    "e2e": "node run.mjs"
+  },
+  "dependencies": {
+    "@sparticuz/chromium": "^138.0.2",
+    "axe-core": "^4.10.3",
+    "lighthouse": "^13.5.0",
+    "mailparser": "^3.9.36",
+    "pg": "^8.16.0",
+    "playwright-core": "1.54.2",
+    "smtp-server": "^3.19.17"
+  },
+  "overrides": {
+    "nodemailer": "10.2.1"
+  }
+}

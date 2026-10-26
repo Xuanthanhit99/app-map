@@ -70,14 +70,16 @@ export function resolvePresentation<TDomain>(
   if (state.contentAvailability === "EMPTY") {
     headline = "Chưa có dữ liệu";
     supportingText = `Chưa có ${ctx.domainLabel.toLowerCase()} cho ngữ cảnh này.`;
-    tone = "muted";
+    // Precedence 1: a hard safety consequence is never downgraded by lower layers.
+    tone = safetyTone ?? "muted";
     badges.push("EMPTY");
   }
 
   if (state.truthStatus === "UNKNOWN") {
     headline = ctx.unknownHeadline ?? "Chưa rõ tình trạng";
     supportingText = "Chưa có đủ dữ liệu để xác nhận tình trạng hiện tại.";
-    tone = "uncertainty";
+    // Unknown != Safe, and Unknown must not mask a Journey/Impact safety consequence.
+    tone = safetyTone ?? "uncertainty";
     cta = ctx.askCta;
     badges.push("UNKNOWN");
   } else if (state.truthStatus === "CONFLICT") {

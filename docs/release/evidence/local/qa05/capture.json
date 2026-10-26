@@ -1,0 +1,799 @@
+{
+  "capturedAt": "2026-10-26T07:55:55.216Z",
+  "web": "http://127.0.0.1:3000",
+  "notes": [
+    {
+      "file": "desktop-1536-home.png",
+      "path": "/",
+      "status": 200,
+      "fonts": {
+        "sample": "Biết điều gì đang thật sự xảy ra, trước khi bạn ra đường.",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "desktop-1536-map.png",
+      "path": "/ban-do",
+      "status": 200,
+      "fonts": {
+        "sample": "Bản đồ tình trạng",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "desktop-1536-place.png",
+      "path": "/dia-diem/186-coffee-roasters-n14119231102",
+      "status": 200,
+      "fonts": {
+        "sample": "186 Coffee Roasters",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "desktop-1536-decide.png",
+      "path": "/di-dau",
+      "status": 200,
+      "fonts": {
+        "sample": "Đi đâu bây giờ?",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "desktop-1536-privacy.png",
+      "path": "/quyen-rieng-tu",
+      "status": 200,
+      "fonts": {
+        "sample": "Chính sách quyền riêng tư",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "desktop-1536-login.png",
+      "path": "/dang-nhap",
+      "status": 200,
+      "fonts": {
+        "sample": "Đăng nhập",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "tablet-820-home.png",
+      "path": "/",
+      "status": 200,
+      "fonts": {
+        "sample": "Biết điều gì đang thật sự xảy ra, trước khi bạn ra đường.",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "tablet-820-map.png",
+      "path": "/ban-do",
+      "status": 200,
+      "fonts": {
+        "sample": "Bản đồ tình trạng",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "tablet-820-place.png",
+      "path": "/dia-diem/186-coffee-roasters-n14119231102",
+      "status": 200,
+      "fonts": {
+        "sample": "186 Coffee Roasters",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "tablet-820-decide.png",
+      "path": "/di-dau",
+      "status": 200,
+      "fonts": {
+        "sample": "Đi đâu bây giờ?",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "tablet-820-privacy.png",
+      "path": "/quyen-rieng-tu",
+      "status": 200,
+      "fonts": {
+        "sample": "Chính sách quyền riêng tư",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "tablet-820-login.png",
+      "path": "/dang-nhap",
+      "status": 200,
+      "fonts": {
+        "sample": "Đăng nhập",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "mobile-390-home.png",
+      "path": "/",
+      "status": 200,
+      "fonts": {
+        "sample": "Biết điều gì đang thật sự xảy ra, trước khi bạn ra đường.",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "mobile-390-map.png",
+      "path": "/ban-do",
+      "status": 200,
+      "fonts": {
+        "sample": "Bản đồ tình trạng",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "mobile-390-place.png",
+      "path": "/dia-diem/186-coffee-roasters-n14119231102",
+      "status": 200,
+      "fonts": {
+        "sample": "186 Coffee Roasters",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "mobile-390-decide.png",
+      "path": "/di-dau",
+      "status": 200,
+      "fonts": {
+        "sample": "Đi đâu bây giờ?",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "mobile-390-privacy.png",
+      "path": "/quyen-rieng-tu",
+      "status": 200,
+      "fonts": {
+        "sample": "Chính sách quyền riêng tư",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "mobile-390-login.png",
+      "path": "/dang-nhap",
+      "status": 200,
+      "fonts": {
+        "sample": "Đăng nhập",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "landscape-844-home.png",
+      "path": "/",
+      "status": 200,
+      "fonts": {
+        "sample": "Biết điều gì đang thật sự xảy ra, trước khi bạn ra đường.",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "landscape-844-map.png",
+      "path": "/ban-do",
+      "status": 200,
+      "fonts": {
+        "sample": "Bản đồ tình trạng",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "landscape-844-place.png",
+      "path": "/dia-diem/186-coffee-roasters-n14119231102",
+      "status": 200,
+      "fonts": {
+        "sample": "186 Coffee Roasters",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "landscape-844-decide.png",
+      "path": "/di-dau",
+      "status": 200,
+      "fonts": {
+        "sample": "Đi đâu bây giờ?",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "landscape-844-privacy.png",
+      "path": "/quyen-rieng-tu",
+      "status": 200,
+      "fonts": {
+        "sample": "Chính sách quyền riêng tư",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    },
+    {
+      "file": "landscape-844-login.png",
+      "path": "/dang-nhap",
+      "status": 200,
+      "fonts": {
+        "sample": "Đăng nhập",
+        "fontFamily": "fontVietnamese, fontLatinExt, fontLatin, \"fontLatin Fallback\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+        "vietnamese": "\"fontVietnamese\"",
+        "preloads": [
+          "/_next/static/media/be_vietnam_pro_latin_400_normal-s.p.19fn_nsidnous.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_600_normal-s.p.076r4lhepcnqo.woff2",
+          "/_next/static/media/be_vietnam_pro_latin_700_normal-s.p.2q6i5oi91ug6_.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_400_normal.p.0ir3lowcg2jd4.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_600_normal.p.13vsqp3suqx94.woff2",
+          "/_next/static/media/be_vietnam_pro_vietnamese_700_normal.p.02am7a5a9xufd.woff2"
+        ],
+        "loaded": [
+          "fontVietnamese 400",
+          "fontVietnamese 600",
+          "fontVietnamese 700",
+          "fontLatinExt 400",
+          "fontLatinExt 600",
+          "fontLatinExt 700",
+          "fontLatin 400",
+          "fontLatin 600",
+          "fontLatin 700"
+        ]
+      },
+      "failedRequests": {
+        "rscPrefetchAborted": 8,
+        "other": 0
+      }
+    }
+  ],
+  "note": "failed requests recorded during capture were Next.js RSC prefetches aborted when the screenshot navigated on. They are not tile or API failures. landscape-844-map.png was recaptured after the short-landscape side rail."
+}

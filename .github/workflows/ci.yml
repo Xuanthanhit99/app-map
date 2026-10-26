@@ -1,36 +1,56 @@
 name: CI
+# Budget policy (≤ $10/month): one job per PR update, no matrix, cancel superseded runs.
+# Browser E2E (e2e/) is run locally / against QA at release gates, not on every push.
 on:
   pull_request:
+    # Evidence/docs-only and browser-E2E-only changes do not need the build job (Actions budget).
+    paths-ignore: ["docs/**", "**/*.md", "e2e/**"]
   push:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  contracts-and-mobile:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - name: Install workspace dependencies
-        run: npm install --no-audit --no-fund
-      - name: Test behavior contracts
-        run: npm test
-      - name: Typecheck core and Expo runtime
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck core, API, mobile, web
         run: npm run typecheck
-      - name: Detect mobile workspace
-        id: mobile
-        shell: bash
-        run: |
-          if [ -f apps/mobile/package.json ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "Mobile workspace is not present on this baseline; mobile export gates are not applicable."
-          fi
-      - name: Export Android production bundle
-        if: steps.mobile.outputs.exists == 'true'
-        run: npm run export:android --workspace @app-map/mobile
-      - name: Export iOS production bundle
-        if: steps.mobile.outputs.exists == 'true'
-        run: npm run export:ios --workspace @app-map/mobile
+      - name: Unit, contract and PostGIS integration tests
+        run: npm test
+      - name: Build web
+        run: npm run build --workspace @app-map/web
+      - name: Export Android production bundle (with source maps for the security gate)
+        run: npm run export:android --workspace @app-map/mobile -- --source-maps
+      - name: Export iOS production bundle (with source maps for the security gate)
+        run: npm run export:ios --workspace @app-map/mobile -- --source-maps
+      - name: Security gate (blocking; exceptions in security/audit-exceptions.json)
+        run: node scripts/security-gate.mjs --bundle-map apps/mobile/dist/android --bundle-map apps/mobile/dist/ios --report security-gate.json
+      - name: Upload security gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-gate
+          path: security-gate.json
+          if-no-files-found: ignore
+          retention-days: 30

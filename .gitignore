@@ -1,0 +1,13 @@
+node_modules/
+.expo/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.DS_Store
+.next/
+apps/web/.next/
+*.tsbuildinfo
+evidence/tmp/
+apps/web/public/vendor/

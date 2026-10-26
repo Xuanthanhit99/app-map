@@ -1,0 +1,143 @@
+{
+  "webUrl": "http://127.0.0.1:3000",
+  "runAt": "2026-10-26T07:54:42.727Z",
+  "expectIndexing": false,
+  "robotsDisallowAll": true,
+  "sitemapUrls": 9,
+  "pagesChecked": 17,
+  "issues": [],
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "ms": 108,
+      "title": "Reality — Điều gì đang thật sự xảy ra quanh bạn",
+      "canonical": "http://127.0.0.1:3000",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/ban-do",
+      "status": 200,
+      "ms": 15,
+      "title": "Bản đồ tình trạng Hà Nội · Reality",
+      "canonical": "http://127.0.0.1:3000/ban-do",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/di-dau",
+      "status": 200,
+      "ms": 18,
+      "title": "Đi đâu bây giờ? · Reality",
+      "canonical": "http://127.0.0.1:3000/di-dau",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/du-lieu",
+      "status": 200,
+      "ms": 17,
+      "title": "Nguồn dữ liệu và giới hạn · Reality",
+      "canonical": "http://127.0.0.1:3000/du-lieu",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/gioi-thieu",
+      "status": 200,
+      "ms": 11,
+      "title": "Giới thiệu · Reality",
+      "canonical": "http://127.0.0.1:3000/gioi-thieu",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/tro-giup",
+      "status": 200,
+      "ms": 10,
+      "title": "Trợ giúp · Reality",
+      "canonical": "http://127.0.0.1:3000/tro-giup",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/quyen-rieng-tu",
+      "status": 200,
+      "ms": 11,
+      "title": "Chính sách quyền riêng tư · Reality",
+      "canonical": "http://127.0.0.1:3000/quyen-rieng-tu",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/dieu-khoan",
+      "status": 200,
+      "ms": 11,
+      "title": "Điều khoản sử dụng · Reality",
+      "canonical": "http://127.0.0.1:3000/dieu-khoan",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/cau-chuyen",
+      "status": 200,
+      "ms": 17,
+      "title": "Câu chuyện về Hà Nội · Reality",
+      "canonical": "http://127.0.0.1:3000/cau-chuyen",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "ms": 11,
+      "title": "Reality — Điều gì đang thật sự xảy ra quanh bạn",
+      "canonical": "http://127.0.0.1:3000",
+      "robots": null,
+      "h1": 1
+    },
+    {
+      "path": "/tai-khoan",
+      "status": 307,
+      "robots": null,
+      "private": true
+    },
+    {
+      "path": "/quan-tri",
+      "status": 307,
+      "robots": null,
+      "private": true
+    },
+    {
+      "path": "/dang-nhap",
+      "status": 200,
+      "robots": "noindex, follow",
+      "private": true
+    },
+    {
+      "path": "/dang-ky",
+      "status": 200,
+      "robots": "noindex, follow",
+      "private": true
+    },
+    {
+      "path": "/quen-mat-khau",
+      "status": 200,
+      "robots": "noindex, nofollow",
+      "private": true
+    },
+    {
+      "path": "/dat-lai-mat-khau",
+      "status": 200,
+      "robots": "noindex, nofollow",
+      "private": true
+    },
+    {
+      "path": "/xac-minh-email",
+      "status": 200,
+      "robots": "noindex, nofollow",
+      "private": true
+    }
+  ]
+}
