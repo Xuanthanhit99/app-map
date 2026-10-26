@@ -5,7 +5,7 @@
 - Starting HEAD observed in this environment: `215b144` (the brief's `c3e14b4` is an earlier commit on the same branch; GitHub HEAD had already moved)
 - Brief: "REALITY V2 — QA INTEGRATION & RELEASE GATE RECOVERY"
 
-Code commit: `2524b87`. This file is the evidence commit on top of it.
+Code commit: `2524b87`. CI was recorded on head `c195a69` after run `40285133976` finished.
 
 ## What changed in this pass
 
@@ -29,7 +29,7 @@ Code commit: `2524b87`. This file is the evidence commit on top of it.
 | Live ingestion into database `reality_qa` (`APP_ENV` not used; adapters called directly after `migrate`) | 6 migrations applied. Open-Meteo **SUCCEEDED** (1 cell, value recorded). Overpass first attempt **FAILED** `HTTP_502` (2 attempts). Retry **SUCCEEDED**: 67 cafes in bbox `105.84,21.02,105.85,21.03`, licence ODbL-1.0, attribution © OpenStreetMap contributors |
 | QA API on `127.0.0.1:3011` (`APP_ENV=qa`, `MAIL_TRANSPORT=none`, no TomTom key) | `/health/ready` 200: database, PostGIS, migrations 6, `routingConfigured: false`, `env: qa`. Register 201 with `verificationEmail: UNAVAILABLE`. Refresh rotated; reuse of the old refresh token returned 401 `REFRESH_TOKEN_REVOKED` and revoked the family. Anonymous admin 401 `UNAUTHENTICATED`. Signed-in user admin 403 `INSUFFICIENT_ROLE`. Export 200 `reality-export/1`. Delete 204; later login 401; `users` count 0. `POST /v1/routing/route` 503 `ROUTING_PROVIDER_NOT_CONFIGURED` (straight-line routing was not used). Forgot-password 503 `EMAIL_DELIVERY_UNAVAILABLE` because no SMTP catcher was configured for this boot |
 
-CI for this commit is not yet recorded. The last green run remains `39745834087` on `4678f78`.
+CI run `40285133976` on `c195a69` **succeeded** (14:19–14:21 Asia/Bangkok). The verify job passed typecheck, 55 files / 379 PostGIS tests, the web build, Android and iOS source-map exports, and the security gate. The gate log says image-size and node-forge are absent from the bundles and decode-uri-component is in the bundle, which matches its exception. https://github.com/Xuanthanhit99/app-map/actions/runs/40285133976
 
 ## Railway
 

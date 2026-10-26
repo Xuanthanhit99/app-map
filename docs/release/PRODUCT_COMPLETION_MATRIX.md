@@ -1,6 +1,6 @@
 # Product Completion Matrix
 
-Verified on 2026-10-26 (Asia/Bangkok) on `feat/reality-v2-completion`, Draft PR #5, code commit `2524b87`. Local suite: 55 files / 379 tests. The previous matrix baseline was commit `4678f78`. CI for `2524b87` is not yet recorded.
+Verified on 2026-10-26 (Asia/Bangkok) on `feat/reality-v2-completion`, Draft PR #5. Code commit `2524b87`; CI head `c195a69`. Local and CI suite: 55 files / 379 tests (run `40285133976`). The previous matrix baseline was commit `4678f78`.
 
 Status values:
 - **DONE**: implemented and verified by a recorded test.
@@ -37,7 +37,7 @@ Visual conformance is BLOCKED for every row: the approved masters are missing. T
 | SEO | Sitemap, robots, canonical, JSON-LD, indexing boundary | ✅ | ✅ | n/a | `seo-crawl.json` (0 issues) | DONE-LOCAL. Deployed crawl NOT RUN |
 | Performance | Lab budgets | n/a | measured | — | `lighthouse.json` | PARTIAL: text pages perf 0.87–0.90 mobile, LCP over budget; map page heavy (software WebGL in sandbox) |
 | A11y | axe on key pages; Lighthouse a11y | n/a | ✅ 1.0 | contrast via shared tokens | E2E axe, `theme-parity.test` | DONE (automated). Manual screen reader NOT RUN |
-| Security | Enforced dependency gate, headers, rate limits, internal-hop identity | ✅ | ✅ | bundle-verified on the previous CI export | `audit-gate.json` (2026-10-26 PASS: 0 critical, 3 excepted packages, e2e tree clean), `security-gate.test`, nodemailer 10.2.1 | DONE (local). Bundle re-check waits on the next CI export |
+| Security | Enforced dependency gate, headers, rate limits, internal-hop identity | ✅ | ✅ | CI run `40285133976`: image-size and node-forge absent from both bundles; decode-uri-component in the bundle as classified | `audit-gate.json`, `security-gate.test`, nodemailer 10.2.1 | DONE |
 | Ops | QA environment | config ✅ | config ✅ | — | `QA_DEPLOYMENT.md`, `CHECKPOINT-04.md` | BLOCKED: no Railway token in this environment. Platform endpoint answered on 2026-10-26. Local `APP_ENV=qa` boot is not a deployment |
 | Ops | Installable Android test build | n/a | n/a | workflow ✅ | `native-qa-build.yml` | BLOCKED: needs QA URL; not run |
 | Ops | iOS test build, store submission | n/a | n/a | — | — | BLOCKED: Apple credentials; submission requires owner approval |

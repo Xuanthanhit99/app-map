@@ -3,7 +3,7 @@
 Gate definitions come from the V2 brief §14. A gate is marked PASS only when its full definition was met with recorded evidence. Local runs that support a gate without meeting its environment requirement are listed as supporting evidence, not as PASS.
 
 **Run context (this revision)**
-- Branch: `feat/reality-v2-completion`, Draft PR #5. Code commit: `2524b87`. Previous evidence commit: `215b144`. Earlier CI record: `4678f78` / run `39745834087`.
+- Branch: `feat/reality-v2-completion`, Draft PR #5. Code commit: `2524b87`. CI head that this record covers: `c195a69` (run `40285133976`). Earlier CI record: `4678f78` / run `39745834087`.
 - Date: 2026-10-26.
 - Local environment: Linux sandbox, Node 22.23, PostgreSQL 16 + PostGIS 3.4.
   - Integration suite: `TEST_DATABASE_URL` set; tests fail (they do not skip) if that database is unreachable.
@@ -16,7 +16,7 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 | Gate | Status | Reason |
 |---|---|---|
 | G0 Repository & contract recovery | **PASS** | Unchanged; masters still missing |
-| G1 Backend | **PASS (local); CI pending this SHA** | 55 files / 379 tests incl. PostGIS. Last green CI is still run `39745834087` on `4678f78`, which does not cover this commit |
+| G1 Backend | **PASS (local + CI)** | 55 files / 379 tests incl. PostGIS. CI run `40285133976` succeeded on `c195a69` (14:19–14:21 Asia/Bangkok) |
 | G2 Data readiness | **BLOCKED** | Railway `reality-qa` still not created. Supporting only: one live Overpass tile (67 cafes) and one Open-Meteo cell on a local `APP_ENV=qa` database. No licensed live traffic / flood / parking feeds |
 | G3 Web functional | **BLOCKED** | 26/26 browser E2E PASS locally on the previous revision (desktop, tablet, mobile, landscape); the gate requires real QA APIs |
 | G4 Native Android | **BLOCKED** | JS bundles only. An installable debug-signed APK workflow exists (manual), but it needs the QA URL; no device testing |
@@ -24,7 +24,7 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 | G6 Reality & trust | **BLOCKED** | Invariants PASS; State Matrix V2 still missing |
 | G7 Visual fidelity | **BLOCKED** | Navy + amber reconstruction applied across web and mobile; screenshots at 1536 / 820 / 390 / landscape; **owner approval required**, masters missing |
 | G8 SEO | **NOT RUN** (partial local PASS) | Previous local crawl 17 pages / 0 issues and the Lighthouse lab run still stand. This revision did not re-crawl. Deployed crawl and field CWV not run |
-| G9 Security & privacy | **PASS (local); CI pending this SHA** | Enforced gate: 0 critical. 3 documented exceptions, re-checked. Nodemailer addressparser advisories fixed in the API and e2e trees. Recovery flows remain covered by integration tests and the earlier E2E |
+| G9 Security & privacy | **PASS (local + CI)** | Enforced gate: 0 critical. 3 documented exceptions. CI confirmed image-size and node-forge absent from both bundles; decode-uri-component is in the bundle, as classified. Nodemailer addressparser advisories fixed |
 | G10 End-to-end product | **BLOCKED** | Full loop PASS locally with fixtures + straight-line routing; real routing / QA data needed |
 | G11 Release candidate | **FAIL** | G2–G8 and G10 unverified; QA not deployed |
 
@@ -32,7 +32,7 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 
 ## Details
 
-### G1 — Backend — PASS (local); CI pending this SHA
+### G1 — Backend — PASS (local + CI)
 - Commands on 2026-10-26:
   - `npm run typecheck` (exit 0)
   - `TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres npx vitest run` → **55 files, 379 tests, 0 failures**
@@ -46,7 +46,8 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 - When `TEST_DATABASE_URL` is set and the database is unreachable, the integration tests **fail**; they do not skip. Observed locally. The CI job sets it.
 - CI record:
   - Run `39724229411` succeeded on `c3e14b4`.
-  - Run `39745834087` succeeded on `4678f78`. It covered the PostGIS integration tests, web build, Android / iOS exports with source maps, and the **blocking security gate** (step success; report artifact uploaded). Logs and artifacts cannot be downloaded from the sandbox.
+  - Run `39745834087` succeeded on `4678f78`.
+  - Run `40285133976` succeeded on `c195a69` (started 14:19, finished 14:21 Asia/Bangkok). The verify job passed typecheck, **55 files / 379 tests** with PostGIS, the web build, Android and iOS exports with source maps, and the blocking security gate. Gate log: `security gate: PASS`; bundle maps 2; image-size and node-forge `absent`; decode-uri-component `IN BUNDLE` (the documented runtime-unreachable exception). https://github.com/Xuanthanhit99/app-map/actions/runs/40285133976
 
 ### G2 — Data readiness — BLOCKED
 - Railway project still not created (no token in this environment). The platform pause string from 2026-10-22 was not reproduced; the GraphQL endpoint answered HTTP 400.
@@ -104,10 +105,11 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 - Fonts are the main LCP render-delay contributor on text pages. One weight was dropped. Moving to `next/font` with adjusted fallbacks is a recommended follow-up.
 - Not run: crawl of the deployed QA site, field Core Web Vitals.
 
-### G9 — Security & privacy — PASS (local); CI pending this SHA
+### G9 — Security & privacy — PASS (local + CI)
 - Security gate:
   - `scripts/security-gate.mjs` is blocking in CI and now also audits `e2e/package-lock.json`. Tested in `tests/security-gate.test.ts` (5 cases).
   - **0 critical**. 4 advisories in 3 packages are documented exceptions (image-size, node-forge, decode-uri-component). The e2e tree has 0 advisories.
+  - Run `40285133976` checked both production bundle source maps: image-size and node-forge absent; decode-uri-component present, which is the allowed `runtime-unreachable` case.
   - Nodemailer 10.2.1 removes the three addressparser advisories from the API image and the e2e mail stack.
   - braces and sprintf-js exceptions were removed because those advisories were withdrawn.
   - vitest critical issues remain fixed (2.1.9 → 4.1.12). postcss and uuid remain patched.
