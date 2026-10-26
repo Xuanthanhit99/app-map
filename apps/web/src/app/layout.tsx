@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { fontVariableClass } from "@/fonts";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader, TabBar } from "@/components/site-chrome";
 import { SITE_URL } from "@/lib/config";
@@ -20,7 +21,7 @@ export const viewport: Viewport = { themeColor: "#071C2C", width: "device-width"
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
   return (
-    <html lang="vi">
+    <html lang="vi" className={fontVariableClass}>
       <body>
         <a className="skip-link" href="#main">Bỏ qua tới nội dung chính</a>
         <SiteHeader user={user ? { displayName: user.displayName, role: user.role } : null} />

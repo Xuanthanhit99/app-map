@@ -12,6 +12,7 @@ import type { Place, PlaceDetail, PublicReport, RealityState } from "@/lib/types
 import { IconAlert, IconInfo, IconLocate, IconPlus } from "../icons";
 import { StateCard, StateChip, domainLabel } from "../state";
 import { basemapStyle, COLORS, LOCATE_MESSAGES, locateOnce, prefersReducedMotion, STATE_COLOR, type BrowserFix } from "./map-core";
+import { mapRenderOptions } from "./map-render";
 import { ReportPanel } from "./report-panel";
 
 type Category = { id: string; label: string; placeCount: number };
@@ -56,6 +57,7 @@ export function MapExplorer(props: { initialQuery?: string; initialAt?: [number,
       maxBounds: [[101.5, 7.5], [110.5, 24]],
       attributionControl: { compact: true },
       cooperativeGestures: false,
+      ...mapRenderOptions(),
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: true }), "bottom-right");
     m.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");

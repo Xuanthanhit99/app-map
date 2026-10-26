@@ -1,8 +1,7 @@
 /* REALITY web — "Night Chart" navy + amber (src/theme/navy-amber.ts). PROPOSED RECONSTRUCTION pending approved masters.
-   State is never carried by colour alone: every state chip also has a glyph and words. */
-@import "@fontsource/be-vietnam-pro/400.css";
-@import "@fontsource/be-vietnam-pro/600.css";
-@import "@fontsource/be-vietnam-pro/700.css";
+   State is never carried by colour alone: every state chip also has a glyph and words.
+   Be Vietnam Pro is loaded by next/font in src/fonts.ts (woff2 subsets). The stack order is the subset order. */
+
 
 :root {
   /* Night Chart — navy + amber (mirrors src/theme/navy-amber.ts; parity enforced by tests/theme-parity.test.ts). */
@@ -17,7 +16,7 @@
   --hero: #0B2638;
   --r-chip: 18px; --r-control: 12px; --r-card: 16px; --r-sheet: 24px;
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px; --s12: 48px; --s16: 64px;
-  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font: var(--font-vietnamese), var(--font-latin-ext), var(--font-latin), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --t-xs: 0.8125rem; --t-sm: 0.875rem; --t-md: 1rem; --t-lg: 1.25rem; --t-xl: 1.5625rem; --t-2xl: 1.953rem; --t-3xl: 2.441rem; --t-4xl: 3.052rem;
   --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
   --header-h: 60px;
@@ -235,6 +234,11 @@ textarea.input { min-height: 96px; resize: vertical; }
   .map-status { bottom: auto; top: 12px; left: 12px; right: 76px; }
 }
 @media (min-width: 901px) { .map-side .grabber { display: none; } }
+@media (orientation: landscape) and (max-height: 520px) {
+  /* Short landscape: a bottom sheet at 55% covers the map. Use a side rail instead, same as the journey screen. */
+  .map-shell { grid-template-columns: minmax(240px, 34%) minmax(0, 1fr); height: calc(100dvh - var(--header-h) - 56px - env(safe-area-inset-bottom)); }
+  .map-side { position: relative; inset: auto; max-height: none; border-radius: 0; border-top: 0; border-right: 1px solid var(--line); box-shadow: none; }
+}
 
 .marker-pin { width: 16px; height: 16px; border-radius: 50%; background: var(--lake-700); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); cursor: pointer; }
 
