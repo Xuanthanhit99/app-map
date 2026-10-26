@@ -3,28 +3,28 @@
 Gate definitions come from the V2 brief §14. A gate is marked PASS only when its full definition was met with recorded evidence. Local runs that support a gate without meeting its environment requirement are listed as supporting evidence, not as PASS.
 
 **Run context (this revision)**
-- Commit: `4678f78` on `feat/reality-v2-completion` (Draft PR #5). Earlier record: `bdb769b` / `c3e14b4`.
-- Date: 2026-10-22.
-- Local environment: Linux sandbox, Node 22.22, PostgreSQL 16 + PostGIS 3.4.
-  - API: `APP_ENV=development`, dev fixtures, `DEV_FAKE_ROUTING=true`, `MAIL_TRANSPORT=smtp` to a local SMTP sink, `INTERNAL_PROXY_SECRET` set.
-  - Web: `next start` production build.
-- The sandbox cannot reach Overpass, Open-Meteo, OSM tiles, TomTom, Gradle/Maven, the Expo API or `*.railway.app`.
-- QA (`reality-qa` on Railway): approved by the owner, but **not created**. Railway answered "Deploys have been paused due to an upstream issue" on every attempt (see `QA_DEPLOYMENT.md`).
+- Branch: `feat/reality-v2-completion`, Draft PR #5. Code commit: `2524b87`. Previous evidence commit: `215b144`. Earlier CI record: `4678f78` / run `39745834087`.
+- Date: 2026-10-26.
+- Local environment: Linux sandbox, Node 22.23, PostgreSQL 16 + PostGIS 3.4.
+  - Integration suite: `TEST_DATABASE_URL` set; tests fail (they do not skip) if that database is unreachable.
+  - Separate local QA boot: `APP_ENV=qa`, fixtures and straight-line routing refused by config, `MAIL_TRANSPORT=none`, no TomTom key. Database `reality_qa` on localhost. This is not the Railway project.
+- Overpass and Open-Meteo were reachable. TomTom, Gradle/Maven, the Expo API and a Railway account were not.
+- QA (`reality-qa` on Railway): still **not created**. The GraphQL endpoint answered (HTTP 400 on an empty request). This environment has no Railway token, so nothing was created or billed. See `QA_DEPLOYMENT.md` and `docs/audit/CHECKPOINT-04.md`.
 
 ## Summary
 
 | Gate | Status | Reason |
 |---|---|---|
 | G0 Repository & contract recovery | **PASS** | Unchanged; masters still missing |
-| G1 Backend | **PASS (local + CI)** | 54 files / 377 tests incl. PostGIS; CI run `39745834087` success on `4678f78` |
-| G2 Data readiness | **BLOCKED** | No QA environment (Railway incident); live ingestion unverified; no licensed live traffic / flood / parking feeds |
-| G3 Web functional | **BLOCKED** | 26/26 browser E2E PASS locally (desktop, tablet, mobile, landscape); the gate requires real QA APIs |
+| G1 Backend | **PASS (local); CI pending this SHA** | 55 files / 379 tests incl. PostGIS. Last green CI is still run `39745834087` on `4678f78`, which does not cover this commit |
+| G2 Data readiness | **BLOCKED** | Railway `reality-qa` still not created. Supporting only: one live Overpass tile (67 cafes) and one Open-Meteo cell on a local `APP_ENV=qa` database. No licensed live traffic / flood / parking feeds |
+| G3 Web functional | **BLOCKED** | 26/26 browser E2E PASS locally on the previous revision (desktop, tablet, mobile, landscape); the gate requires real QA APIs |
 | G4 Native Android | **BLOCKED** | JS bundles only. An installable debug-signed APK workflow exists (manual), but it needs the QA URL; no device testing |
 | G5 Native iOS | **BLOCKED** | Needs Apple signing / EAS credentials and a device |
 | G6 Reality & trust | **BLOCKED** | Invariants PASS; State Matrix V2 still missing |
 | G7 Visual fidelity | **BLOCKED** | Navy + amber reconstruction applied across web and mobile; screenshots at 1536 / 820 / 390 / landscape; **owner approval required**, masters missing |
-| G8 SEO | **NOT RUN** (partial local PASS) | Local crawl 17 pages / 0 issues; Lighthouse lab run done; deployed crawl and field CWV not run |
-| G9 Security & privacy | **PASS (local + CI)** | Enforced security gate (0 critical, 6 documented exceptions); recovery and verification flows E2E PASS |
+| G8 SEO | **NOT RUN** (partial local PASS) | Previous local crawl 17 pages / 0 issues and the Lighthouse lab run still stand. This revision did not re-crawl. Deployed crawl and field CWV not run |
+| G9 Security & privacy | **PASS (local); CI pending this SHA** | Enforced gate: 0 critical. 3 documented exceptions, re-checked. Nodemailer addressparser advisories fixed in the API and e2e trees. Recovery flows remain covered by integration tests and the earlier E2E |
 | G10 End-to-end product | **BLOCKED** | Full loop PASS locally with fixtures + straight-line routing; real routing / QA data needed |
 | G11 Release candidate | **FAIL** | G2–G8 and G10 unverified; QA not deployed |
 
@@ -32,11 +32,12 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 
 ## Details
 
-### G1 — Backend — PASS (local + CI)
-- Commands:
+### G1 — Backend — PASS (local); CI pending this SHA
+- Commands on 2026-10-26:
   - `npm run typecheck` (exit 0)
-  - `TEST_DATABASE_URL=postgres://postgres@127.0.0.1:5432/postgres npx vitest run` → **54 files, 377 tests, 0 failures**
-- New coverage in this revision:
+  - `TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres npx vitest run` → **55 files, 379 tests, 0 failures**
+- Added: mail-recipient boundary (registration rejects the nodemailer addressparser proofs; installed parser does not emit an `@evil.com` recipient).
+- Coverage added on 2026-10-22 and still in this suite:
   - account recovery: verification, reset, expiry, single use, email binding, enumeration resistance, session revocation, change notices;
   - federated sign-in with nonce binding;
   - push dispatch: consent, quiet hours, priority, dead-token disable, no coordinates in payload;
@@ -48,9 +49,10 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
   - Run `39745834087` succeeded on `4678f78`. It covered the PostGIS integration tests, web build, Android / iOS exports with source maps, and the **blocking security gate** (step success; report artifact uploaded). Logs and artifacts cannot be downloaded from the sandbox.
 
 ### G2 — Data readiness — BLOCKED
-- QA environment not created (Railway platform incident).
-- Adapters verified only against recorded payloads.
-- To unblock, follow the runbook in `QA_DEPLOYMENT.md`.
+- Railway project still not created (no token in this environment). The platform pause string from 2026-10-22 was not reproduced; the GraphQL endpoint answered HTTP 400.
+- Supporting local evidence, not a gate pass: database `reality_qa`, six migrations, then a live ingest of bbox `105.84,21.02,105.85,21.03`. Overpass returned 67 cafes on the retry (first attempt `HTTP_502`). Open-Meteo stored one forecast cell. Public place responses carry `license: ODbL-1.0` and `© OpenStreetMap contributors`.
+- No licensed live traffic, flood, or parking feed.
+- To unblock the gate, follow `QA_DEPLOYMENT.md` with the owner's Railway token and TomTom key.
 
 ### G3 — Web functional — BLOCKED (local E2E 26/26)
 - Command: `bash e2e/reset-db.sh && cd e2e && SMTP_SINK_PORT=2525 DATABASE_URL=…/reality_e2e node run.mjs`.
@@ -102,11 +104,13 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 - Fonts are the main LCP render-delay contributor on text pages. One weight was dropped. Moving to `next/font` with adjusted fallbacks is a recommended follow-up.
 - Not run: crawl of the deployed QA site, field Core Web Vitals.
 
-### G9 — Security & privacy — PASS (local + CI)
+### G9 — Security & privacy — PASS (local); CI pending this SHA
 - Security gate:
-  - `scripts/security-gate.mjs` is blocking in CI. Tested in `tests/security-gate.test.ts`.
-  - **0 critical**; 6 advisories in 5 packages are documented and verified absent from shipped bundles, except one runtime-unreachable case (see `SECURITY_FINDINGS.md`).
-  - vitest critical issues fixed (2.1.9 → 4.1.12). postcss and uuid patched.
+  - `scripts/security-gate.mjs` is blocking in CI and now also audits `e2e/package-lock.json`. Tested in `tests/security-gate.test.ts` (5 cases).
+  - **0 critical**. 4 advisories in 3 packages are documented exceptions (image-size, node-forge, decode-uri-component). The e2e tree has 0 advisories.
+  - Nodemailer 10.2.1 removes the three addressparser advisories from the API image and the e2e mail stack.
+  - braces and sprintf-js exceptions were removed because those advisories were withdrawn.
+  - vitest critical issues remain fixed (2.1.9 → 4.1.12). postcss and uuid remain patched.
 - Account recovery:
   - single-use hashed tokens with expiry and email binding;
   - no account enumeration;

@@ -60,4 +60,4 @@ E2E: `bash e2e/reset-db.sh && cd e2e && DATABASE_URL=.../reality_e2e node run.mj
 - Product: `docs/product/REALITY_FULL_PRODUCT_MASTER.md`
 - Architecture: `docs/architecture/REALITY_SYSTEM_ARCHITECTURE.md`
 - Completion: `docs/release/PRODUCT_COMPLETION_MATRIX.md`
-- Gates G0–G11: `docs/release/RELEASE_GATES.md`. The current recommendation is **NOT READY**.
+- Gates G0–G11: `docs/release/RELEASE_GATES.md`. The current recommendation is **NOT READY**. Latest checkpoint: `docs/audit/CHECKPOINT-04.md`.

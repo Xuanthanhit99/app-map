@@ -1,6 +1,8 @@
 # Visual Fidelity Evidence (G7)
 
-**Status: BLOCKED pending owner approval.** No approved visual masters exist in the repository or in the available project artifacts:
+**Status: BLOCKED pending owner approval.** No new screenshots were taken on 2026-10-26. The only UI change since the captures below is one sentence on the web account-deletion dialog (a Google/Apple account with no password may leave the password blank). That sentence was not re-captured, and it does not change the gate.
+
+No approved visual masters exist in the repository or in the available project artifacts:
 - the Responsive Production Master;
 - the Journey G01 Visual Master V1;
 - the Product V2 four-panel master;

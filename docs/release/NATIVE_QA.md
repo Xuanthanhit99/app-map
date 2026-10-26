@@ -2,6 +2,8 @@
 
 **Status: BLOCKED.** Expo bundle exports are not device tests and are not counted as such.
 
+Rechecked 2026-10-26: this machine has Java 21 and does not have `sdkmanager`, Gradle, `eas`, or `ANDROID_HOME`. No installable APK or IPA was produced.
+
 | Check | Android | iOS | Evidence / blocker |
 |---|---|---|---|
 | Production JS bundle (Hermes) | PASS | PASS | `npm run export:{android,ios} -- --source-maps`: 2.95 MB each |

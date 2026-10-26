@@ -1,6 +1,6 @@
 # Product Completion Matrix
 
-Verified at commit `4678f78` (branch `feat/reality-v2-completion`, Draft PR #5) on 2026-10-22, in the local sandbox.
+Verified on 2026-10-26 (Asia/Bangkok) on `feat/reality-v2-completion`, Draft PR #5, code commit `2524b87`. Local suite: 55 files / 379 tests. The previous matrix baseline was commit `4678f78`. CI for `2524b87` is not yet recorded.
 
 Status values:
 - **DONE**: implemented and verified by a recorded test.
@@ -18,10 +18,10 @@ Visual conformance is BLOCKED for every row: the approved masters are missing. T
 | Identity | Password reset / account recovery (30 min, revokes sessions, change notice) | ✅ | ✅ | ✅ request + deep-link reset screen | `api-account-recovery.int`, E2E G9 forgot → reset | DONE-LOCAL. Same note as above |
 | Identity | Change password (notifies owner) | ✅ | ✅ (new) | ✅ (new) | int test | DONE |
 | Identity | Google / Apple sign-in (native, nonce-bound) | ✅ verifier + nonce | — | ✅ shown only when configured | `api-federated.int` | BLOCKED: client IDs, Apple team, native build |
-| Privacy | Consent, export, account deletion | ✅ | ✅ | ✅ native JSON export via share sheet (new) | int + E2E G9 export | DONE (mobile export not device-tested) |
+| Privacy | Consent, export, account deletion | ✅ | ✅ deletion dialog says a Google/Apple account with no password may leave the password blank | ✅ native JSON export via share sheet | int + E2E G9 export; local `APP_ENV=qa` export 200 and delete 204 | DONE (mobile export not device-tested; web copy change not re-screenshotted) |
 | Privacy | Location consent / revocation | n/a | browser-managed | ✅ OS permission status, "no background location", link to OS settings | code; `app.json` disables background location | DONE (device test pending) |
 | Reality | State engine, place / area / map / pulse | ✅ | ✅ | ✅ | unit + int + E2E | DONE |
-| Data | OSM places + Open-Meteo ingestion, breaker, retention | ✅ | admin views | n/a | int tests (recorded payloads) | DONE-LOCAL. Live: BLOCKED (QA not created) |
+| Data | OSM places + Open-Meteo ingestion, breaker, retention | ✅ | admin views | n/a | int tests (recorded payloads); local QA database live tile: 67 OSM cafes (ODbL) and 1 Open-Meteo cell. First Overpass attempt HTTP 502, retry succeeded | DONE-LOCAL plus one live sample. Deployed QA: BLOCKED (Railway project not created) |
 | Data | Live traffic, flood, parking occupancy, transit, events | — | — | — | — | BLOCKED: no licensed feed; shown as UNKNOWN |
 | Contribution | Reports, corroboration, votes, holds, moderation | ✅ | ✅ | ✅ | int + E2E G10 | DONE |
 | Contribution | Report photos | — | — | — | — | BLOCKED: object storage |
@@ -37,7 +37,7 @@ Visual conformance is BLOCKED for every row: the approved masters are missing. T
 | SEO | Sitemap, robots, canonical, JSON-LD, indexing boundary | ✅ | ✅ | n/a | `seo-crawl.json` (0 issues) | DONE-LOCAL. Deployed crawl NOT RUN |
 | Performance | Lab budgets | n/a | measured | — | `lighthouse.json` | PARTIAL: text pages perf 0.87–0.90 mobile, LCP over budget; map page heavy (software WebGL in sandbox) |
 | A11y | axe on key pages; Lighthouse a11y | n/a | ✅ 1.0 | contrast via shared tokens | E2E axe, `theme-parity.test` | DONE (automated). Manual screen reader NOT RUN |
-| Security | Enforced dependency gate, headers, rate limits, internal-hop identity | ✅ | ✅ | bundle-verified | `audit-gate.json`, `security-gate.test` | DONE |
-| Ops | QA environment | config ✅ | config ✅ | — | `QA_DEPLOYMENT.md` | BLOCKED: Railway platform incident ("deploys paused") |
+| Security | Enforced dependency gate, headers, rate limits, internal-hop identity | ✅ | ✅ | bundle-verified on the previous CI export | `audit-gate.json` (2026-10-26 PASS: 0 critical, 3 excepted packages, e2e tree clean), `security-gate.test`, nodemailer 10.2.1 | DONE (local). Bundle re-check waits on the next CI export |
+| Ops | QA environment | config ✅ | config ✅ | — | `QA_DEPLOYMENT.md`, `CHECKPOINT-04.md` | BLOCKED: no Railway token in this environment. Platform endpoint answered on 2026-10-26. Local `APP_ENV=qa` boot is not a deployment |
 | Ops | Installable Android test build | n/a | n/a | workflow ✅ | `native-qa-build.yml` | BLOCKED: needs QA URL; not run |
 | Ops | iOS test build, store submission | n/a | n/a | — | — | BLOCKED: Apple credentials; submission requires owner approval |
