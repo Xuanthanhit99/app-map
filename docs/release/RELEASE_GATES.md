@@ -3,27 +3,27 @@
 Gate definitions come from the V2 brief §14. A gate is marked PASS only when its full definition was met with recorded evidence. Local runs that support a gate without meeting its environment requirement are listed as supporting evidence, not as PASS.
 
 **Run context (this revision)**
-- Branch: `feat/reality-v2-completion`, Draft PR #5. Code commit: `2524b87`. CI head that this record covers: `c195a69` (run `40285133976`). Earlier CI record: `4678f78` / run `39745834087`.
+- Branch: `feat/reality-v2-completion`, Draft PR #5. Implementation: `b136268`. Previous recorded CI head: `5b1bb15` (run `40285556100`, which recorded run `40285133976` on `c195a69`). This evidence commit starts one new verify run because it contains the web change; that run is not marked PASS here.
 - Date: 2026-10-26.
 - Local environment: Linux sandbox, Node 22.23, PostgreSQL 16 + PostGIS 3.4.
   - Integration suite: `TEST_DATABASE_URL` set; tests fail (they do not skip) if that database is unreachable.
-  - Separate local QA boot: `APP_ENV=qa`, fixtures and straight-line routing refused by config, `MAIL_TRANSPORT=none`, no TomTom key. Database `reality_qa` on localhost. This is not the Railway project.
+  - Separate local QA boot: `APP_ENV=qa`, fixtures and straight-line routing not enabled, `MAIL_TRANSPORT=smtp` to a local catcher (Mailpit is not installed), no TomTom key. Database `reality_qa` on localhost. API, ingestion worker and the production web server ran together. This is not the Railway project.
 - Overpass and Open-Meteo were reachable. TomTom, Gradle/Maven, the Expo API and a Railway account were not.
-- QA (`reality-qa` on Railway): still **not created**. The GraphQL endpoint answered (HTTP 400 on an empty request). This environment has no Railway token, so nothing was created or billed. See `QA_DEPLOYMENT.md` and `docs/audit/CHECKPOINT-04.md`.
+- QA (`reality-qa` on Railway): still **not created**. The GraphQL endpoint answered HTTP 400 at 14:50 Asia/Bangkok. This environment has no Railway token, so nothing was created or billed. See `QA_DEPLOYMENT.md` and `docs/audit/CHECKPOINT-05.md`.
 
 ## Summary
 
 | Gate | Status | Reason |
 |---|---|---|
 | G0 Repository & contract recovery | **PASS** | Unchanged; masters still missing |
-| G1 Backend | **PASS (local + CI)** | 55 files / 379 tests incl. PostGIS. CI run `40285133976` succeeded on `c195a69` (14:19–14:21 Asia/Bangkok) |
-| G2 Data readiness | **BLOCKED** | Railway `reality-qa` still not created. Supporting only: one live Overpass tile (67 cafes) and one Open-Meteo cell on a local `APP_ENV=qa` database. No licensed live traffic / flood / parking feeds |
+| G1 Backend | **PASS (local + CI on the previous head)** | Local 56 files / 381 tests incl. PostGIS at 14:57 Asia/Bangkok. Last recorded CI is still 379 tests on `c195a69` / run `40285133976` |
+| G2 Data readiness | **BLOCKED** | Railway `reality-qa` still not created. Supporting only: local worker ingest, 262 OSM records and Open-Meteo, on `APP_ENV=qa`. No licensed live traffic / flood / parking feeds |
 | G3 Web functional | **BLOCKED** | 26/26 browser E2E PASS locally on the previous revision (desktop, tablet, mobile, landscape); the gate requires real QA APIs |
 | G4 Native Android | **BLOCKED** | JS bundles only. An installable debug-signed APK workflow exists (manual), but it needs the QA URL; no device testing |
 | G5 Native iOS | **BLOCKED** | Needs Apple signing / EAS credentials and a device |
 | G6 Reality & trust | **BLOCKED** | Invariants PASS; State Matrix V2 still missing |
-| G7 Visual fidelity | **BLOCKED** | Navy + amber reconstruction applied across web and mobile; screenshots at 1536 / 820 / 390 / landscape; **owner approval required**, masters missing |
-| G8 SEO | **NOT RUN** (partial local PASS) | Previous local crawl 17 pages / 0 issues and the Lighthouse lab run still stand. This revision did not re-crawl. Deployed crawl and field CWV not run |
+| G7 Visual fidelity | **BLOCKED** | New Web captures at 1536 / 820 / 390 / landscape in `qa05/`. Package: `VISUAL_APPROVAL_PACKAGE.md`. **Owner approval required.** No native screenshots. Masters missing |
+| G8 SEO | **NOT RUN** (local crawl refreshed) | Local crawl 17 pages / 0 issues at 14:54 Asia/Bangkok. Lab Lighthouse remeasured; LCP still over budget; map still misses. Deployed crawl and field CWV not run |
 | G9 Security & privacy | **PASS (local + CI)** | Enforced gate: 0 critical. 3 documented exceptions. CI confirmed image-size and node-forge absent from both bundles; decode-uri-component is in the bundle, as classified. Nodemailer addressparser advisories fixed |
 | G10 End-to-end product | **BLOCKED** | Full loop PASS locally with fixtures + straight-line routing; real routing / QA data needed |
 | G11 Release candidate | **FAIL** | G2–G8 and G10 unverified; QA not deployed |
@@ -32,10 +32,11 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 
 ## Details
 
-### G1 — Backend — PASS (local + CI)
+### G1 — Backend — PASS (local + CI on the previous head)
 - Commands on 2026-10-26:
-  - `npm run typecheck` (exit 0)
-  - `TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres npx vitest run` → **55 files, 379 tests, 0 failures**
+  - `npm run typecheck` (exit 0) on the web workspace after the font change. Full monorepo typecheck runs in CI.
+  - `TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres npx vitest run` → **56 files, 381 tests, 0 failures** at 14:57 Asia/Bangkok. Added `tests/map-render-options.test.ts` (2 tests).
+  - Earlier the same day, before those two tests: **55 files, 379 tests**. CI run `40285133976` on `c195a69` recorded that count. Run `40285556100` on `5b1bb15` also succeeded.
 - Added: mail-recipient boundary (registration rejects the nodemailer addressparser proofs; installed parser does not emit an `@evil.com` recipient).
 - Coverage added on 2026-10-22 and still in this suite:
   - account recovery: verification, reset, expiry, single use, email binding, enumeration resistance, session revocation, change notices;
@@ -51,7 +52,7 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 
 ### G2 — Data readiness — BLOCKED
 - Railway project still not created (no token in this environment). The platform pause string from 2026-10-22 was not reproduced; the GraphQL endpoint answered HTTP 400.
-- Supporting local evidence, not a gate pass: database `reality_qa`, six migrations, then a live ingest of bbox `105.84,21.02,105.85,21.03`. Overpass returned 67 cafes on the retry (first attempt `HTTP_502`). Open-Meteo stored one forecast cell. Public place responses carry `license: ODbL-1.0` and `© OpenStreetMap contributors`.
+- Supporting local evidence, not a gate pass: database `reality_qa`, six migrations. A worker process (`INGESTION_ENABLED=true`, region `qa-hoan-kiem`, bbox `105.84,21.02,105.85,21.03`) stored Open-Meteo (1 cell) and Overpass (262 records) at 14:51 Asia/Bangkok. Public place responses carry `license: ODbL-1.0` and `© OpenStreetMap contributors`. An earlier cafe-only sample the same day was 67 places after an `HTTP_502`.
 - No licensed live traffic, flood, or parking feed.
 - To unblock the gate, follow `QA_DEPLOYMENT.md` with the owner's Railway token and TomTom key.
 
@@ -79,31 +80,32 @@ Gate definitions come from the V2 brief §14. A gate is marked PASS only when it
 ### G7 — Visual fidelity — BLOCKED (owner approval)
 - Owner direction applied: dark navy + amber/gold on web and mobile from one palette (`src/theme/navy-amber.ts`).
 - `tests/theme-parity.test.ts` enforces web == mobile tokens and WCAG AA for all text and state colours on all surfaces.
-- Screenshots: desktop / tablet / mobile / landscape in `docs/release/evidence/local/`.
+- Screenshots: desktop / tablet / mobile / landscape in `docs/release/evidence/local/qa05/` (2026-10-26, OSM tiles loaded). Approval package: `docs/release/VISUAL_APPROVAL_PACKAGE.md`. Status: not approved.
 - Fixed defects:
   - tablet navigation wrapping (tab bar ≤ 900 px);
   - map attribution contrast;
-  - landscape journey height under the tab bar.
+  - landscape journey height under the tab bar;
+  - short landscape map used a bottom sheet that covered the map. It now uses a side rail (`landscape-844-map.png` recaptured).
 - Not done: comparison against approved masters (missing), Dynamic Type 200 %, manual screen reader pass.
 
 ### G8 — SEO — NOT RUN (partial local PASS)
-- `e2e/seo-crawl.mjs` (local): 17 pages (9 in sitemap), **0 issues**. It checks:
+- `e2e/seo-crawl.mjs` against the local production server at 14:54 Asia/Bangkok: 17 pages (9 in sitemap), **0 issues**. It checks:
   - status, title, description, `lang=vi`, single h1, self canonical, JSON-LD parse;
   - private pages redirect or carry noindex and are absent from the sitemap;
   - non-production robots disallows.
-- `e2e/perf.mjs` (Lighthouse 13 lab, local sandbox, simulated throttling). Evidence: `lighthouse.json`. Accessibility is 1.0 on every page.
+- Lighthouse 13.5.0 lab on system Chrome, simulated throttling, 14:58 Asia/Bangkok. Evidence: `docs/release/evidence/local/qa05/lighthouse.json`. The 2026-10-22 file `lighthouse.json` used a different Chrome binary and is kept as the earlier row. Accessibility is 1.0 on the four pages below.
 
 | Page | Mobile perf | LCP | CLS | TBT | Budget misses |
 |---|---|---|---|---|---|
-| `/` | 0.87 | 3.5 s | 0 | 148 ms | LCP |
-| `/di-dau` | 0.90 | 2.7 s | 0 | 277 ms | LCP |
-| `/du-lieu` | 0.88 | 3.4 s | 0.06 | 132 ms | LCP |
-| `/ban-do` | 0.34 | 8.6 s | 0.02 | 5.6 s | perf, LCP, TBT |
+| `/` | 0.93 | 3.14 s | 0 | 29 ms | LCP (SEO score is the robots disallow) |
+| `/di-dau` | 0.92 | 3.27 s | 0 | 27 ms | LCP |
+| `/du-lieu` | 0.91 | 3.34 s | 0 | 107 ms | LCP |
+| `/ban-do` | 0.65 | 3.16 s | 0.018 | 1.79 s | perf, LCP, TBT |
 
 - The SEO category scores 0.66 only because non-production robots blocks crawling (`is-crawlable`). That is expected.
-- The map page's TBT is dominated by MapLibre on software WebGL in the sandbox. It must be re-measured on QA with real devices.
-- Fonts are the main LCP render-delay contributor on text pages. One weight was dropped. Moving to `next/font` with adjusted fallbacks is a recommended follow-up.
-- Not run: crawl of the deployed QA site, field Core Web Vitals.
+- `/ban-do` is still over the lab budget. TBT remains MapLibre work in this environment. Field CWV was not measured.
+- Fonts: Be Vietnam Pro is now `next/font` woff2, vietnamese + latin preloaded, latin-ext not preloaded. Text-page LCP is still above 2.5 s in this lab.
+- Not run: crawl of a deployed QA site, field Core Web Vitals.
 
 ### G9 — Security & privacy — PASS (local + CI)
 - Security gate:

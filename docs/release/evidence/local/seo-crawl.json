@@ -1,6 +1,6 @@
 {
   "webUrl": "http://127.0.0.1:3000",
-  "runAt": "2026-10-22T08:07:39.873Z",
+  "runAt": "2026-10-26T07:54:42.727Z",
   "expectIndexing": false,
   "robotsDisallowAll": true,
   "sitemapUrls": 9,
@@ -10,90 +10,90 @@
     {
       "path": "/",
       "status": 200,
-      "ms": 32,
+      "ms": 108,
       "title": "Reality — Điều gì đang thật sự xảy ra quanh bạn",
-      "canonical": "http://localhost:3000",
+      "canonical": "http://127.0.0.1:3000",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/ban-do",
       "status": 200,
-      "ms": 18,
+      "ms": 15,
       "title": "Bản đồ tình trạng Hà Nội · Reality",
-      "canonical": "http://localhost:3000/ban-do",
+      "canonical": "http://127.0.0.1:3000/ban-do",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/di-dau",
       "status": 200,
-      "ms": 16,
+      "ms": 18,
       "title": "Đi đâu bây giờ? · Reality",
-      "canonical": "http://localhost:3000/di-dau",
+      "canonical": "http://127.0.0.1:3000/di-dau",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/du-lieu",
       "status": 200,
-      "ms": 26,
+      "ms": 17,
       "title": "Nguồn dữ liệu và giới hạn · Reality",
-      "canonical": "http://localhost:3000/du-lieu",
+      "canonical": "http://127.0.0.1:3000/du-lieu",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/gioi-thieu",
       "status": 200,
-      "ms": 19,
+      "ms": 11,
       "title": "Giới thiệu · Reality",
-      "canonical": "http://localhost:3000/gioi-thieu",
+      "canonical": "http://127.0.0.1:3000/gioi-thieu",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/tro-giup",
       "status": 200,
-      "ms": 15,
+      "ms": 10,
       "title": "Trợ giúp · Reality",
-      "canonical": "http://localhost:3000/tro-giup",
+      "canonical": "http://127.0.0.1:3000/tro-giup",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/quyen-rieng-tu",
       "status": 200,
-      "ms": 31,
+      "ms": 11,
       "title": "Chính sách quyền riêng tư · Reality",
-      "canonical": "http://localhost:3000/quyen-rieng-tu",
+      "canonical": "http://127.0.0.1:3000/quyen-rieng-tu",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/dieu-khoan",
       "status": 200,
-      "ms": 21,
+      "ms": 11,
       "title": "Điều khoản sử dụng · Reality",
-      "canonical": "http://localhost:3000/dieu-khoan",
+      "canonical": "http://127.0.0.1:3000/dieu-khoan",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/cau-chuyen",
       "status": 200,
-      "ms": 24,
+      "ms": 17,
       "title": "Câu chuyện về Hà Nội · Reality",
-      "canonical": "http://localhost:3000/cau-chuyen",
+      "canonical": "http://127.0.0.1:3000/cau-chuyen",
       "robots": null,
       "h1": 1
     },
     {
       "path": "/",
       "status": 200,
-      "ms": 16,
+      "ms": 11,
       "title": "Reality — Điều gì đang thật sự xảy ra quanh bạn",
-      "canonical": "http://localhost:3000",
+      "canonical": "http://127.0.0.1:3000",
       "robots": null,
       "h1": 1
     },

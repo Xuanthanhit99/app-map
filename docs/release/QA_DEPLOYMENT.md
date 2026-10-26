@@ -8,7 +8,7 @@ Owner approval: 2026-10-22. Approved option: "Approve, sleep when idle". Estimat
 |---|---|
 | Config-as-code, Dockerfiles, migrations pre-deploy, health checks | DONE in git (`deploy/railway/*.json`, `apps/api/Dockerfile`, `apps/web/Dockerfile`) |
 | Image layout smoke test (local, no Docker daemon registry access) | PASS. The API ran in `APP_ENV=qa` from the image's file layout: migrations applied, `/health/ready` returned 200 ready. Next standalone served `/`, `/robots.txt` and the MapLibre worker |
-| Railway project creation | **BLOCKED (credentials)**. 2026-10-22 attempts returned `Deploys have been paused due to an upstream issue`. On 2026-10-26 14:12 Asia/Bangkok the GraphQL endpoint `backboard.railway.com/graphql/v2` answered HTTP 400 (the API is up). This environment has no `RAILWAY_TOKEN`, and GitHub Actions secrets are not readable (HTTP 403). Nothing was created and nothing was billed |
+| Railway project creation | **BLOCKED (credentials)**. 2026-10-22 attempts returned `Deploys have been paused due to an upstream issue`. On 2026-10-26 14:12 and again at 14:50 Asia/Bangkok the GraphQL endpoint `backboard.railway.com/graphql/v2` answered HTTP 400 (the API is up). This environment has no `RAILWAY_TOKEN`, and GitHub Actions secrets are not readable (HTTP 403). Nothing was created and nothing was billed |
 | Live integration tests on QA | NOT RUN. They depend on the item above |
 
 Deploy branch: `qa/reality-v2`. It mirrors the PR head; pushes to it do not trigger GitHub Actions.

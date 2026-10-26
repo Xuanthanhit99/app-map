@@ -1,0 +1,175 @@
+{
+  "startedAt": "2026-10-26T07:54:18.536Z",
+  "steps": [
+    {
+      "name": "health",
+      "ok": true,
+      "detail": {
+        "status": "ready",
+        "database": true,
+        "postgis": true,
+        "migrations": 6,
+        "routingConfigured": false,
+        "geocodingConfigured": false,
+        "ingestionEnabled": false,
+        "env": "qa"
+      }
+    },
+    {
+      "name": "capabilities",
+      "ok": true,
+      "detail": {
+        "emailDelivery": true,
+        "passwordReset": true,
+        "emailVerification": true,
+        "federated": {
+          "google": false,
+          "apple": false
+        },
+        "push": false
+      }
+    },
+    {
+      "name": "places",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "count": 2,
+        "license": "ODbL-1.0",
+        "attribution": "© OpenStreetMap contributors"
+      }
+    },
+    {
+      "name": "routing-blocked",
+      "ok": true,
+      "detail": {
+        "status": 503,
+        "error": "ROUTING_PROVIDER_NOT_CONFIGURED"
+      }
+    },
+    {
+      "name": "admin-anonymous",
+      "ok": true,
+      "detail": {
+        "status": 401,
+        "error": "UNAUTHENTICATED"
+      }
+    },
+    {
+      "name": "register",
+      "ok": true,
+      "detail": {
+        "status": 201,
+        "verificationEmail": "SENT"
+      }
+    },
+    {
+      "name": "verify-mail",
+      "ok": true,
+      "detail": "token captured"
+    },
+    {
+      "name": "verify-confirm",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "body": {
+          "status": "VERIFIED"
+        }
+      }
+    },
+    {
+      "name": "refresh",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "name": "refresh-reuse",
+      "ok": true,
+      "detail": {
+        "status": 401,
+        "error": "REFRESH_TOKEN_REVOKED"
+      }
+    },
+    {
+      "name": "login-after-reuse",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "name": "admin-user",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "error": "INSUFFICIENT_ROLE"
+      }
+    },
+    {
+      "name": "forgot",
+      "ok": true,
+      "detail": {
+        "status": 202,
+        "body": {
+          "status": "ACCEPTED"
+        }
+      }
+    },
+    {
+      "name": "reset-mail",
+      "ok": true,
+      "detail": "token captured"
+    },
+    {
+      "name": "reset",
+      "ok": true,
+      "detail": {
+        "status": 204
+      }
+    },
+    {
+      "name": "old-password-rejected",
+      "ok": true,
+      "detail": {
+        "status": 401,
+        "error": "INVALID_CREDENTIALS"
+      }
+    },
+    {
+      "name": "new-password-login",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "name": "export",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "disposition": "attachment; filename=\"reality-export.json\"",
+        "format": "reality-export/1"
+      }
+    },
+    {
+      "name": "delete",
+      "ok": true,
+      "detail": {
+        "status": 204
+      }
+    },
+    {
+      "name": "login-after-delete",
+      "ok": true,
+      "detail": {
+        "status": 401,
+        "error": "INVALID_CREDENTIALS"
+      }
+    }
+  ],
+  "finishedAt": "2026-10-26T07:54:19.221Z",
+  "ok": true
+}

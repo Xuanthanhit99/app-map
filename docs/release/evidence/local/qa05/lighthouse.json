@@ -1,0 +1,167 @@
+{
+  "webUrl": "http://127.0.0.1:3000",
+  "runAt": "2026-10-26T07:58:13.739Z",
+  "chrome": "/usr/bin/google-chrome",
+  "budget": {
+    "performance": 0.8,
+    "accessibility": 0.95,
+    "seo": 0.9,
+    "best-practices": 0.9,
+    "lcpMs": 2500,
+    "cls": 0.1,
+    "tbtMs": 300
+  },
+  "note": "Lab measurements on the local APP_ENV=qa stack (simulated throttling). Not field Core Web Vitals and not a deployed crawl.",
+  "rows": [
+    {
+      "path": "/",
+      "formFactor": "mobile",
+      "performance": 0.93,
+      "accessibility": 1,
+      "seo": 0.66,
+      "bestPractices": 1,
+      "lcpMs": 3143,
+      "cls": 0,
+      "tbtMs": 29,
+      "fcpMs": 1227,
+      "runtimeError": null,
+      "seoFails": [
+        "is-crawlable"
+      ],
+      "budget": [
+        "seo",
+        "lcp"
+      ]
+    },
+    {
+      "path": "/ban-do",
+      "formFactor": "mobile",
+      "performance": 0.65,
+      "accessibility": 1,
+      "seo": 0.66,
+      "bestPractices": 1,
+      "lcpMs": 3163,
+      "cls": 0.018,
+      "tbtMs": 1794,
+      "fcpMs": 1226,
+      "runtimeError": null,
+      "seoFails": [
+        "is-crawlable"
+      ],
+      "budget": [
+        "performance",
+        "seo",
+        "lcp",
+        "tbt"
+      ]
+    },
+    {
+      "path": "/di-dau",
+      "formFactor": "mobile",
+      "performance": 0.92,
+      "accessibility": 1,
+      "seo": 0.66,
+      "bestPractices": 1,
+      "lcpMs": 3272,
+      "cls": 0,
+      "tbtMs": 27,
+      "fcpMs": 1214,
+      "runtimeError": null,
+      "seoFails": [
+        "is-crawlable"
+      ],
+      "budget": [
+        "seo",
+        "lcp"
+      ]
+    },
+    {
+      "path": "/du-lieu",
+      "formFactor": "mobile",
+      "performance": 0.91,
+      "accessibility": 1,
+      "seo": 0.66,
+      "bestPractices": 1,
+      "lcpMs": 3337,
+      "cls": 0,
+      "tbtMs": 107,
+      "fcpMs": 1255,
+      "runtimeError": null,
+      "seoFails": [
+        "is-crawlable"
+      ],
+      "budget": [
+        "seo",
+        "lcp"
+      ]
+    },
+    {
+      "path": "/",
+      "formFactor": "desktop",
+      "performance": 0.79,
+      "accessibility": 1,
+      "seo": 0.66,
+      "bestPractices": 1,
+      "lcpMs": 3150,
+      "cls": 0,
+      "tbtMs": 37,
+      "fcpMs": 1219,
+      "runtimeError": null,
+      "seoFails": [
+        "is-crawlable"
+      ],
+      "budget": []
+    },
+    {
+      "path": "/ban-do",
+      "formFactor": "desktop",
+      "performance": 0.33,
+      "accessibility": 1,
+      "seo": 0.66,
+      "bestPractices": 1,
+      "lcpMs": 5617,
+      "cls": 0.105,
+      "tbtMs": 1791,
+      "fcpMs": 1219,
+      "runtimeError": null,
+      "seoFails": [
+        "is-crawlable"
+      ],
+      "budget": []
+    },
+    {
+      "path": "/di-dau",
+      "formFactor": "desktop",
+      "performance": 0.78,
+      "accessibility": 1,
+      "seo": 0.66,
+      "bestPractices": 1,
+      "lcpMs": 3291,
+      "cls": 0,
+      "tbtMs": 35,
+      "fcpMs": 1216,
+      "runtimeError": null,
+      "seoFails": [
+        "is-crawlable"
+      ],
+      "budget": []
+    },
+    {
+      "path": "/du-lieu",
+      "formFactor": "desktop",
+      "performance": 0.79,
+      "accessibility": 1,
+      "seo": 0.66,
+      "bestPractices": 1,
+      "lcpMs": 3188,
+      "cls": 0,
+      "tbtMs": 57,
+      "fcpMs": 1218,
+      "runtimeError": null,
+      "seoFails": [
+        "is-crawlable"
+      ],
+      "budget": []
+    }
+  ]
+}

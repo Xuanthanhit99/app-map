@@ -2,7 +2,7 @@
 
 **Status: BLOCKED.** Expo bundle exports are not device tests and are not counted as such.
 
-Rechecked 2026-10-26: this machine has Java 21 and does not have `sdkmanager`, Gradle, `eas`, or `ANDROID_HOME`. No installable APK or IPA was produced.
+Rechecked 2026-10-26 14:50 Asia/Bangkok: this machine has Java 21 and does not have `sdkmanager`, Gradle, `eas`, `ANDROID_HOME`, or Apple credentials. No installable APK or IPA was produced. Expo export was not treated as a device build.
 
 | Check | Android | iOS | Evidence / blocker |
 |---|---|---|---|
